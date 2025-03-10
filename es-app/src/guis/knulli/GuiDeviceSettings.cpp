@@ -35,25 +35,27 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : GuiSettings(window, _("DE
 		addGroup(_("NATIVE PICO-8"));
 		addEntry(_("INSTALL PICO-8"), true, [this] { installPico8(); });
 	}
-	addGroup(_("USB MODE"));
-	optionsUsbMode = createUsbModeOptionList();
+	// Only add USB MODE options if USB service is available on this device.
+	if (UsbService::hasService()) {
+		addGroup(_("USB MODE"));
+		optionsUsbMode = createUsbModeOptionList();
 
-	addSaveFunc([this] {		
-        // Set the USB mode in batocera.conf
-        SystemConf::getInstance()->set("system.usbmode", optionsUsbMode->getSelected());
-		SystemConf::getInstance()->saveSystemConf();
+		addSaveFunc([this] {		
+			// Set the USB mode in batocera.conf
+			SystemConf::getInstance()->set("system.usbmode", optionsUsbMode->getSelected());
+			SystemConf::getInstance()->saveSystemConf();
 
-		if (optionsUsbMode->getSelected() == "off") {
-			// Deactivate the USB Service
-			UsbService::stop();
-		} else {
-			// Reactivate the USB Service
-			UsbService::restart();	
-		}
-    });
+			if (optionsUsbMode->getSelected() == "off") {
+				// Deactivate the USB Service
+				UsbService::stop();
+			} else {
+				// Reactivate the USB Service
+				UsbService::restart();	
+			}
+		});
+	}
 	
 }
-
 
 void GuiDeviceSettings::openPowerManagementSettings()
 {

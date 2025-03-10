@@ -13,6 +13,11 @@ const std::string START = "start";
 const std::string STOP = "stop";
 const std::string RESTART = "restart";
 
+bool UsbService::hasService()
+{
+	return Utils::FileSystem::exists(USB_SERVICE_NAME);
+}
+
 void UsbService::start()
 {
 	call(START);
@@ -30,7 +35,7 @@ void UsbService::restart()
 
 void UsbService::call(std::string argument)
 {
-	if (Utils::FileSystem::exists(USB_SERVICE_NAME)) {
+	if (hasService()) {
 		system((USB_SERVICE_NAME + SEPARATOR + argument).c_str());
 	}
 }

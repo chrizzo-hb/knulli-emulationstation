@@ -4,6 +4,7 @@
 class UsbService
 {
 public:
+        static bool hasService();
         static void start();
         static void stop();
         static void restart();
