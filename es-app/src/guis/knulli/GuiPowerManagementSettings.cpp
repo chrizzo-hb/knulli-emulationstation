@@ -16,7 +16,7 @@
 #include "utils/Platform.h"
 #include "BoardCheck.h"
 
-const std::vector<std::string> SUPPORTED_LID_BOARDS = {"rg40xx-sp"};
+const std::vector<std::string> SUPPORTED_LID_BOARDS = {"rg35xx-sp"};
 
 GuiPowerManagementSettings::GuiPowerManagementSettings(Window* window) : GuiSettings(window, _("POWER MANAGEMENT").c_str())
 {
@@ -83,7 +83,7 @@ GuiPowerManagementSettings::GuiPowerManagementSettings(Window* window) : GuiSett
 	auto aggressiveBatterySaveMode = std::make_shared<SwitchComponent>(mWindow);
 
 	aggressiveBatterySaveMode->setState(SystemConf::getInstance()->getBool("system.batterysaver.aggressive"));
-	addWithLabel(_("ENABLE AGGRESSIVE MODE"), aggressiveBatterySaveMode);
+	addWithDescription(_("AGGRESSIVE BATTERY SAVER"),_("Optimizes battery life with extra power-saving measures during system idle."), aggressiveBatterySaveMode);
 
 	// Lid close mode
 	auto optionsLidCloseMode = std::make_shared<OptionListComponent<std::string> >(mWindow, _("LID CLOSE MODE"), false);
@@ -100,7 +100,7 @@ GuiPowerManagementSettings::GuiPowerManagementSettings(Window* window) : GuiSett
 		addWithLabel(_("LID CLOSE MODE"), optionsLidCloseMode);
 	}
 
-	addSaveFunc([this, optionsBatterySaveMode, sliderBatterySaverTime, optionsBatterySaveExtendedMode, sliderBatterySaverExtendedTime, aggressiveBatterySaveMode, optionsLidCloseMode, this]
+	addSaveFunc([this, optionsBatterySaveMode, sliderBatterySaverTime, optionsBatterySaveExtendedMode, sliderBatterySaverExtendedTime, aggressiveBatterySaveMode, optionsLidCloseMode]
 	{
 		int newBatterySaverTimeSeconds = (int)Math::round(sliderBatterySaverTime->getValue()*60.f);
 		int newBatterySaverExtendedTimeSeconds = (int)Math::round(sliderBatterySaverExtendedTime->getValue()*60.f);
