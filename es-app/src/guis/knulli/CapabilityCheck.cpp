@@ -1,4 +1,4 @@
-#include "guis/knulli/BoardCheck.h"
+#include "guis/knulli/CapabilityCheck.h"
 #include "utils/Platform.h"
 #include "Paths.h"
 #include "utils/FileSystemUtil.h"
