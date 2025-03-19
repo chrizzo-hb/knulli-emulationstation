@@ -26,7 +26,7 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : GuiSettings(window, _("DE
 {
 	addGroup(_("POWER SAVING AND BATTERY LIFE"));
 	addEntry(_("POWER MANAGEMENT"), true, [this] { openPowerManagementSettings(); });
-	if(BoardCheck::hasCapability(RGB_CAPABILITY)) {
+	if(CapabilityCheck::hasCapability(RGB_CAPABILITY)) {
 		addGroup(_("DEVICE CUSTOMIZATION"));
 		addEntry(_("RGB LED SETTINGS"), true, [this] { openRgbLedSettings(); });
 	}
