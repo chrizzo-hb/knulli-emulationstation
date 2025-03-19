@@ -16,7 +16,7 @@
 #include "utils/Platform.h"
 #include "CapabilityCheck.h"
 
-const std::string LID_CAPABILITY = "rgb";
+const std::string LID_CAPABILITY = "lid";
 
 GuiPowerManagementSettings::GuiPowerManagementSettings(Window* window) : GuiSettings(window, _("POWER MANAGEMENT").c_str())
 {
