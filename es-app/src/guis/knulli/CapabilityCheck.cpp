@@ -11,7 +11,7 @@
 const std::string CAPABILITY_CHECK_COMMAND_NAME = "/usr/bin/knulli-board-capability";
 const std::string SEPARATOR = " ";
 
-bool CapabilityCheck::hasCapability(const std::vector<std::string>& capability)
+bool CapabilityCheck::hasCapability(const std::string capability)
 {
 	int result = system((CAPABILITY_CHECK_COMMAND_NAME
 		+ SEPARATOR + capability

@@ -19,7 +19,7 @@
 #include "CapabilityCheck.h"
 #include "UsbService.h"
 
-constexpr const char* RGB_CAPABILITY = "rgb";
+const std::string RGB_CAPABILITY = "rgb";
 constexpr const char* DEFAULT_USB_MODE = "off";
 
 GuiDeviceSettings::GuiDeviceSettings(Window* window) : GuiSettings(window, _("DEVICE SETTINGS").c_str())

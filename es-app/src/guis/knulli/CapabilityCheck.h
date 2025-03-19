@@ -4,6 +4,6 @@
 class CapabilityCheck
 {
 public:
-        static bool hasCapability(const std::vector<std::string>& capability);
+        static bool hasCapability(const std::string capability);
 
 };
