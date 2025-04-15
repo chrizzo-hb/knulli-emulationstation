@@ -362,7 +362,7 @@ GuiControllersSettings::GuiControllersSettings(Window* wnd, int autoSel) : GuiSe
 		InputManager::getInstance()->computeLastKnownPlayersDeviceIndexes();
 	});
 
-	#endif // KNULLI
+#endif // KNULLI
 
 }
 
