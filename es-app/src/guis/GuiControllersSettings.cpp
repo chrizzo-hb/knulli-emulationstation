@@ -184,6 +184,7 @@ GuiControllersSettings::GuiControllersSettings(Window* wnd, int autoSel) : GuiSe
 	if (Settings::getInstance()->getBool("ShowControllerActivity"))
 		addSwitch(_("SHOW CONTROLLER BATTERY LEVEL"), "ShowControllerBattery", true);
 
+#ifndef KNULLI
 	addGroup(controllers_group_label);
 
 	// Here we go; for each player
@@ -323,7 +324,9 @@ GuiControllersSettings::GuiControllersSettings(Window* wnd, int autoSel) : GuiSe
 		// Populate controllers list
 		addWithLabel(label, inputOptionList);
 	}
-#endif
+#endif // WIN32
+
+#endif // KNULLI
 
 	addSaveFunc([this, options, window]
 	{
