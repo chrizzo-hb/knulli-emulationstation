@@ -66,7 +66,7 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : GuiSettings(window, _("DE
 
 		addSaveFunc([this] {
 			// Set the toggle Switch mode in batocera.conf
-			SystemConf::getInstance()->set("system.brickswitch.mode", optionsToggleSwitchMode->getSelected());
+			SystemConf::getInstance()->set("system.toggleswitch.mode", optionsToggleSwitchMode->getSelected());
 			SystemConf::getInstance()->saveSystemConf();
 		});
 
