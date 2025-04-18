@@ -24,7 +24,7 @@ const std::string RGB_CAPABILITY = "rgb";
 const std::string ADB_CAPABILITY = "adb";
 const std::string MTP_CAPABILITY = "mtp";
 
-const std::vector<std::string> BOARDS_WITH_TOGGLE_SWITCH = {"trimui-brick", "trimui-smart-pro", "rg-cubexx"};
+const std::vector<std::string> BOARDS_WITH_TOGGLE_SWITCH = {"trimui-brick", "trimui-smart-pro"};
 
 constexpr const char* DEFAULT_USB_MODE = "off";
 constexpr const char* DEFAULT_SWITCH_MODE = "mute";
