@@ -33,8 +33,22 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : GuiSettings(window, _("DE
 {
 	addGroup(_("POWER SAVING AND BATTERY LIFE"));
 	addEntry(_("POWER MANAGEMENT"), true, [this] { openPowerManagementSettings(); });
-	if(CapabilityCheck::hasCapability(RGB_CAPABILITY)) {
+	if(CapabilityCheck::hasCapability(RGB_CAPABILITY) || BoardCheck::isBoard(BOARDS_WITH_TOGGLE_SWITCH)) {
 		addGroup(_("DEVICE CUSTOMIZATION"));
+		if(CapabilityCheck::hasCapability(RGB_CAPABILITY)) {
+			addEntry(_("RGB LED SETTINGS"), true, [this] { openRgbLedSettings(); });
+		}
+		if(BoardCheck::isBoard(BOARDS_WITH_TOGGLE_SWITCH)) {
+			optionsToggleSwitchMode = createToggleSwitchModeOptionList();
+	
+			addSaveFunc([this] {
+				// Set the toggle Switch mode in batocera.conf
+				SystemConf::getInstance()->set("system.toggleswitch.mode", optionsToggleSwitchMode->getSelected());
+				SystemConf::getInstance()->saveSystemConf();
+			});
+	
+		}
+
 		addEntry(_("RGB LED SETTINGS"), true, [this] { openRgbLedSettings(); });
 	}
 	if(Pico8Installer::hasInstaller()) {
@@ -60,18 +74,6 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : GuiSettings(window, _("DE
 			}
 		});
 	}
-	if(BoardCheck::isBoard(BOARDS_WITH_TOGGLE_SWITCH)) {
-		addGroup(_("INPUT OPTIONS"));
-		optionsToggleSwitchMode = createToggleSwitchModeOptionList();
-
-		addSaveFunc([this] {
-			// Set the toggle Switch mode in batocera.conf
-			SystemConf::getInstance()->set("system.toggleswitch.mode", optionsToggleSwitchMode->getSelected());
-			SystemConf::getInstance()->saveSystemConf();
-		});
-
-	}
-	
 }
 
 void GuiDeviceSettings::openPowerManagementSettings()
