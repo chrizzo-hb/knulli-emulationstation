@@ -48,8 +48,6 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : GuiSettings(window, _("DE
 			});
 	
 		}
-
-		addEntry(_("RGB LED SETTINGS"), true, [this] { openRgbLedSettings(); });
 	}
 	if(Pico8Installer::hasInstaller()) {
 		addGroup(_("NATIVE PICO-8"));
