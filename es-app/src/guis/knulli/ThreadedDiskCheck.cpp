@@ -13,10 +13,6 @@ ThreadedDiskCheck::ThreadedDiskCheck(Window* window, std::string diskCheckMode)
 	: mWindow(window)
 {
 	mDiskCheckMode = diskCheckMode;
-	mWndNotification = mWindow->createAsyncNotificationComponent();
-	mWndNotification->updateTitle(ICONINDEX + _("CHECKING YOUR DISK(S)"));	
-	mWndNotification->updateText(_("Searching for any issues with your storage..."));
-
 	mHandle = new std::thread(&ThreadedDiskCheck::run, this);
 }
 
