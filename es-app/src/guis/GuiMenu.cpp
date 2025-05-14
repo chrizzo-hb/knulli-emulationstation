@@ -855,7 +855,14 @@ void GuiMenu::openDeveloperSettings()
 	}
 
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::DISKFORMAT))
-		s->addEntry(_("FORMAT A DISK"), true, [this] { openFormatDriveSettings(); });
+	s->addEntry(_("FORMAT A DISK"), true, [this] { openFormatDriveSettings(); });
+	
+	#ifdef KNULLI
+		s->addWithDescription(_("DISK CHECK"), _("Verify the integrity of your SD cards."), nullptr, [this, s]
+		{
+			mWindow->pushGui(new GuiDiskCheck(mWindow));
+		});
+	#endif
 
 	s->addWithDescription(_("CLEAN GAMELISTS & REMOVE UNUSED MEDIA"), _("Remove unused entries, and clean references to missing medias."), nullptr, [this, s]
 	{
@@ -872,13 +879,6 @@ void GuiMenu::openDeveloperSettings()
 			mWindow->closeSplashScreen();
 		}, _("NO"), nullptr));
 	});
-
-#ifdef KNULLI
-	s->addWithDescription(_("DISK CHECK"), _("Verify the integrity of your SD cards."), nullptr, [this, s]
-	{
-		mWindow->pushGui(new GuiDiskCheck(mWindow));
-	});
-#endif
 
 	s->addWithDescription(_("RESET GAMELISTS USAGE DATA"), _("Reset values of GameTime, PlayCount and LastPlayed metadatas."), nullptr, [this, s]
 		{
