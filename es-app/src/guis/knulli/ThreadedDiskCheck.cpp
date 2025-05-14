@@ -12,6 +12,7 @@ ThreadedDiskCheck* ThreadedDiskCheck::mInstance = nullptr;
 ThreadedDiskCheck::ThreadedDiskCheck(Window* window, std::string diskCheckMode)
 	: mWindow(window)
 {
+	mDiskCheckMode = diskCheckMode;
 	mWndNotification = mWindow->createAsyncNotificationComponent();
 	mWndNotification->updateTitle(ICONINDEX + _("CHECKING YOUR DISK(S)"));	
 	mWndNotification->updateText(_("Searching for any issues with your storage..."));
@@ -36,12 +37,12 @@ void ThreadedDiskCheck::updateNotificationComponentContent(const std::string inf
 	mWndNotification->updateText(info);
 }
 
-void ThreadedDiskCheck::run(std::string diskCheckMode)
+void ThreadedDiskCheck::run()
 {
 	ApiSystem::getInstance()->runDiskCheck([this](const std::string info)
 	{
 		updateNotificationComponentContent(info);
-	}, diskCheckMode);
+	}, mDiskCheckMode);
 
 	delete this;
 	ThreadedDiskCheck::mInstance = nullptr;
