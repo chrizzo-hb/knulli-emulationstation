@@ -27,5 +27,6 @@ void GuiDiskCheck::pressedStart()
     {
 	    std::string selectedDiskCheckMode = diskCheckMode->getSelected();
 	    ThreadedDiskCheck::start(mWindow, selectedDiskCheckMode);
+        close();
     }
 }
