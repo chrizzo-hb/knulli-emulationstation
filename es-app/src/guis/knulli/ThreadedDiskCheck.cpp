@@ -13,6 +13,10 @@ ThreadedDiskCheck::ThreadedDiskCheck(Window* window, std::string diskCheckMode)
 	: mWindow(window)
 {
 	mDiskCheckMode = diskCheckMode;
+	mWndNotification = mWindow->createAsyncNotificationComponent();
+	mWndNotification->updateTitle(ICONINDEX + _("CHECKING YOUR DISK(S)"));	
+	mWndNotification->updateText(_("Searching for any issues with your storage..."));
+
 	mHandle = new std::thread(&ThreadedDiskCheck::run, this);
 }
 
@@ -24,9 +28,21 @@ ThreadedDiskCheck::~ThreadedDiskCheck()
 	ThreadedDiskCheck::mInstance = nullptr;
 }
 
+void ThreadedDiskCheck::updateNotificationComponentContent(const std::string info)
+{
+	if (info.empty())
+		return;
+
+	mWndNotification->updatePercent(-1);
+	mWndNotification->updateText(info);
+}
+
 void ThreadedDiskCheck::run()
 {
-	ApiSystem::getInstance()->runDiskCheck(mDiskCheckMode);
+	ApiSystem::getInstance()->runDiskCheck([this](const std::string info)
+	{
+		updateNotificationComponentContent(info);
+	}, mDiskCheckMode);
 
 	delete this;
 	ThreadedDiskCheck::mInstance = nullptr;

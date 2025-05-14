@@ -491,9 +491,9 @@ std::string ApiSystem::getIpAdress()
 }
 
 #ifdef KNULLI
-bool ApiSystem::runDiskCheck(std::string diskCheckMode)
+bool ApiSystem::runDiskCheck(const std::function<void(const std::string)>& func, std::string diskCheckMode)
 {
-	return executeScript("knulli-disk-check " + diskCheckMode).second == 0;
+	return executeScript("knulli-disk-check " + diskCheckMode, func).second == 0;
 }
 #endif
 
