@@ -5,10 +5,10 @@
 #include "guis/GuiMsgBox.h"
 #include "ThreadedDiskCheck.h"
 
-GuiDiskCheck::GuiDiskCheck(Window* window) : GuiSettings(window, _("SCRAPER SETTINGS").c_str())
+GuiDiskCheck::GuiDiskCheck(Window* window) : GuiSettings(window, _("DISK CHECK").c_str())
 {
 
-	diskCheckMode = std::make_shared< OptionListComponent<std::string> >(mWindow, _("IMAGE SOURCE"), false);
+	diskCheckMode = std::make_shared< OptionListComponent<std::string> >(mWindow, _("DISK_CHECK_MODE"), false);
 	diskCheckMode->add(_("FAST"), "fast", true);
 	diskCheckMode->add(_("FULL"), "full", false);
 	addWithDescription(_("DISK CHECK MODE"),_("Full mode is more thorough but takes longer.") , diskCheckMode);

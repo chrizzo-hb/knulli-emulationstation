@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GuiSettings.h"
+#include "guis/GuiSettings.h"
 
 class Window;
 

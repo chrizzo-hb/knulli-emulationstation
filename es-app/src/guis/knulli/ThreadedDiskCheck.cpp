@@ -42,10 +42,6 @@ void ThreadedDiskCheck::run(std::string diskCheckMode)
 	{
 		updateNotificationComponentContent(info);
 	}, diskCheckMode);
-	ApiSystem::getInstance()->scanNewBluetooth([this](const std::string info)
-	{
-		updateNotificationComponentContent(info);
-	});
 
 	delete this;
 	ThreadedDiskCheck::mInstance = nullptr;
