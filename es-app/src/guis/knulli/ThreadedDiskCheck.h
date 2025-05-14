@@ -11,7 +11,6 @@ public:
 
 private:
 	void run();
-	void updateNotificationComponentContent(const std::string info);
 
 	ThreadedDiskCheck(Window* window, std::string diskCheckMode);
 	~ThreadedDiskCheck();

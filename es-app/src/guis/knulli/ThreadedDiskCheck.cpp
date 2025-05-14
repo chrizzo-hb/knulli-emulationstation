@@ -28,21 +28,9 @@ ThreadedDiskCheck::~ThreadedDiskCheck()
 	ThreadedDiskCheck::mInstance = nullptr;
 }
 
-void ThreadedDiskCheck::updateNotificationComponentContent(const std::string info)
-{
-	if (info.empty())
-		return;
-
-	mWndNotification->updatePercent(-1);
-	mWndNotification->updateText(info);
-}
-
 void ThreadedDiskCheck::run()
 {
-	ApiSystem::getInstance()->runDiskCheck([this](const std::string info)
-	{
-		updateNotificationComponentContent(info);
-	}, mDiskCheckMode);
+	ApiSystem::getInstance()->runDiskCheck(mDiskCheckMode);
 
 	delete this;
 	ThreadedDiskCheck::mInstance = nullptr;
