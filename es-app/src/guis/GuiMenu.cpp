@@ -22,6 +22,7 @@
 #include "guis/GuiScraperSettings.h"
 #include "guis/GuiControllersSettings.h"
 #include "guis/knulli/GuiDeviceSettings.h"
+#include "guis/knulli/GuiDiskCheck.h"
 #include "views/UIModeController.h"
 #include "views/ViewController.h"
 #include "CollectionSystemManager.h"
@@ -871,6 +872,13 @@ void GuiMenu::openDeveloperSettings()
 			mWindow->closeSplashScreen();
 		}, _("NO"), nullptr));
 	});
+
+#ifdef KNULLI
+	s->addWithDescription(_("DISK CHECK"), _("Verify the integrity of your SD cards."), nullptr, [this, s]
+	{
+		mWindow->pushGui(new GuiDiskCheck(mWindow));
+	});
+#endif
 
 	s->addWithDescription(_("RESET GAMELISTS USAGE DATA"), _("Reset values of GameTime, PlayCount and LastPlayed metadatas."), nullptr, [this, s]
 		{
