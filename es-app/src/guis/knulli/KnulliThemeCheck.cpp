@@ -9,7 +9,7 @@
 #include <vector>
 #include <string>
 
-const std::vector<std::string> KNULLI_COMPATIBLE_THEMES = {"Art-Book-Next", "Canvas", "Knulli"};
+const std::vector<std::string> KNULLI_COMPATIBLE_THEMES = {"Art-Book-Next", "Canvas", "Knulli", "Techdweeb"};
 
 bool KnulliThemeCheck::isCompatible(const std::string themeName)
 {
