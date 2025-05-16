@@ -22,7 +22,7 @@
 #include "guis/GuiScraperSettings.h"
 #include "guis/GuiControllersSettings.h"
 #include "guis/knulli/GuiDeviceSettings.h"
-#include "guis/knulli/GuiDiskCheck.h"
+#include "guis/knulli/ThreadedDiskCheck.h"
 #include "guis/knulli/CapabilityCheck.h"
 #include "views/UIModeController.h"
 #include "views/ViewController.h"
@@ -859,10 +859,24 @@ void GuiMenu::openDeveloperSettings()
 	s->addEntry(_("FORMAT A DISK"), true, [this] { openFormatDriveSettings(); });
 	
 	#ifdef KNULLI
-		s->addWithDescription(_("DISK CHECK"), _("Verify the integrity of your SD cards."), nullptr, [this, s]
+	s->addWithDescription(_("DISK CHECK"), _("Verify the integrity of your SD cards."), nullptr, [this, s]
+	{
+		mWindow->pushGui(new GuiDiskCheck(mWindow));
+	});
+
+	s->addEntry(_("DISK CHECK"), true, [window]
+	{
+		if (ThreadedDiskCheck::isRunning())
+			mWindow->pushGui(new GuiMsgBox(mWindow, _("DISK CHECK IS ALREADY RUNNING.")));
+		else
 		{
-			mWindow->pushGui(new GuiDiskCheck(mWindow));
-		});
+			window->pushGui(new GuiMsgBox(window, _("RUN DISK CHECK NOW?"), _("YES"), [window]
+				{
+					ThreadedDiskCheck::start(mWindow);
+				},
+				_("NO"), nullptr));
+		}
+	});
 	#endif
 
 	s->addWithDescription(_("CLEAN GAMELISTS & REMOVE UNUSED MEDIA"), _("Remove unused entries, and clean references to missing medias."), nullptr, [this, s]
