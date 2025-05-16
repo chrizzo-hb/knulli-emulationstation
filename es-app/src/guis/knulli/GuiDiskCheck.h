@@ -10,6 +10,4 @@ public:
 	GuiDiskCheck(Window* window);
     void pressedStart();
     
-private:
-    std::shared_ptr<OptionListComponent<std::string>> diskCheckMode;
 };
