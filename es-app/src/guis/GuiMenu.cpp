@@ -864,13 +864,13 @@ void GuiMenu::openDeveloperSettings()
 		mWindow->pushGui(new GuiDiskCheck(mWindow));
 	});
 
-	s->addEntry(_("DISK CHECK"), true, [window]
+	s->addEntry(_("DISK CHECK"), true, [this]
 	{
 		if (ThreadedDiskCheck::isRunning())
 			mWindow->pushGui(new GuiMsgBox(mWindow, _("DISK CHECK IS ALREADY RUNNING.")));
 		else
 		{
-			mWindow->pushGui(new GuiMsgBox(mWindow, _("RUN DISK CHECK NOW?"), _("YES"), [window]
+			mWindow->pushGui(new GuiMsgBox(mWindow, _("RUN DISK CHECK NOW?"), _("YES"), [this]
 				{
 					ThreadedDiskCheck::start(mWindow);
 				},
