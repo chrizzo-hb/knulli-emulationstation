@@ -870,7 +870,7 @@ void GuiMenu::openDeveloperSettings()
 			mWindow->pushGui(new GuiMsgBox(mWindow, _("DISK CHECK IS ALREADY RUNNING.")));
 		else
 		{
-			window->pushGui(new GuiMsgBox(window, _("RUN DISK CHECK NOW?"), _("YES"), [window]
+			mWindow->pushGui(new GuiMsgBox(mWindow, _("RUN DISK CHECK NOW?"), _("YES"), [window]
 				{
 					ThreadedDiskCheck::start(mWindow);
 				},
