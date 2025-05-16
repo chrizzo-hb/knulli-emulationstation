@@ -861,11 +861,6 @@ void GuiMenu::openDeveloperSettings()
 	#ifdef KNULLI
 	s->addWithDescription(_("DISK CHECK"), _("Verify the integrity of your SD cards."), nullptr, [this, s]
 	{
-		mWindow->pushGui(new GuiDiskCheck(mWindow));
-	});
-
-	s->addEntry(_("DISK CHECK"), true, [this]
-	{
 		if (ThreadedDiskCheck::isRunning())
 			mWindow->pushGui(new GuiMsgBox(mWindow, _("DISK CHECK IS ALREADY RUNNING.")));
 		else
