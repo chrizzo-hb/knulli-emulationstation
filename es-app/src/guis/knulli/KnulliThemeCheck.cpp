@@ -24,12 +24,12 @@ std::vector<std::string> KnulliThemeCheck::getCompatibleThemes()
 
 bool KnulliThemeCheck::isCompatible(const std::string themeName)
 {
-	std::vector<std::string> compatibleThemes = KnulliThemeCheck::getCompatibleThemes();
+	// std::vector<std::string> compatibleThemes = KnulliThemeCheck::getCompatibleThemes();
 
-	for (const auto& compatibleTheme : compatibleThemes) {
-		if (themeName == compatibleTheme) {
-			return true;
-		}
-	}
+	// for (const auto& compatibleTheme : compatibleThemes) {
+	// 	if (themeName == compatibleTheme) {
+	// 		return true;
+	// 	}
+	// }
     return false;
 }
