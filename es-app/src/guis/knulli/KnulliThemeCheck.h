@@ -8,5 +8,5 @@ public:
         static bool isCompatible(const std::string themeName);
 
 private:
-        static std::vector<std::string> KnulliThemeCheck::getCompatibleThemes();
+        static std::vector<std::string> getCompatibleThemes();
 };
