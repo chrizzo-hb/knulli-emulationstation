@@ -13,12 +13,12 @@ static const std::string COMPATIBLE_THEMES_FILE = Paths::getEmulationStationPath
 
 std::vector<std::string> KnulliThemeCheck::getCompatibleThemes()
 {
-	if (Utils::FileSystem::exists(COMPATIBLE_THEMES_FILE)) {
-		std::ifstream file(COMPATIBLE_THEMES_FILE);
-		std::string themesCsv;
-		std::getline(file, themesCsv);
-		return themesCsv.empty() ? std::vector<std::string>() : Utils::String::split(themesCsv, ',');
-	}
+	// if (Utils::FileSystem::exists(COMPATIBLE_THEMES_FILE)) {
+	// 	std::ifstream file(COMPATIBLE_THEMES_FILE);
+	// 	std::string themesCsv;
+	// 	std::getline(file, themesCsv);
+	// 	return themesCsv.empty() ? std::vector<std::string>() : Utils::String::split(themesCsv, ',');
+	// }
 	return std::vector<std::string>();
 }
 
