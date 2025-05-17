@@ -9,7 +9,7 @@
 #include <vector>
 #include <string>
 
-static const std::string COMPATIBLE_THEMES_FILE = Paths::getEmulationStationPath() + "/knulli-compatible-themes.txt";
+//static const std::string COMPATIBLE_THEMES_FILE = Paths::getEmulationStationPath() + "/knulli-compatible-themes.txt";
 
 std::vector<std::string> KnulliThemeCheck::getCompatibleThemes()
 {
