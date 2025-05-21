@@ -3108,107 +3108,55 @@ msgstr ""
 msgid "SEARCHING WI-FI NETWORKS"
 msgstr ""
 
-
-msgid "API KEY"
-msgstr ""
-
-msgid "Always use the built-in handheld controls for player 1, even if additional controllers are connected."
-msgstr ""
-
-msgid "QUICK RESUME MODE"
-msgstr ""
-
-msgid "If shutdown during gameplay, boots directly into game on next startup. Works with Auto Save/Load on supported emulators."
-msgstr ""
-
-msgid "TOGGLE FAST FORWARD"
-msgstr ""
-
-msgid "Enable to toggle fast forward instead of holding it down. Only on libretro cores."
-msgstr ""
-
-msgid "RETROARCH HOTKEYS"
-msgstr ""
-
-msgid "INCREASE SAVE SLOT NUMBER"
-msgstr ""
-
-msgid "Default hotkey + UP."
-msgstr ""
-
-msgid "DECREASE SAVE SLOT NUMBER"
-msgstr ""
-
-msgid "Default hotkey + DOWN."
-msgstr ""
-
-msgid "Default hotkey + LEFT."
-msgstr ""
-
-msgid "FAST-FORWARD"
-msgstr ""
-
-msgid "Default hotkey + RIGHT."
-msgstr ""
-
-msgid "SAVE STATE"
-msgstr ""
-
-msgid "Default hotkey + Y."
-msgstr ""
-
-msgid "LOAD STATE"
-msgstr ""
-
-msgid "Default hotkey + X."
-msgstr ""
-
-msgid "RETROARCH MENU"
-msgstr ""
-
-msgid "Default hotkey + B."
-msgstr ""
-
-msgid "RESET EMULATOR"
-msgstr ""
-
-msgid "Default hotkey + A."
-msgstr ""
-
-msgid "Default hotkey + L1."
-msgstr ""
-
-msgid "AUTO TRANSLATE"
-msgstr ""
-
-msgid "Default hotkey + R1."
-msgstr ""
-
-msgid "PREVIOUS SHADER"
-msgstr ""
-
-msgid "Default hotkey + L2."
-msgstr ""
-
-msgid "NEXT SHADER"
-msgstr ""
-
-msgid "Default hotkey + R2."
-msgstr ""
-
-msgid "UNLIMITED RECURSION DEPTH"
-msgstr ""
-
-msgid "Might slow down gamelist updates significantly!"
-msgstr ""
-
-msgid "DEVICE SETTINGS"
-msgstr ""
-
 msgid "POWER SAVING AND BATTERY LIFE"
 msgstr ""
 
 msgid "POWER MANAGEMENT"
+msgstr ""
+
+msgid "DEVICE CUSTOMIZATION"
+msgstr ""
+
+msgid "RGB LED SETTINGS"
+msgstr ""
+
+msgid "NATIVE PICO-8"
+msgstr ""
+
+msgid "INSTALL PICO-8"
+msgstr ""
+
+msgid "USB MODE"
+msgstr ""
+
+msgid "Native Pico-8 was successfully installed."
+msgstr ""
+
+msgid "ADB"
+msgstr ""
+
+msgid "MTP"
+msgstr ""
+
+msgid "Set the USB mode to access your device."
+msgstr ""
+
+msgid "TOGGLE SWITCH MODE"
+msgstr ""
+
+msgid "MUTE/UNMUTE"
+msgstr ""
+
+msgid "RGB ON/OFF"
+msgstr ""
+
+msgid "AIRPLANE MODE ON/OFF"
+msgstr ""
+
+msgid "Decide what to use the switch of your device for."
+msgstr ""
+
+msgid "BATTERY SAVING"
 msgstr ""
 
 msgid "DIM"
@@ -3226,7 +3174,8 @@ msgstr ""
 msgid "IDLE TIME"
 msgstr ""
 
-msgid "Battery safe mode is activated after idle time has passed without any input."
+msgid ""
+"Battery save mode is activated after idle time has passed without any input."
 msgstr ""
 
 msgid "EXTENDED MODE"
@@ -3235,25 +3184,31 @@ msgstr ""
 msgid "EXTENDED IDLE TIME"
 msgstr ""
 
-msgid "Secondary timer which starts after initial idle time has passed without any input."
-msgstr ""
-
-msgid "LID CLOSE MODE"
+msgid ""
+"Secondary timer which starts after initial idle time has passed without any "
+"input."
 msgstr ""
 
 msgid "AGGRESSIVE BATTERY SAVER"
 msgstr ""
 
-msgid "Optimizes batter life with extra power-saving measures during system idle."
+msgid ""
+"Optimizes battery life with extra power-saving measures during system idle."
 msgstr ""
 
-msgid "DEVICE CUSTOMIZATION"
-msgstr ""
-
-msgid "RGB LED SETTINGS"
+msgid "LID CLOSE MODE"
 msgstr ""
 
 msgid "REGULAR LED MODE AND COLOR"
+msgstr ""
+
+msgid "RESTORE DEFAULT COLORS"
+msgstr ""
+
+msgid "BATTERY CHARGE INDICATION"
+msgstr ""
+
+msgid "RETRO ACHIEVEMENT INDICATION"
 msgstr ""
 
 msgid "STATIC"
@@ -3272,81 +3227,6 @@ msgid "SINGLE RAINBOW"
 msgstr ""
 
 msgid "MULTI RAINBOW"
-msgstr ""
-
-msgid "ADAPTIVE BRIGHTNESS"
-msgstr ""
-
-msgid "Automatically adapts LED brightness to screen brightness (based on the brightness setting above)."
-msgstr ""
-
-msgid "SPEED"
-msgstr ""
-
-msgid "Not applicable for all devices/modes. Warning: High speed may cause seizures for people with photosensitive epilepsy."
-msgstr ""
-
-msgid "RESTORE DEFAULT COLORS"
-msgstr ""
-
-msgid "LOW BATTERY THRESHOLD"
-msgstr ""
-
-msgid "Show yellow/red breathing when battery is below this threshold. Set to 0 to disable."
-msgstr ""
-
-msgid "BATTERY CHARGING"
-msgstr ""
-
-msgid "Show green breathing while device is charging."
-msgstr ""
-
-msgid "RETRO ACHIEVEMENT INDICATION"
-msgstr ""
-
-msgid "Honor your retro achievements with a LED effect."
-msgstr ""
-
-msgid "USB MODE"
-msgstr ""
-
-msgid "Set the USB mode to access your device."
-msgstr ""
-
-msgid "NATIVE PICO-8"
-msgstr ""
-
-msgid "INSTALL PICO-8"
-msgstr ""
-
-msgid "Native Pico-8 was successfully installed."
-msgstr ""
-
-msgid "Unable to install: An unknown error occurred. If the error persists, try installing Pico-8 manually."
-msgstr ""
-
-msgid "Unable to install: Pico-8 installer files missing. Please download the Raspberry Pi version of Pico-8 and place the ZIP file in the roms/pico8 folder and try again."
-msgstr ""
-
-msgid "TOGGLE SWITCH MODE"
-msgstr ""
-
-msgid "Decide what to use the switch of your device for."
-msgstr ""
-
-msgid "MUTE/UNMUTE"
-msgstr ""
-
-msgid "RGB ON/OFF"
-msgstr ""
-
-msgid "AIRPLANE MODE ON/OFF"
-msgstr ""
-
-msgid "DISK CHECK"
-msgstr ""
-
-msgid "Verify the integrity of your SD cards."
 msgstr ""
 
 msgid ""
