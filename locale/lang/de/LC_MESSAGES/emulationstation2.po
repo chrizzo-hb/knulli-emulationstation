@@ -3612,24 +3612,3 @@ msgstr "Standard: Hotkey + Y."
 
 msgid "LOAD STATE"
 msgstr "SPIELZUSTAND LADEN"
-
-msgid "Default hotkey + X."
-msgstr "Standard: Hotkey + X."
-
-msgid "RETROARCH MENU"
-msgstr "RETROARCH-MENÜ"
-
-msgid "Default hotkey + B."
-msgstr "Standard: Hotkey + B."
-
-msgid "RESET EMULATOR"
-msgstr "EMULATOR ZURÜCKSETZEN"
-
-msgid "Default hotkey + A."
-msgstr "Standard: Hotkey + A."
-
-msgid "SCREENSHOT"
-msgstr "BILDSCHIRMFOTO"
-
-msgid "Default hotkey + L1."
-msgstr "Standard: Hotkey + L1."
