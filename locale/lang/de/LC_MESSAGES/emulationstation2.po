@@ -3579,3 +3579,57 @@ msgstr "VORSPULEN EIN-/AUSCHALTEN"
 
 msgid "Enable to toggle fast forward instead of holding it down. Only on libretro cores."
 msgstr "Vorspulen mit einem Tastendruck Ein-/Ausschalten statt gedrückt halten. Nur für Libretro-Cores."
+
+msgid "RETROARCH HOTKEYS"
+msgstr "RETROARCH-TASTENKOMBINATIONEN"
+
+msgid "INCREASE SAVE SLOT NUMBER"
+msgstr "NÄCHSTER SPEICHERPLATZ"
+
+msgid "Default hotkey + UP."
+msgstr "Standard: Hotkey + HOCH."
+
+msgid "DECREASE SAVE SLOT NUMBER"
+msgstr "VORHERIGER SPEICHERPLATZ"
+
+msgid "Default hotkey + DOWN."
+msgstr "Standard: Hotkey + RUNTER."
+
+msgid "Default hotkey + LEFT."
+msgstr "Standard: Hotkey + LINKS."
+
+msgid "FAST-FORWARD"
+msgstr "VORSPULFUNKTION"
+
+msgid "Default hotkey + RIGHT."
+msgstr "Standard: Hotkey + RECHTS."
+
+msgid "SAVE STATE"
+msgstr "SPIELZUSTAND SPEICHERN"
+
+msgid "Default hotkey + Y."
+msgstr "Standard: Hotkey + Y."
+
+msgid "LOAD STATE"
+msgstr "SPIELZUSTAND LADEN"
+
+msgid "Default hotkey + X."
+msgstr "Standard: Hotkey + X."
+
+msgid "RETROARCH MENU"
+msgstr "RETROARCH-MENÜ"
+
+msgid "Default hotkey + B."
+msgstr "Standard: Hotkey + B."
+
+msgid "RESET EMULATOR"
+msgstr "EMULATOR ZURÜCKSETZEN"
+
+msgid "Default hotkey + A."
+msgstr "Standard: Hotkey + A."
+
+msgid "SCREENSHOT"
+msgstr "BILDSCHIRMFOTO"
+
+msgid "Default hotkey + L1."
+msgstr "Standard: Hotkey + L1."
