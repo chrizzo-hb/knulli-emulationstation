@@ -3567,3 +3567,6 @@ msgstr "API-KEY"
 
 msgid "Always use the built-in handheld controls for player 1, even if additional controllers are connected."
 msgstr "Das Handheld-Gerät auch dann als Controller für Spieler 1 benutzen, wenn weitere Controller angeschlossen sind."
+
+msgid "QUICK RESUME MODE"
+msgstr "SPIEL BEIM START FORTSETZEN"
