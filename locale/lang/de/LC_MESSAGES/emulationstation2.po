@@ -3636,21 +3636,3 @@ msgstr "Standard: Hotkey + L1."
 
 msgid "AUTO TRANSLATE"
 msgstr "AUTOMATISCHE ÜBERSETZUNG"
-
-msgid "Default hotkey + R1."
-msgstr "Standard: Hotkey + R1."
-
-msgid "PREVIOUS SHADER"
-msgstr "VORHERIGER SHADER"
-
-msgid "Default hotkey + L2."
-msgstr "Standard: Hotkey + L2."
-
-msgid "NEXT SHADER"
-msgstr "NÄCHSTER SHADER"
-
-msgid "Default hotkey + R2."
-msgstr "Standard: Hotkey + R2."
-
-msgid "UNLIMITED RECURSION DEPTH"
-msgstr "UNBEGRENZTE REKURSIONSTIEFE"
