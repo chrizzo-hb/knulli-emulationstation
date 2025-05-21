@@ -3654,30 +3654,3 @@ msgstr "Standard: Hotkey + R2."
 
 msgid "UNLIMITED RECURSION DEPTH"
 msgstr "UNBEGRENZTE REKURSIONSTIEFE"
-
-msgid "Might slow down gamelist updates significantly!"
-msgstr "Könnte Aktualisierung der Spielelisten signifikant verlangsamen!"
-
-msgid "DEVICE SETTINGS"
-msgstr "GERÄTEEINSTELLUNGEN"
-
-msgid "POWER SAVING AND BATTERY LIFE"
-msgstr "ENERGIESPAREN UND AKKUPFLEGE"
-
-msgid "POWER MANAGEMENT"
-msgstr "ENERGIEVERWALTUNG"
-
-msgid "DIM"
-msgstr "DIMMEN"
-
-msgid "DISPLAY OFF"
-msgstr "BILDSCHIRM AUS"
-
-msgid "SUSPEND"
-msgstr "RUHEZUSTAND"
-
-msgid "SHUTDOWN"
-msgstr "HERUNTERFAHREN"
-
-msgid "IDLE TIME"
-msgstr "LEERLAUFZEIT"
