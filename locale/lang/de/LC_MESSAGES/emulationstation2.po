@@ -3615,3 +3615,6 @@ msgstr "SPIELZUSTAND LADEN"
 
 msgid "Default hotkey + X."
 msgstr "Standard: Hotkey + X."
+
+msgid "RETROARCH MENU"
+msgstr "RETROARCH-MENÜ"
