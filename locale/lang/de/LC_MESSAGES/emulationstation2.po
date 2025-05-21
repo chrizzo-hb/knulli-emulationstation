@@ -3618,3 +3618,6 @@ msgstr "Standard: Hotkey + X."
 
 msgid "RETROARCH MENU"
 msgstr "RETROARCH-MENÜ"
+
+msgid "Default hotkey + B."
+msgstr "Standard: Hotkey + B."
