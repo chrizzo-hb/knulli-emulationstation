@@ -3621,3 +3621,6 @@ msgstr "RETROARCH-MENÜ"
 
 msgid "Default hotkey + B."
 msgstr "Standard: Hotkey + B."
+
+msgid "RESET EMULATOR"
+msgstr "EMULATOR ZURÜCKSETZEN"
