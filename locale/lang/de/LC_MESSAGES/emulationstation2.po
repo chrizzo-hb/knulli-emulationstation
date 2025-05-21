@@ -3612,3 +3612,6 @@ msgstr "Standard: Hotkey + Y."
 
 msgid "LOAD STATE"
 msgstr "SPIELZUSTAND LADEN"
+
+msgid "Default hotkey + X."
+msgstr "Standard: Hotkey + X."
