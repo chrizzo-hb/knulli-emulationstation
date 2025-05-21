@@ -3624,3 +3624,6 @@ msgstr "Standard: Hotkey + B."
 
 msgid "RESET EMULATOR"
 msgstr "EMULATOR ZURÜCKSETZEN"
+
+msgid "Default hotkey + A."
+msgstr "Standard: Hotkey + A."
