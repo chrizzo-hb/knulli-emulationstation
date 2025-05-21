@@ -3633,6 +3633,3 @@ msgstr "BILDSCHIRMFOTO"
 
 msgid "Default hotkey + L1."
 msgstr "Standard: Hotkey + L1."
-
-msgid "AUTO TRANSLATE"
-msgstr "AUTOMATISCHE ÜBERSETZUNG"
