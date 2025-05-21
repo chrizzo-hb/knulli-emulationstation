@@ -3627,3 +3627,6 @@ msgstr "EMULATOR ZURÜCKSETZEN"
 
 msgid "Default hotkey + A."
 msgstr "Standard: Hotkey + A."
+
+msgid "SCREENSHOT"
+msgstr "BILDSCHIRMFOTO"
