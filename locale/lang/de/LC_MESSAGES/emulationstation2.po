@@ -3570,3 +3570,12 @@ msgstr "Das Handheld-Gerät auch dann als Controller für Spieler 1 benutzen, we
 
 msgid "QUICK RESUME MODE"
 msgstr "SPIEL BEIM START FORTSETZEN"
+
+msgid "If shutdown during gameplay, boots directly into game on next startup. Works with Auto Save/Load on supported emulators."
+msgstr "Wird das Gerät mitten im Spiel heruntergefahren, wird das Gerät das Spiel direkt nach dem nächsten Hochfahren laden. Unterstützt Auto Speichern/Laden je nach Emulator."
+
+msgid "TOGGLE FAST FORWARD"
+msgstr "VORSPULEN EIN-/AUSCHALTEN"
+
+msgid "Enable to toggle fast forward instead of holding it down. Only on libretro cores."
+msgstr "Vorspulen mit einem Tastendruck Ein-/Ausschalten statt gedrückt halten. Nur für Libretro-Cores."
