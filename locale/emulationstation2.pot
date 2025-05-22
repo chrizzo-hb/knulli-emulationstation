@@ -3552,15 +3552,11 @@ msgctxt "game_options"
 msgid "Off"
 msgstr ""
 
-#. TRANSLATION: shared
-msgctxt "game_options"
 msgid ""
 "Enable to toggle fast forward instead of holding it down. Only on libretro "
 "cores."
 msgstr ""
 
-#. TRANSLATION: shared
-msgctxt "game_options"
 msgid "TOGGLE FAST FORWARD"
 msgstr ""
 
