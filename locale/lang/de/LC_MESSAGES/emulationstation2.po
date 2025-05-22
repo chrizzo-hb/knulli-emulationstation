@@ -3820,3 +3820,6 @@ msgstr "LAUFWERKE ÜBERPRÜFEN"
 
 msgid "Verify the integrity of your SD cards."
 msgstr "Überprüfe die Integrität deiner SD-Karten."
+
+msgid "CPU CLOCK RATE"
+msgstr "CPU-TAKTRATE"
