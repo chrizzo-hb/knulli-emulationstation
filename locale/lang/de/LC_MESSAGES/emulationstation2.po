@@ -3568,6 +3568,9 @@ msgstr "API-KEY"
 msgid "CONTROLLER ASSIGNMENT"
 msgstr "CONTROLLER-ZUWEISUNG"
 
+msgid "USE HANDHELD CONTROLS FOR PLAYER 1"
+msgstr "HANDHELD ALS CONTROLLER FÜR SPIELER 1"
+
 msgid "Always use the built-in handheld controls for player 1, even if additional controllers are connected."
 msgstr "Das Handheld-Gerät auch dann als Controller für Spieler 1 benutzen, wenn weitere Controller angeschlossen sind."
 
@@ -3703,7 +3706,7 @@ msgstr "MODUS BEIM ZUKLAPPEN"
 msgid "AGGRESSIVE BATTERY SAVER"
 msgstr "AGGRESSIVES ENERGIESPAREN"
 
-msgid "Optimizes batter life with extra power-saving measures during system idle."
+msgid "Optimizes battery life with extra power-saving measures during system idle."
 msgstr "Optimiert die Akkulaufzeit mit zusätzlichen Energiesparmaßnahmen während das Gerät im Leerlauf ist."
 
 msgid "DEVICE CUSTOMIZATION"
@@ -3735,6 +3738,11 @@ msgstr "MEHRFARBIGER REGENBOGEN"
 
 msgid "ADAPTIVE BRIGHTNESS"
 msgstr "ADAPTIVE HELLIGKEIT"
+
+msgid ""
+"Set the default LED animation. (Not all of the settings below are applicable "
+"to every mode.)"
+msgstr "Passt die LED-Helligkeit automatisch der Bildschirmhelligkeit an (basierend auf der Helligkeitseinstellung weiter oben)."
 
 msgid "Automatically adapts LED brightness to screen brightness (based on the brightness setting above)."
 msgstr "Passt die LED-Helligkeit automatisch der Bildschirmhelligkeit an (basierend auf der Helligkeitseinstellung weiter oben)."
