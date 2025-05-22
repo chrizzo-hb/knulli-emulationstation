@@ -2307,6 +2307,83 @@ msgstr ""
 msgid "Store past states to rewind to in realtime, if the core supports it."
 msgstr ""
 
+msgid "TOGGLE FAST FORWARD"
+msgstr ""
+
+msgid ""
+"Enable to toggle fast forward instead of holding it down. Only on libretro "
+"cores."
+msgstr ""
+
+msgid "RETROARCH HOTKEYS"
+msgstr ""
+
+msgid "INCREASE SAVE SLOT NUMBER"
+msgstr ""
+
+msgid "Default hotkey + UP."
+msgstr ""
+
+msgid "DECREASE SAVE SLOT NUMBER"
+msgstr ""
+
+msgid "Default hotkey + DOWN."
+msgstr ""
+
+msgid "Default hotkey + LEFT."
+msgstr ""
+
+msgid "FAST-FORWARD"
+msgstr ""
+
+msgid "Default hotkey + RIGHT."
+msgstr ""
+
+msgid "SAVE STATE"
+msgstr ""
+
+msgid "Default hotkey + Y."
+msgstr ""
+
+msgid "LOAD STATE"
+msgstr ""
+
+msgid "Default hotkey + X."
+msgstr ""
+
+msgid "RETROARCH MENU"
+msgstr ""
+
+msgid "Default hotkey + B."
+msgstr ""
+
+msgid "RESET EMULATOR"
+msgstr ""
+
+msgid "Default hotkey + A."
+msgstr ""
+
+msgid "Default hotkey + L1."
+msgstr ""
+
+msgid "AUTO TRANSLATE"
+msgstr ""
+
+msgid "Default hotkey + R1."
+msgstr ""
+
+msgid "PREVIOUS SHADER"
+msgstr ""
+
+msgid "Default hotkey + L2."
+msgstr ""
+
+msgid "NEXT SHADER"
+msgstr ""
+
+msgid "Default hotkey + R2."
+msgstr ""
+
 msgid "INTEGER SCALING (PIXEL PERFECT)"
 msgstr ""
 
@@ -3252,6 +3329,9 @@ msgid "Show green breathing while device is charging."
 msgstr ""
 
 msgid "RETRO ACHIEVEMENT INDICATION"
+msgstr ""
+
+msgid "RETRO ACHIEVEMENT EFFECT"
 msgstr ""
 
 msgid "Honor your retro achievements with a LED effect."

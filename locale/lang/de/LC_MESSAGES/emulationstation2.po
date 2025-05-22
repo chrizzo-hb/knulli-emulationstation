@@ -3583,7 +3583,9 @@ msgstr "Wird das Gerät mitten im Spiel heruntergefahren, wird das Gerät das Sp
 msgid "TOGGLE FAST FORWARD"
 msgstr "VORSPULEN EIN-/AUSCHALTEN"
 
-msgid "Enable to toggle fast forward instead of holding it down. Only on libretro cores."
+msgid ""
+"Enable to toggle fast forward instead of holding it down. Only on libretro "
+"cores."
 msgstr "Vorspulen mit einem Tastendruck Ein-/Ausschalten statt gedrückt halten. Nur für Libretro-Cores."
 
 msgid "RETROARCH HOTKEYS"
@@ -3673,6 +3675,9 @@ msgstr "ENERGIESPAREN UND AKKUPFLEGE"
 msgid "POWER MANAGEMENT"
 msgstr "ENERGIEVERWALTUNG"
 
+msgid "BATTERY SAVING"
+msgstr "AKKULAUFZEIT VERLÄNGERN"
+
 msgid "DIM"
 msgstr "DIMMEN"
 
@@ -3688,7 +3693,7 @@ msgstr "HERUNTERFAHREN"
 msgid "IDLE TIME"
 msgstr "LEERLAUFZEIT"
 
-msgid "Battery safe mode is activated after idle time has passed without any input."
+msgid "Battery save mode is activated after idle time has passed without any input."
 msgstr "Energiesparmodus wird aktiviert wenn das Gerät für diesen Zeitraum keine Eingabe empfangen hat."
 
 msgid "EXTENDED MODE"
@@ -3771,6 +3776,9 @@ msgstr "LEDs pulsieren grün während das Gerät geladen wird."
 msgid "RETRO ACHIEVEMENT INDICATION"
 msgstr "RETRO-ACHIEVEMENT-BENACHRICHTIGUNG"
 
+msgid "RETRO ACHIEVEMENT EFFECT"
+msgstr "RETRO-ACHIEVEMENT-EFFEKT"
+
 msgid "Honor your retro achievements with a LED effect."
 msgstr "Würdige deine erreichten Retro-Achievements mit einem LED-Effekt."
 
@@ -3815,3 +3823,6 @@ msgstr "LAUFWERKE ÜBERPRÜFEN"
 
 msgid "Verify the integrity of your SD cards."
 msgstr "Überprüfe die Integrität deiner SD-Karten."
+
+msgid "CPU CLOCK RATE"
+msgstr "CPU-TAKTRATE"
