@@ -3565,6 +3565,9 @@ msgstr ""
 msgid "API KEY"
 msgstr "API-KEY"
 
+msgid "CONTROLLER ASSIGNMENT"
+msgstr "CONTROLLER-ZUWEISUNG"
+
 msgid "Always use the built-in handheld controls for player 1, even if additional controllers are connected."
 msgstr "Das Handheld-Gerät auch dann als Controller für Spieler 1 benutzen, wenn weitere Controller angeschlossen sind."
 
@@ -3648,6 +3651,9 @@ msgstr "NÄCHSTER SHADER"
 
 msgid "Default hotkey + R2."
 msgstr "Standard: Hotkey + R2."
+
+msgid "GAME DETECTION OPTIONS"
+msgstr "SPIELE ERKENNEN"
 
 msgid "UNLIMITED RECURSION DEPTH"
 msgstr "UNBEGRENZTE REKURSIONSTIEFE"
