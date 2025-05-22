@@ -3776,6 +3776,9 @@ msgstr "LEDs pulsieren grün während das Gerät geladen wird."
 msgid "RETRO ACHIEVEMENT INDICATION"
 msgstr "RETRO-ACHIEVEMENT-BENACHRICHTIGUNG"
 
+msgid "RETRO ACHIEVEMENT EFFECT"
+msgstr "RETRO-ACHIEVEMENT-EFFEKT"
+
 msgid "Honor your retro achievements with a LED effect."
 msgstr "Würdige deine erreichten Retro-Achievements mit einem LED-Effekt."
 

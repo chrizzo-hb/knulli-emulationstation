@@ -3331,6 +3331,9 @@ msgstr ""
 msgid "RETRO ACHIEVEMENT INDICATION"
 msgstr ""
 
+msgid "RETRO ACHIEVEMENT EFFECT"
+msgstr ""
+
 msgid "Honor your retro achievements with a LED effect."
 msgstr ""
 
