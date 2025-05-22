@@ -2307,6 +2307,14 @@ msgstr ""
 msgid "Store past states to rewind to in realtime, if the core supports it."
 msgstr ""
 
+msgid "TOGGLE FAST FORWARD"
+msgstr ""
+
+msgid ""
+"Enable to toggle fast forward instead of holding it down. Only on libretro "
+"cores."
+msgstr ""
+
 msgid "INTEGER SCALING (PIXEL PERFECT)"
 msgstr ""
 
