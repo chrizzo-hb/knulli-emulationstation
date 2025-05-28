@@ -1,6 +1,9 @@
 #pragma once
 #include "guis/GuiSettings.h"
 
+#include "components/SliderComponent.h"
+#include "components/SwitchComponent.h"
+
 class ExtendedGuiSettings : public GuiSettings
 {
 public:

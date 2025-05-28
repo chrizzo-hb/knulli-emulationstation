@@ -1,4 +1,7 @@
-#include ExtendedGuiSettings.h
+#include "ExtendedGuiSettings.h"
+
+#include "components/SliderComponent.h"
+#include "components/SwitchComponent.h"
 
 GuiDeviceSettings::GuiDeviceSettings(Window* window, const std::string& title) : GuiSettings(window, _(title).c_str())
 {
