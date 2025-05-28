@@ -1,6 +1,6 @@
 #include "guis/knulli/GuiRgbSettings.h"
 #include "guis/GuiMsgBox.h"
-#include "ExtendedGuiSettings.h"
+#include "guis/knulli/ExtendedGuiSettings.h"
 #include "components/OptionListComponent.h"
 #include "components/SliderComponent.h"
 #include "components/SwitchComponent.h"
