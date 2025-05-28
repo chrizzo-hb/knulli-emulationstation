@@ -1,6 +1,6 @@
 #include "guis/knulli/GuiRgbSettings.h"
 #include "guis/GuiMsgBox.h"
-#include "guis/GuiSettings.h"
+#include "ExtendedGuiSettings.h"
 #include "components/OptionListComponent.h"
 #include "components/SliderComponent.h"
 #include "components/SwitchComponent.h"
@@ -36,7 +36,7 @@ constexpr float DEFAULT_LOW_BATTERY_THRESHOLD = 20;
 constexpr const char* DEFAULT_SWITCH_ON = "1";
 
 // Constructor creates a new GuiRgbSettings menu.
-GuiRgbSettings::GuiRgbSettings(Window* window) : GuiSettings(window, _("RGB LED SETTINGS").c_str())
+GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RGB LED SETTINGS")
 {
 
     // Temporary disable RgbService to be able to interact with the RGB LEDs directly
@@ -149,47 +149,6 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createModeOpti
     return optionsLedMode;
 }
 
-// Creates a new slider
-std::shared_ptr<SliderComponent> GuiRgbSettings::createSlider(std::string label, float min, float max, float step, std::string unit, std::string description, bool show)
-{
-    std::shared_ptr<SliderComponent> slider = std::make_shared<SliderComponent>(mWindow, min, max, step, unit);
-    if (!show) { // TODO: Awful hack to hide the slider, find a better way to do this
-        return slider;
-    }
-    if (description.empty()) {
-        addWithLabel(label, slider);
-    } else {
-        addWithDescription(label, description, slider);
-    }
-    return slider;
-}
-
-// Sets an initial value to a slider, either from default value or from variable if a batocera.conf variable for this slider has been set
-void GuiRgbSettings::setConfigValueForSlider(std::shared_ptr<SliderComponent> slider, float defaultValue, std::string variable)
-{
-    float selectedValue = defaultValue;
-    std::string configuredValue = SystemConf::getInstance()->get(variable);
-    if (!configuredValue.empty()) {
-        selectedValue = Utils::String::toFloat(configuredValue);
-    }
-    slider->setValue(selectedValue);
-}
-
-// Creates a new switch
-std::shared_ptr<SwitchComponent> GuiRgbSettings::createSwitch(std::string label, std::string variable, std::string description, bool show)
-{
-    std::shared_ptr<SwitchComponent> switchComponent = std::make_shared<SwitchComponent>(mWindow);
-    std::string selected = SystemConf::getInstance()->get(variable);
-    if (selected.empty())
-        selected = DEFAULT_SWITCH_ON;
-
-    switchComponent->setState(selected == DEFAULT_SWITCH_ON);
-    if (!show) { // TODO: Awful hack to hide the switch, find a better way to do this
-        return switchComponent;
-    }
-    addWithDescription(label, description, switchComponent);
-    return switchComponent;
-}
 
 // Retrieves RGB value settings from batocera.conf as an array of floats
 std::array<float, 3> GuiRgbSettings::getRgbValues()
