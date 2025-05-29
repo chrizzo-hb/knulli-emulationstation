@@ -70,13 +70,13 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : ExtendedGuiSettings(windo
 	}
 
 	addGroup(_("TELEMETRY"));
-	switchTelemetryStatistics = createSwitch(_("ENABLE STATISTICS"), "system.telemetry.statistics", _("Help the Knulli project keep track of which devices and Knulli versions are currently in use by reporting your device model and Knulli version to our statistics server. No other data will be transmitted!"), true, true, true);
-	switchTelemetryLocation = createSwitch(_("ENABLE LOCATION"), "system.telemetry.location", _("Include your location in your statistics report and help us show how many countries are playing with Knulli. No other data will be transmitted!"), true, true, true);
+	switchTelemetryStatistics = createSwitch(_("ENABLE STATISTICS"), "system.telemetry.statistics.disabled", _("Help the Knulli project keep track of which devices and Knulli versions are currently in use. Enable telemetry and report your device model and Knulli version to our statistics server after boot. No other data will be transmitted!"), false, false, true);
+	switchTelemetryLocation = createSwitch(_("ENABLE LOCATION"), "system.telemetry.location.disabled", _("Include your location in your statistics report and help us show how many countries are playing with Knulli. No other data will be transmitted!"), false, false, true);
 
 	addSaveFunc([this] {
 		// Set the telemetry settings in batocera.conf
-		SystemConf::getInstance()->set("system.telemetry.statistics", switchTelemetryStatistics->getState() ? "1" : "0");
-		SystemConf::getInstance()->set("system.telemetry.location", switchTelemetryLocation->getState() ? "1" : "0");
+		SystemConf::getInstance()->set("system.telemetry.statistics.disabled", switchTelemetryStatistics->getState() ? "0" : "1");
+		SystemConf::getInstance()->set("system.telemetry.location.disabled", switchTelemetryLocation->getState() ? "0" : "1");
 		SystemConf::getInstance()->saveSystemConf();
 	});
 
