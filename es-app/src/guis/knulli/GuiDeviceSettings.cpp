@@ -74,7 +74,7 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : ExtendedGuiSettings(windo
 
 	addSaveFunc([this] {
 		// Set the telemetry settings in batocera.conf
-		SystemConf::getInstance()->set("system.telemetry", switchTelemetryStatistics->getState() ? "0" : "1");
+		SystemConf::getInstance()->set("system.telemetry", switchTelemetryStatistics->getState() ? "1" : "0");
 		SystemConf::getInstance()->saveSystemConf();
 	});
 
