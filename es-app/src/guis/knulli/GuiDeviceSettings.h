@@ -1,7 +1,7 @@
 #pragma once
-#include "guis/GuiSettings.h"
+#include "guis/knulli/ExtendedGuiSettings.h"
 
-class GuiDeviceSettings : public GuiSettings
+class GuiDeviceSettings : public ExtendedGuiSettings
 {
 public:
         GuiDeviceSettings(Window* window);
@@ -10,6 +10,10 @@ private:
         void openPowerManagementSettings();
         void openRgbLedSettings();
         void installPico8();
+
+        std::shared_ptr<SwitchComponent> switchTelemetryStatistics;
+        std::shared_ptr<SwitchComponent> switchTelemetryLocation;
+
         std::shared_ptr<OptionListComponent<std::string>> createUsbModeOptionList();
         std::shared_ptr<OptionListComponent<std::string>> createToggleSwitchModeOptionList();
 

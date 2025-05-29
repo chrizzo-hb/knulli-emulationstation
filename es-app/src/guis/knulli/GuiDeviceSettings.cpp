@@ -1,3 +1,4 @@
+#include "guis/knulli/ExtendedGuiSettings.h"
 #include "guis/knulli/GuiDeviceSettings.h"
 #include "guis/knulli/GuiPowerManagementSettings.h"
 #include "guis/knulli/GuiRgbSettings.h"
@@ -6,7 +7,6 @@
 #include "components/SliderComponent.h"
 #include "components/SwitchComponent.h"
 #include "guis/GuiMsgBox.h"
-#include "guis/GuiSettings.h"
 #include "views/UIModeController.h"
 #include "views/ViewController.h"
 #include "SystemConf.h"
@@ -25,7 +25,7 @@ const std::vector<std::string> BOARDS_WITH_TOGGLE_SWITCH = {"trimui-brick", "tri
 constexpr const char* DEFAULT_USB_MODE = "off";
 constexpr const char* DEFAULT_SWITCH_MODE = "mute";
 
-GuiDeviceSettings::GuiDeviceSettings(Window* window) : GuiSettings(window, _("DEVICE SETTINGS").c_str())
+GuiDeviceSettings::GuiDeviceSettings(Window* window) : ExtendedGuiSettings(window, _("DEVICE SETTINGS").c_str())
 {
 	addGroup(_("POWER SAVING AND BATTERY LIFE"));
 	addEntry(_("POWER MANAGEMENT"), true, [this] { openPowerManagementSettings(); });
@@ -68,6 +68,18 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : GuiSettings(window, _("DE
 			}
 		});
 	}
+
+	addGroup(_("TELEMETRY"));
+	switchTelemetryStatistics = createSwitch(_("ENABLE STATISTICS"), "system.telemetry.statistics", _("Help the Knulli project keep track of which devices and Knulli versions are currently in use by reporting your device model and Knulli version to our statistics server. No other data will be transmitted!"), true, true, true);
+	switchTelemetryLocation = createSwitch(_("ENABLE LOCATION"), "system.telemetry.location", _("Include your location in your statistics report and help us show how many countries are playing with Knulli. No other data will be transmitted!"), true, true, true);
+
+	addSaveFunc([this] {
+		// Set the telemetry settings in batocera.conf
+		SystemConf::getInstance()->set("system.telemetry.statistics", switchTelemetryStatistics->getState() ? "1" : "0");
+		SystemConf::getInstance()->set("system.telemetry.location", switchTelemetryLocation->getState() ? "1" : "0");
+		SystemConf::getInstance()->saveSystemConf();
+	});
+
 }
 
 void GuiDeviceSettings::openPowerManagementSettings()

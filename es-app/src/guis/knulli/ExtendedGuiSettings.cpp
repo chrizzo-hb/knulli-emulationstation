@@ -5,7 +5,8 @@
 #include "components/SwitchComponent.h"
 #include "SystemConf.h"
 
-static constexpr const char* DEFAULT_SWITCH_ON = "1";
+static constexpr const char* SWITCH_ON = "1";
+static constexpr const char* SWITCH_OFF = "0";
 
 ExtendedGuiSettings::ExtendedGuiSettings(Window* window, const char* title) : GuiSettings(window, _(title).c_str())
 {
@@ -39,14 +40,20 @@ void ExtendedGuiSettings::setConfigValueForSlider(std::shared_ptr<SliderComponen
 }
 
 // Creates a new switch
-std::shared_ptr<SwitchComponent> ExtendedGuiSettings::createSwitch(std::string label, std::string variable, std::string description, bool show)
+std::shared_ptr<SwitchComponent> ExtendedGuiSettings::createSwitch(std::string label, std::string variable, std::string description, bool defaultValue, bool hasAuto, bool show)
 {
+    const char* defaultState = defaultValue ? SWITCH_ON : SWITCH_OFF;
     std::shared_ptr<SwitchComponent> switchComponent = std::make_shared<SwitchComponent>(mWindow);
+    if (hasAuto)
+    {
+        switchComponent->setHasAuto(true);
+        switchComponent->setAutoState(defaultState);
+    }
     std::string selected = SystemConf::getInstance()->get(variable);
     if (selected.empty())
-        selected = DEFAULT_SWITCH_ON;
+        selected = defaultState;
 
-    switchComponent->setState(selected == DEFAULT_SWITCH_ON);
+    switchComponent->setState(selected == SWITCH_ON);
     if (!show) { // TODO: Awful hack to hide the switch, find a better way to do this
         return switchComponent;
     }
