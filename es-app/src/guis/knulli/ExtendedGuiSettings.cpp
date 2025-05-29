@@ -1,5 +1,6 @@
 #include "guis/knulli/ExtendedGuiSettings.h"
 
+#include "guis/GuiSettings.h"
 #include "components/SliderComponent.h"
 #include "components/SwitchComponent.h"
 
