@@ -4,13 +4,13 @@
 #include "components/SliderComponent.h"
 #include "components/SwitchComponent.h"
 
-GuiDeviceSettings::GuiDeviceSettings(Window* window, const std::string& title) : GuiSettings(window, _(title).c_str())
+ExtendedGuiSettings::ExtendedGuiSettings(Window* window, const std::string& title) : GuiSettings(window, _(title).c_str())
 {
     // Do not nothing here, this is just a placeholder for the constructor
 }
 
 // Creates a new slider
-std::shared_ptr<SliderComponent> GuiRgbSettings::createSlider(std::string label, float min, float max, float step, std::string unit, std::string description, bool show)
+std::shared_ptr<SliderComponent> ExtendedGuiSettings::createSlider(std::string label, float min, float max, float step, std::string unit, std::string description, bool show)
 {
     std::shared_ptr<SliderComponent> slider = std::make_shared<SliderComponent>(mWindow, min, max, step, unit);
     if (!show) { // TODO: Awful hack to hide the slider, find a better way to do this
@@ -25,7 +25,7 @@ std::shared_ptr<SliderComponent> GuiRgbSettings::createSlider(std::string label,
 }
 
 // Sets an initial value to a slider, either from default value or from variable if a batocera.conf variable for this slider has been set
-void GuiRgbSettings::setConfigValueForSlider(std::shared_ptr<SliderComponent> slider, float defaultValue, std::string variable)
+void ExtendedGuiSettings::setConfigValueForSlider(std::shared_ptr<SliderComponent> slider, float defaultValue, std::string variable)
 {
     float selectedValue = defaultValue;
     std::string configuredValue = SystemConf::getInstance()->get(variable);
@@ -36,7 +36,7 @@ void GuiRgbSettings::setConfigValueForSlider(std::shared_ptr<SliderComponent> sl
 }
 
 // Creates a new switch
-std::shared_ptr<SwitchComponent> GuiRgbSettings::createSwitch(std::string label, std::string variable, std::string description, bool show)
+std::shared_ptr<SwitchComponent> ExtendedGuiSettings::createSwitch(std::string label, std::string variable, std::string description, bool show)
 {
     std::shared_ptr<SwitchComponent> switchComponent = std::make_shared<SwitchComponent>(mWindow);
     std::string selected = SystemConf::getInstance()->get(variable);
