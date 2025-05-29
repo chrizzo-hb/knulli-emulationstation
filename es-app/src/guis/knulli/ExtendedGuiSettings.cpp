@@ -3,6 +3,9 @@
 #include "guis/GuiSettings.h"
 #include "components/SliderComponent.h"
 #include "components/SwitchComponent.h"
+#include "SystemConf.h"
+
+static constexpr const char* DEFAULT_SWITCH_ON = "1";
 
 ExtendedGuiSettings::ExtendedGuiSettings(Window* window, const char* title) : GuiSettings(window, _(title).c_str())
 {
