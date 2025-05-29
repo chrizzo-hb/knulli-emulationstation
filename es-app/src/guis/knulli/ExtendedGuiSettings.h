@@ -8,7 +8,7 @@
 class ExtendedGuiSettings : public GuiSettings
 {
 public:
-    ExtendedGuiSettings(Window* window, const std::string& title);
+    ExtendedGuiSettings(Window* window, const char* title);
 
     std::shared_ptr<SliderComponent> createSlider(std::string label, float min, float max, float step, std::string unit, std::string description, bool show);
     void setConfigValueForSlider(std::shared_ptr<SliderComponent> slider, float defaultValue, std::string settingsID);

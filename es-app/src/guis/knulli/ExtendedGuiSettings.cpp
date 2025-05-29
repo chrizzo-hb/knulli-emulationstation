@@ -4,7 +4,7 @@
 #include "components/SliderComponent.h"
 #include "components/SwitchComponent.h"
 
-ExtendedGuiSettings::ExtendedGuiSettings(Window* window, const std::string& title) : GuiSettings(window, _(title).c_str())
+ExtendedGuiSettings::ExtendedGuiSettings(Window* window, const char* title) : GuiSettings(window, _(title).c_str())
 {
     // Do not nothing here, this is just a placeholder for the constructor
 }
