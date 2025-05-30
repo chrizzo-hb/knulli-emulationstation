@@ -89,7 +89,7 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : ExtendedGuiSettings(windo
 				},
 				_("NO"), nullptr));
 		}, "", false, true);
-	}	
+	}
 
 }
 
