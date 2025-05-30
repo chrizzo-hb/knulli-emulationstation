@@ -88,7 +88,7 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : ExtendedGuiSettings(windo
 					FactorySettings::applyFactoryReset();
 				},
 				_("NO"), nullptr));
-		});
+		}, nullptr, false, true);
 	}	
 
 }
