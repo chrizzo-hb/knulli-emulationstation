@@ -81,7 +81,7 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : ExtendedGuiSettings(windo
 
 	if (FactorySettings::hasFactoryReset()) {
 		addGroup(_("FACTORY SETTINGS"));
-		addWithDescription(_("FACTORY RESET"), _("This will reset all your Knulli settings to factory defaults after creating a backup of your current settings. All other user data (e.g., games, BIOS files, saves, bezels, scraped media, etc.) will be left untouched."), nullptr, [this]
+		addWithDescription(_("FACTORY RESET"), _("This will reset all your Knulli settings to factory defaults. Other user data (e.g., games, BIOS files, saves, etc.) will be left untouched."), nullptr, [this]
 		{
 			mWindow->pushGui(new GuiMsgBox(mWindow, _("ARE YOU SURE YOU WANT TO RESET TO FACTORY SETTINGS? ALL YOUR SETTINGS WILL BE UNDONE!\n\nDO NOT PANIC: THE SCREEN WILL TURN OFF AND THE DEVICE WILL REBOOT AUTOMATICALLY AFTER A COUPLE OF SECONDS."), _("YES"), [this]
 				{
