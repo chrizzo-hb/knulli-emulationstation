@@ -83,7 +83,7 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : ExtendedGuiSettings(windo
 		addGroup(_("FACTORY SETTINGS"));
 		addWithDescription(_("FACTORY RESET"), _("Reset Knulli to factory settings. All your settings will be undone."), nullptr, [this]
 		{
-			mWindow->pushGui(new GuiMsgBox(mWindow, _("ARE YOU SURE YOU WANT TO RESET TO FACTORY SETTINGS? ALL YOUR SETTINGS WILL BE UNDONE! THE DEVICE WILL REBOOT AUTOMATICALLY."), _("YES"), [this]
+			mWindow->pushGui(new GuiMsgBox(mWindow, _("ARE YOU SURE YOU WANT TO RESET TO FACTORY SETTINGS? ALL YOUR SETTINGS WILL BE UNDONE! DO NOT PANIC: THE SCREEN WILL TURN OFF AND THE DEVICE WILL REBOOT AUTOMATICALLY AFTER A COUPLE OF SECONDS."), _("YES"), [this]
 				{
 					FactorySettings::applyFactoryReset();
 				},
