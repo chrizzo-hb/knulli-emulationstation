@@ -1280,7 +1280,7 @@ void GuiMenu::openUpdatesSettings()
 			updatesTypeList->add("unstable", "unstable", updatesType == "unstable");
 		else
 #endif
-#ifdef KNULLI
+#if KNULLI
 			if (updatesType.empty() || updatesType != "alpha" || updatesType != "development")
 				updatesType = "stable";
 #else
