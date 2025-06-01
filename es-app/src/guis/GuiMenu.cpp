@@ -1271,7 +1271,6 @@ void GuiMenu::openUpdatesSettings()
 #else
 #define BETA_NAME "beta"
 #endif
-#else
 
 		std::string updatesType = SystemConf::getInstance()->get("updates.type");
 
@@ -1288,12 +1287,11 @@ void GuiMenu::openUpdatesSettings()
 				updatesType = "stable";
 #endif			
 		updatesTypeList->add("stable", "stable", updatesType == "stable");
-#ifndef KNULLI
-		updatesTypeList->add(BETA_NAME, BETA_NAME, updatesType == BETA_NAME);
-#endif
-#ifdef KNULLI
+#if KNULLI
 		updatesTypeList->add("alpha", "alpha", updatesType == "alpha");
 		updatesTypeList->add("development", "development", updatesType == "development");
+#else
+		updatesTypeList->add(BETA_NAME, BETA_NAME, updatesType == BETA_NAME);
 #endif
 		updateGui->addWithLabel(_("UPDATE TYPE"), updatesTypeList);
 		updatesTypeList->setSelectedChangedCallback([](std::string name)
