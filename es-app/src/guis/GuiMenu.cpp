@@ -1257,7 +1257,6 @@ void GuiMenu::openUpdatesSettings()
 		});
 	}
 
-#ifndef KNULLI
 	if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::UPGRADE))
 	{
 		updateGui->addGroup(_("SOFTWARE UPDATES"));
@@ -1272,6 +1271,7 @@ void GuiMenu::openUpdatesSettings()
 #else
 #define BETA_NAME "beta"
 #endif
+#else
 
 		std::string updatesType = SystemConf::getInstance()->get("updates.type");
 
@@ -1280,12 +1280,21 @@ void GuiMenu::openUpdatesSettings()
 			updatesTypeList->add("unstable", "unstable", updatesType == "unstable");
 		else
 #endif
+#ifdef KNULLI
+			if (updatesType.empty() || updatesType != "alpha" || updatesType != "development")
+				updatesType = "stable";
+#else
 			if (updatesType.empty() || updatesType != BETA_NAME)
 				updatesType = "stable";
-
+#endif			
 		updatesTypeList->add("stable", "stable", updatesType == "stable");
+#ifndef KNULLI
 		updatesTypeList->add(BETA_NAME, BETA_NAME, updatesType == BETA_NAME);
-
+#endif
+#ifdef KNULLI
+		updatesTypeList->add("alpha", "alpha", updatesType == "alpha");
+		updatesTypeList->add("development", "development", updatesType == "development");
+#endif
 		updateGui->addWithLabel(_("UPDATE TYPE"), updatesTypeList);
 		updatesTypeList->setSelectedChangedCallback([](std::string name)
 		{
@@ -1309,7 +1318,7 @@ void GuiMenu::openUpdatesSettings()
 			}
 		});
 	}
-#endif
+
 	mWindow->pushGui(updateGui);
 }
 
