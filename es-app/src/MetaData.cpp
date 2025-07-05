@@ -552,13 +552,13 @@ void MetaDataList::importScrappedMetadata(const MetaDataList& source)
 
 	if (Utils::String::startsWith(source.getName(), "ZZZ(notgame)"))
 #ifdef KNULLI
-		std::string prefix = "ZZZ(notgame):";
+		std::string prefixNotGame = "ZZZ(notgame):";
 		std::string prefixedName = source.getName();
 		
-		std::string::size_type index = prefixedName.find(prefix);
+		std::string::size_type index = prefixedName.find(prefixNotGame);
 
 		if (index != std::string::npos)
-		prefixedName.erase(index, prefix.length());
+		prefixedName.erase(index, prefixNotGame.length());
 		set(MetaDataId::Name, prefixedName);
 #else
 		set(MetaDataId::Hidden, "true");
