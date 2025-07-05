@@ -559,7 +559,7 @@ void MetaDataList::importScrappedMetadata(const MetaDataList& source)
 
 		if (index != std::string::npos)
 		prefixedName.erase(index, prefix.length());
-		set(MetaDataId::Name, name);
+		set(MetaDataId::Name, prefixedName);
 #else
 		set(MetaDataId::Hidden, "true");
 #endif
