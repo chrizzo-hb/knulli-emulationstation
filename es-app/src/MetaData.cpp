@@ -549,8 +549,18 @@ void MetaDataList::importScrappedMetadata(const MetaDataList& source)
 		}
 	}
 
-#ifndef KNULLI
+
 	if (Utils::String::startsWith(source.getName(), "ZZZ(notgame)"))
+#ifdef KNULLI
+		std::string prefix = "ZZZ(notgame):";
+		std::string name = source.getName();
+		
+		std::string::size_type index = name.find(s);
+
+		if (index != std::string::npos)
+		t.erase(index, prefix.length());
+		set(MetaDataId::Name, name);
+#else
 		set(MetaDataId::Hidden, "true");
 #endif
 }
