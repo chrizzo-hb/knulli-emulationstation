@@ -549,15 +549,10 @@ void MetaDataList::importScrappedMetadata(const MetaDataList& source)
 		}
 	}
 
-	if (source.getName() == "ZZZ(notgame):Splore")
-	{
-		set(MetaDataId::Name, "Splore");
-		set(MetaDataId::Hidden, "false");
-	}
-	else if (Utils::String::startsWith(source.getName(), "ZZZ(notgame)"))
-	{
+#ifndef KNULLI
+	if (Utils::String::startsWith(source.getName(), "ZZZ(notgame)"))
 		set(MetaDataId::Hidden, "true");
-	}
+#endif
 }
 
 std::string MetaDataList::getRelativeRootPath()
