@@ -551,6 +551,7 @@ void MetaDataList::importScrappedMetadata(const MetaDataList& source)
 
 
 	if (Utils::String::startsWith(source.getName(), "ZZZ(notgame)"))
+	{
 #ifdef KNULLI
 		std::string prefixNotGame = "ZZZ(notgame):";
 		std::string prefixedName = source.getName();
@@ -563,6 +564,7 @@ void MetaDataList::importScrappedMetadata(const MetaDataList& source)
 #else
 		set(MetaDataId::Hidden, "true");
 #endif
+	}
 }
 
 std::string MetaDataList::getRelativeRootPath()
