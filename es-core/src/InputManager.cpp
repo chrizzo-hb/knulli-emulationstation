@@ -18,7 +18,7 @@
 #include "Paths.h"
 #include "GunManager.h"
 #include "renderers/Renderer.h"
-#include "SystemConf.h"
+
 
 #ifdef HAVE_UDEV
 #include <libudev.h>
