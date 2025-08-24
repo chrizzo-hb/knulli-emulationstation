@@ -19,7 +19,6 @@
 #include "Paths.h"
 #include "GunManager.h"
 #include "renderers/Renderer.h"
-#include "SystemConf.h"
 
 #ifdef HAVE_UDEV
 #include <libudev.h>
@@ -1234,25 +1233,6 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 			playerJoysticks[assigned - 1] = handheld;
 		}
 	}
-
-	const bool handheldAlwaysP1 = SystemConf::getInstance()->getBool("system.input.p1_handheld");
-
-    if (!handheldAlwaysP1) {
-        int assigned = 0;
-        for (int p = 0; p < MAX_PLAYERS; ++p) {
-            auto it = playerJoysticks.find(p);
-            if (it == playerJoysticks.end() || it->second == nullptr) break;
-            assigned++;
-        }
-
-        // Shift left only if we have at least two assigned controllers.
-        if (assigned > 1 && playerJoysticks[0] != nullptr) {
-            InputConfig* handheld = playerJoysticks[0];
-            for (int p = 0; p < assigned - 1; ++p)
-                playerJoysticks[p] = playerJoysticks[p + 1];
-            playerJoysticks[assigned - 1] = handheld;
-        }
-    }
 
 	for (int player = 0; player < MAX_PLAYERS; player++)
 	{
