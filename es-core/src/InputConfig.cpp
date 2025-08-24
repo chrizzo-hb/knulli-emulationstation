@@ -327,6 +327,9 @@ void InputConfig::writeToXML(pugi::xml_node& parent)
 	}
 
 	cfg.append_attribute("deviceGUID") = mDeviceGUID.c_str();
+	if (mIsInternal) {
+		cfg.append_attribute("internal") = "1";
+	}
 
 	typedef std::map<std::string, Input>::const_iterator it_type;
 	for(it_type iterator = mNameMap.cbegin(); iterator != mNameMap.cend(); iterator++)
