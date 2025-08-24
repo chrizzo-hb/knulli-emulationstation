@@ -1222,7 +1222,7 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 	for (int p = 0; p < MAX_PLAYERS; p++) {
 		if (playerJoysticks[p]->isInternal()) {
 			internalControls = playerJoysticks[p];
-			LOG(LogError) << "Identified internal handheld controls: \"" << internalControls->getDeviceName() << "\".\n";
+			LOG(LogDebug) << "Identified internal handheld controls: \"" << internalControls->getDeviceName() << "\".\n";
 			break;
 		}
 	}
