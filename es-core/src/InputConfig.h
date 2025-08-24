@@ -53,7 +53,7 @@ public:
 		type = TYPE_COUNT;
 	}
 
-	Input(int dev, InputType t, int i, int val, bool conf, bool intern) : device(dev), type(t), id(i), value(val), configured(conf)
+	Input(int dev, InputType t, int i, int val, bool conf) : device(dev), type(t), id(i), value(val), configured(conf)
 	{
 	}
 
