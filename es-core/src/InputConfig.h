@@ -53,7 +53,7 @@ public:
 		type = TYPE_COUNT;
 	}
 
-	Input(int dev, InputType t, int i, int val, bool conf) : device(dev), type(t), id(i), value(val), configured(conf)
+	Input(int dev, InputType t, int i, int val, bool conf, bool intern) : device(dev), type(t), id(i), value(val), configured(conf)
 	{
 	}
 
@@ -124,6 +124,7 @@ public:
 	inline int getDeviceNbAxes() const { return mDeviceNbAxes; }; 
 	inline int getBatteryLevel() const { return mBatteryLevel; };
   	inline int isWheel()         const { return mIsWheel;      };
+	inline int isInternal()      const { return mIsInternal;   };
 	inline const std::string& getDevicePath() { return mDevicePath; };
 
 	std::string getSortDevicePath();
@@ -164,6 +165,7 @@ private:
 
 	int mBatteryLevel;
 	bool mIsWheel;
+	bool mIsInternal;
 
 public:
 	static void AssignActionButtons();
