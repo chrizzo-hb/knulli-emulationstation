@@ -283,7 +283,6 @@ void InputConfig::loadFromXML(pugi::xml_node& node)
 	// Determine whether the input device is an internal input device (e.g. built-in handheld controls)
 	pugi::xml_attribute attributeInternal = node.attribute("internal");
 	mIsInternal = attributeInternal.as_bool();
-	LOG(LogError) << "Device \"" << mDeviceName << "\" is internal? \"" << mIsInternal << "\".\n";
 
 	for(pugi::xml_node input = node.child("input"); input; input = input.next_sibling("input"))
 	{
