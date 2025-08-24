@@ -1220,9 +1220,9 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 	// Let's find the internal handheld controls (if present)
 	InputConfig* internalControls = NULL;
 	for (int p = 0; p < MAX_PLAYERS; p++) {
-		if (playerJoysticks[p].isInternal()) {
+		if (playerJoysticks[p]->isInternal()) {
 			internalControls = playerJoysticks[p];
-			LOG(LogError) << "Identified internal handheld controls: \"" << internalControls.getDeviceName() << "\".\n";
+			LOG(LogError) << "Identified internal handheld controls: \"" << internalControls->getDeviceName() << "\".\n";
 			break;
 		}
 	}
