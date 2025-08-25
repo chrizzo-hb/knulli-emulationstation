@@ -617,22 +617,20 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 			bool isWheel = false;
 			auto id = SDL_JoystickGetDeviceInstanceID(ev.jdevice.which);
 			auto it = std::find_if(mInputConfigs.cbegin(), mInputConfigs.cend(), [id](const std::pair<SDL_JoystickID, InputConfig*> & t) { return t.second != nullptr && t.second->getDeviceId() == id; });
+
 			if (it == mInputConfigs.cend()) {
-				LOG(LogError) << "it is mInputConfigs.cend(), whatever than means.\n";
 				addedDeviceName = SDL_JoystickNameForIndex(ev.jdevice.which);
-				LOG(LogError) << "addedDeviceName is \"" << addedDeviceName << "\".\n";
-				addedDeviceName = SDL_JoystickPathForIndex(ev.jdevice.which);
-				LOG(LogError) << "addedDevicePath is \"" << addedDevicePath << "\".\n";
+				addedDevicePath = SDL_JoystickPathForIndex(ev.jdevice.which);
 			} else {
-				LOG(LogError) << "it is NOT mInputConfigs.cend(), whatever than means.\n";
-				LOG(LogError) << "Found device is: \"" << it->second->getDeviceName() << "\" at device path \"" << it->second->getDevicePath() << "\".\n";
-				LOG(LogError) << "Found device is: \"" << it->second->getDeviceName() << "\" at device parent sys path \"" << it->second->getDeviceParentSysPath() << "\".\n";
+				addedDeviceName = it->second->getDeviceName();
+				addedDevicePath = it->second->getDevicePath();
 			}
-			LOG(LogError) << "Second gate has been reached.\n";
 
-			//mLastKnownJoystickConnectionTimestamp[] = ev.jdevice.timestamp;
-			LOG(LogError) << "Last gate has been reached.\n";
-
+			if (!addedDevicePath.empty()) {
+				mDevicePathConnectionTimestamps[addedDevicePath] = ev.jdevice.timestamp;
+			} else {
+				LOG(LogError) << "Joystick device \"" << addedDeviceName << "\" has been added without device path!\n";
+			}
 
 #ifdef HAVE_UDEV
 #ifdef SDL_JoystickDevicePathById
@@ -660,6 +658,13 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 	case SDL_JOYDEVICEREMOVED:
 		{
 			auto it = mInputConfigs.find(ev.jdevice.which);
+			if (it->second != nullptr && !it->second->getDevicePath().empty()) {
+				auto disconnectedIt = mDevicePathConnectionTimestamps.find(it->second->getDevicePath());
+				if (disconnectedIt != mDevicePathConnectionTimestamps.cend()) {
+					mDevicePathConnectionTimestamps.erase(disconnectedIt);
+				}
+			}
+
 			if (Settings::getInstance()->getBool("ShowControllerNotifications") && it != mInputConfigs.cend() && it->second != nullptr) {
 			  if(it->second->isWheel()) {
 			    window->displayNotificationMessage(_U("\uF1B9 ") + Utils::String::format(_("%s disconnected").c_str(), Utils::String::trim(it->second->getDeviceName()).c_str()));
@@ -1133,8 +1138,11 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 		if (conf.second != nullptr && conf.second->isConfigured())
 			availableConfigured.push_back(conf.second);
 
-	// sort available configs
-	std::sort(availableConfigured.begin(), availableConfigured.end(), [](InputConfig * a, InputConfig * b) -> bool { return a->getSortDevicePath() < b->getSortDevicePath(); });
+	// sort available configs by how long they are connected
+	std::sort(availableConfigured.begin(), availableConfigured.end(), [this](InputConfig * a, InputConfig * b) -> bool {
+		return this->mDevicePathConnectionTimestamps[a->getDevicePath()] < this->mDevicePathConnectionTimestamps[b->getDevicePath()];
+	});
+	
 
 	// 2. Pour chaque joueur verifier si il y a un configurated
 	// associer le input au joueur
@@ -1249,22 +1257,7 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 	}
 #endif
 
-	if (!handheldAlwaysP1) {
-		int assigned = 0;
-		for (int p = 0; p < MAX_PLAYERS; ++p) {
-			auto it = playerJoysticks.find(p);
-			if (it == playerJoysticks.end() || it->second == nullptr) break;
-			assigned++;
-		}
 
-		// Shift left only if we have at least two assigned controllers.
-		if (assigned > 1 && playerJoysticks[0] != nullptr) {
-			InputConfig* handheld = playerJoysticks[0];
-			for (int p = 0; p < assigned - 1; ++p)
-				playerJoysticks[p] = playerJoysticks[p + 1];
-			playerJoysticks[assigned - 1] = handheld;
-		}
-	}
 
 	for (int player = 0; player < MAX_PLAYERS; player++)
 	{
@@ -1363,3 +1356,4 @@ void InputManager::sendMouseClick(Window* window, int button)
 	window->input(getInputConfigByDevice(DEVICE_MOUSE), Input(DEVICE_MOUSE, TYPE_BUTTON, button, true, false));
 	window->input(getInputConfigByDevice(DEVICE_MOUSE), Input(DEVICE_MOUSE, TYPE_BUTTON, button, false, false));
 }
+
