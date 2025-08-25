@@ -611,6 +611,7 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 
 	case SDL_JOYDEVICEADDED:
 		{
+			LOG(LogError) << "SDL_JOYDEVICEADDED has been reached.\n";
 			std::string addedDeviceName;
 			std::string addedDevicePath;
 			bool isWheel = false;
@@ -620,10 +621,13 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 				addedDeviceName = SDL_JoystickNameForIndex(ev.jdevice.which);
 				addedDevicePath = SDL_JoystickPathForIndex(ev.jdevice.which);
 			}
-			
+			LOG(LogError) << "Second gate has been reached.\n";
+
 			LOG(LogError) << "Identified internal handheld controls: \"" << addedDeviceName << "\" at device path \"" << it->second->getDevicePath() << "\".\n";
 			LOG(LogError) << "Identified internal handheld controls: \"" << addedDeviceName << "\" at device parent sys path \"" << it->second->getDeviceParentSysPath() << "\".\n";
+			LOG(LogError) << "Identified internal handheld controls: \"" << addedDeviceName << "\" at addedDevicePath \"" << addedDevicePath << "\".\n";
 			//mLastKnownJoystickConnectionTimestamp[] = ev.jdevice.timestamp;
+			LOG(LogError) << "Last gate has been reached.\n";
 
 
 #ifdef HAVE_UDEV
@@ -643,14 +647,6 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 			    window->displayNotificationMessage(_U("\uF1B9 ") + Utils::String::format(_("%s connected").c_str(), Utils::String::trim(addedDeviceName).c_str()));
 			  } else {
 				window->displayNotificationMessage(_U("\uF11B ") + Utils::String::format(_("%s connected").c_str(), Utils::String::trim(addedDeviceName).c_str()));
-			  }
-			}
-
-			if (Settings::getInstance()->getBool("ShowControllerNotifications") && !addedDevicePath.empty()) {
-			  if(isWheel) {
-			    window->displayNotificationMessage(_U("\uF1B9 ") + Utils::String::format(_("Device at path %s connected").c_str(), Utils::String::trim(addedDevicePath).c_str()));
-			  } else {
-				window->displayNotificationMessage(_U("\uF11B ") + Utils::String::format(_("Device at path %s connected").c_str(), Utils::String::trim(addedDevicePath).c_str()));
 			  }
 			}
 
