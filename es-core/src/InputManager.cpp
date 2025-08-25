@@ -618,14 +618,18 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 			auto id = SDL_JoystickGetDeviceInstanceID(ev.jdevice.which);
 			auto it = std::find_if(mInputConfigs.cbegin(), mInputConfigs.cend(), [id](const std::pair<SDL_JoystickID, InputConfig*> & t) { return t.second != nullptr && t.second->getDeviceId() == id; });
 			if (it == mInputConfigs.cend()) {
+				LOG(LogError) << "it is mInputConfigs.cend(), whatever than means.\n";
 				addedDeviceName = SDL_JoystickNameForIndex(ev.jdevice.which);
-				addedDevicePath = SDL_JoystickPathForIndex(ev.jdevice.which);
+				LOG(LogError) << "addedDeviceName is \"" << addedDeviceName << "\".\n";
+				addedDeviceName = SDL_JoystickPathForIndex(ev.jdevice.which);
+				LOG(LogError) << "addedDevicePath is \"" << addedDevicePath << "\".\n";
+			} else {
+				LOG(LogError) << "it is NOT mInputConfigs.cend(), whatever than means.\n";
+				LOG(LogError) << "Found device is: \"" << it->second->getDeviceName() << "\" at device path \"" << it->second->getDevicePath() << "\".\n";
+				LOG(LogError) << "Found device is: \"" << it->second->getDeviceName() << "\" at device parent sys path \"" << it->second->getDeviceParentSysPath() << "\".\n";
 			}
 			LOG(LogError) << "Second gate has been reached.\n";
 
-			LOG(LogError) << "Identified internal handheld controls: \"" << addedDeviceName << "\" at device path \"" << it->second->getDevicePath() << "\".\n";
-			LOG(LogError) << "Identified internal handheld controls: \"" << addedDeviceName << "\" at device parent sys path \"" << it->second->getDeviceParentSysPath() << "\".\n";
-			LOG(LogError) << "Identified internal handheld controls: \"" << addedDeviceName << "\" at addedDevicePath \"" << addedDevicePath << "\".\n";
 			//mLastKnownJoystickConnectionTimestamp[] = ev.jdevice.timestamp;
 			LOG(LogError) << "Last gate has been reached.\n";
 
