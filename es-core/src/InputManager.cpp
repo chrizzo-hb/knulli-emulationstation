@@ -640,7 +640,6 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 			  } else {
 				  window->displayNotificationMessage(_U("\uF11B ") + Utils::String::format(_("%s connected").c_str(), Utils::String::trim(addedDeviceName).c_str()));
 				  window->displayNotificationMessage(_U("\uF1B9 ") + Utils::String::format(_("Device path %s").c_str(), Utils::String::trim(it->second->getDevicePath()).c_str()));
-				  window->displayNotificationMessage(_U("\uF1B9 ") + Utils::String::format(_("Device parent sys path %s").c_str(), Utils::String::trim(it->second->getDeviceParentSysPath()).c_str()));
 			  }
 			}
 		}
