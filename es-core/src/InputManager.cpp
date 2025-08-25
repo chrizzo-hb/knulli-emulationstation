@@ -617,6 +617,11 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 			auto it = std::find_if(mInputConfigs.cbegin(), mInputConfigs.cend(), [id](const std::pair<SDL_JoystickID, InputConfig*> & t) { return t.second != nullptr && t.second->getDeviceId() == id; });
 			if (it == mInputConfigs.cend())
 				addedDeviceName = SDL_JoystickNameForIndex(ev.jdevice.which);
+			
+;
+			LOG(LogError) << "Identified internal handheld controls: \"" << addedDeviceName << "\" at device path \"" << it->second->getDevicePath() << "\".\n";
+			LOG(LogError) << "Identified internal handheld controls: \"" << addedDeviceName << "\" at device parent sys path \"" << it->second->getDeviceParentSysPath() << "\".\n";
+			//mLastKnownJoystickConnectionTimestamp[] = ev.jdevice.timestamp;
 
 #ifdef HAVE_UDEV
 #ifdef SDL_JoystickDevicePathById
