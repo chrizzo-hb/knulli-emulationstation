@@ -612,15 +612,19 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 	case SDL_JOYDEVICEADDED:
 		{
 			std::string addedDeviceName;
+			std::string addedDevicePath;
 			bool isWheel = false;
 			auto id = SDL_JoystickGetDeviceInstanceID(ev.jdevice.which);
 			auto it = std::find_if(mInputConfigs.cbegin(), mInputConfigs.cend(), [id](const std::pair<SDL_JoystickID, InputConfig*> & t) { return t.second != nullptr && t.second->getDeviceId() == id; });
-			if (it == mInputConfigs.cend())
+			if (it == mInputConfigs.cend()) {
 				addedDeviceName = SDL_JoystickNameForIndex(ev.jdevice.which);
+				addedDevicePath = SDL_JoystickPathForIndex(ev.jdevice.which);
+			}
 			
 			LOG(LogError) << "Identified internal handheld controls: \"" << addedDeviceName << "\" at device path \"" << it->second->getDevicePath() << "\".\n";
 			LOG(LogError) << "Identified internal handheld controls: \"" << addedDeviceName << "\" at device parent sys path \"" << it->second->getDeviceParentSysPath() << "\".\n";
 			//mLastKnownJoystickConnectionTimestamp[] = ev.jdevice.timestamp;
+
 
 #ifdef HAVE_UDEV
 #ifdef SDL_JoystickDevicePathById
@@ -638,10 +642,18 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 			  if(isWheel) {
 			    window->displayNotificationMessage(_U("\uF1B9 ") + Utils::String::format(_("%s connected").c_str(), Utils::String::trim(addedDeviceName).c_str()));
 			  } else {
-				  window->displayNotificationMessage(_U("\uF11B ") + Utils::String::format(_("%s connected").c_str(), Utils::String::trim(addedDeviceName).c_str()));
-				  window->displayNotificationMessage(_U("\uF11B ") + Utils::String::format(_("Device path %s").c_str(), Utils::String::trim(it->second->getDevicePath()).c_str()));
+				window->displayNotificationMessage(_U("\uF11B ") + Utils::String::format(_("%s connected").c_str(), Utils::String::trim(addedDeviceName).c_str()));
 			  }
 			}
+
+			if (Settings::getInstance()->getBool("ShowControllerNotifications") && !addedDevicePath.empty()) {
+			  if(isWheel) {
+			    window->displayNotificationMessage(_U("\uF1B9 ") + Utils::String::format(_("Device at path %s connected").c_str(), Utils::String::trim(addedDevicePath).c_str()));
+			  } else {
+				window->displayNotificationMessage(_U("\uF11B ") + Utils::String::format(_("Device at path %s connected").c_str(), Utils::String::trim(addedDevicePath).c_str()));
+			  }
+			}
+
 		}
 		return true;
 
