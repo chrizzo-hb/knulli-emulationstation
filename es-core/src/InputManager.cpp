@@ -618,7 +618,6 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 			if (it == mInputConfigs.cend())
 				addedDeviceName = SDL_JoystickNameForIndex(ev.jdevice.which);
 			
-;
 			LOG(LogError) << "Identified internal handheld controls: \"" << addedDeviceName << "\" at device path \"" << it->second->getDevicePath() << "\".\n";
 			LOG(LogError) << "Identified internal handheld controls: \"" << addedDeviceName << "\" at device parent sys path \"" << it->second->getDeviceParentSysPath() << "\".\n";
 			//mLastKnownJoystickConnectionTimestamp[] = ev.jdevice.timestamp;
@@ -639,7 +638,9 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 			  if(isWheel) {
 			    window->displayNotificationMessage(_U("\uF1B9 ") + Utils::String::format(_("%s connected").c_str(), Utils::String::trim(addedDeviceName).c_str()));
 			  } else {
-			    window->displayNotificationMessage(_U("\uF11B ") + Utils::String::format(_("%s connected").c_str(), Utils::String::trim(addedDeviceName).c_str()));
+				  window->displayNotificationMessage(_U("\uF11B ") + Utils::String::format(_("%s connected").c_str(), Utils::String::trim(addedDeviceName).c_str()));
+				  window->displayNotificationMessage(_U("\uF1B9 ") + Utils::String::format(_("Device path %s").c_str(), Utils::String::trim(it->second->getDevicePath()).c_str()));
+				  window->displayNotificationMessage(_U("\uF1B9 ") + Utils::String::format(_("Device parent sys path %s").c_str(), Utils::String::trim(it->second->getDeviceParentSysPath()).c_str()));
 			  }
 			}
 		}
