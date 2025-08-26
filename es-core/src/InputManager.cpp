@@ -611,6 +611,7 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 
 	case SDL_JOYDEVICEADDED:
 		{
+			LOG(LogError) << "Reached SDL_JOYDEVICEADDED\n";
 			std::string addedDeviceName;
 			std::string addedDevicePath;
 			bool isWheel = false;
@@ -640,6 +641,7 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 			}
 #endif
 #endif
+			LOG(LogError) << "Reached rebuildAllJoysticks\n";
 			rebuildAllJoysticks();
 
 			if (Settings::getInstance()->getBool("ShowControllerNotifications") && !addedDeviceName.empty()) {
@@ -651,9 +653,11 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 			}
 
 		}
+		LOG(LogError) << "Left SDL_JOYDEVICEADDED\n";
 		return true;
 
 	case SDL_JOYDEVICEREMOVED:
+		LOG(LogError) << "Reached SDL_JOYDEVICEREMOVED\n";
 		{
 			auto it = mInputConfigs.find(ev.jdevice.which);
 			if (it->second != nullptr && !it->second->getDevicePath().empty()) {
@@ -673,7 +677,9 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 
 			rebuildAllJoysticks();
 		}
+		LOG(LogError) << "Left SDL_JOYDEVICEREMOVED\n";
 		return false;
+		
 	}
 
 	if (mCECInputConfig && (ev.type == (unsigned int)SDL_USER_CECBUTTONDOWN || ev.type == (unsigned int)SDL_USER_CECBUTTONUP))
@@ -1128,6 +1134,7 @@ void InputManager::computeLastKnownPlayersDeviceIndexes()
 
 std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 {
+	LOG(LogError) << "Reached InputManager::computePlayersConfigs()\n";
 	std::unique_lock<std::mutex> lock(mJoysticksLock);
 
 	// 1. Recuperer les configurated
@@ -1136,10 +1143,12 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 		if (conf.second != nullptr && conf.second->isConfigured())
 			availableConfigured.push_back(conf.second);
 
+	LOG(LogError) << "Attempt sorting\n";
 	// sort available configs by how long they are connected
 	std::sort(availableConfigured.begin(), availableConfigured.end(), [this](InputConfig * a, InputConfig * b) -> bool {
 		return this->mDevicePathConnectionTimestamps[a->getDevicePath()] < this->mDevicePathConnectionTimestamps[b->getDevicePath()];
 	});
+	LOG(LogError) << "Sorting done\n";
 	
 
 	// 2. Pour chaque joueur verifier si il y a un configurated
@@ -1147,21 +1156,7 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 	// enlever des disponibles
 	std::map<int, InputConfig*> playerJoysticks;
 
-	
-
-	// Let's find the internal handheld controls (if present)
-	InputConfig* internalControls = NULL;
-	for (int p = 0; p < MAX_PLAYERS; p++) {
-		if (playerJoysticks[p]->isInternal()) {
-			internalControls = playerJoysticks[p];
-			LOG(LogDebug) << "Identified internal handheld controls: \"" << internalControls->getDeviceName() << "\".\n";
-			break;
-		}
-	}
-
-	if (internalControls == NULL) {
-		LOG(LogError) << "No internal handheld controls found!\n";
-	}
+	LOG(LogError) << "Atempting to assign P1 controller\n";
 
 	int nextAvailablePlayer = 0;
 
@@ -1184,6 +1179,8 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 			LOG(LogWarning) << "system.input.p1_handheld is set but no internal controls found, ignoring the setting.\n";
 		}
 	}
+
+	LOG(LogError) << "Atempting to assign remaining controllers\n";
 
 	// Assign configured controllers to players
 	for (int player = nextAvailablePlayer; player < MAX_PLAYERS; player++)
