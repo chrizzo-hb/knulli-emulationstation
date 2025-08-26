@@ -1215,7 +1215,7 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 		if (playerJoysticks[player] == nullptr) {
 			LOG(LogError) << "computePlayersConfigs : Player " << player << " => none";
 		} else {
-			LOG(LogError) << "computePlayersConfigs : Player " << player << " => " << playerJoysticks[player]->getDevicePath();
+			LOG(LogError) << "computePlayersConfigs : Player " << player << " => " << playerJoysticks[player]->getDevicePath() << " (connected since " << mDevicePathConnectionTimestamps[playerJoysticks[player]->getDevicePath()] << ")";
 		}
 	}
 return playerJoysticks;
