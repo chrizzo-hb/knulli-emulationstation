@@ -1143,13 +1143,7 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 	std::sort(availableConfigured.begin(), availableConfigured.end(), [this](InputConfig * a, InputConfig * b) -> bool {
 		return this->mDevicePathConnectionTimestamps[a->getDevicePath()] < this->mDevicePathConnectionTimestamps[b->getDevicePath()];
 	});
-	
-	LOG(LogError) << "All available controllers ordered by connection time:";
-	for (auto avail = availableConfigured.begin(); avail != availableConfigured.end(); avail++)
-	{
-		LOG(LogError) << (*avail)->getDeviceName() << "connected since " << mDevicePathConnectionTimestamps[(*avail)->getDevicePath()] << "";
-	}
-	LOG(LogError) << "\n";
+
 
 	// 2. Pour chaque joueur verifier si il y a un configurated
 	// associer le input au joueur
@@ -1157,6 +1151,7 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 	std::map<int, InputConfig*> playerJoysticks;
 
 	int nextAvailablePlayer = 0;
+	int lastAvailablePlayer = MAX_PLAYERS - 1;
 
 	// If there's only one controller, assign it to player 1 and return
 	if (availableConfigured.size() == 1) {
@@ -1166,26 +1161,32 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 
 	// Check if we have to force internal controls for player 1
 	const bool handheldAlwaysP1 = SystemConf::getInstance()->getBool("system.input.p1_handheld");
-	if (handheldAlwaysP1) {
-		// Find internal controls and assign them to player 1
-		for (auto controller = availableConfigured.begin(); controller != availableConfigured.end(); ++controller)
-		{
-			// Skip non-internal controls, we want internal controls for player 1
-			if (!(*controller)->isInternal())
-				continue;
+	
+	// Find internal controls
+	for (auto controller = availableConfigured.begin(); controller != availableConfigured.end(); ++controller)
+	{
+		// Skip non-internal controls, we want internal controls for player 1
+		if (!(*controller)->isInternal())
+			continue;
+		// Assign internal controls to player 1 or last player depending on the setting
+		if (handheldAlwaysP1) {
 			playerJoysticks[0] = *controller;
-			availableConfigured.erase(controller);
 			nextAvailablePlayer++;
-			break;
+		} else {
+			playerJoysticks[lastAvailablePlayer] = *controller;
+			lastAvailablePlayer--;
 		}
-		if (playerJoysticks.find(0) == playerJoysticks.cend()) {
-			// No internal controls found, ignore the setting
-			LOG(LogWarning) << "system.input.p1_handheld is set but no internal controls found, ignoring the setting.\n";
-		}
+		availableConfigured.erase(controller);
+		break;
+	}
+	if (playerJoysticks.find(0) == playerJoysticks.cend()) {
+		// No internal controls found, ignore the setting
+		LOG(LogWarning) << "No internal controls found!\n";
 	}
 
+
 	// Assign configured controllers to players
-	for (int player = nextAvailablePlayer; player < MAX_PLAYERS; player++)
+	for (int player = nextAvailablePlayer; player <= lastAvailablePlayer; player++)
 	{
 		if (playerJoysticks.find(player) != playerJoysticks.cend())
 			continue;
@@ -1207,7 +1208,7 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 		if (playerJoysticks.find(player) != playerJoysticks.cend())
 			continue;
 
-		LOG(LogInfo) << "computePlayersConfigs : Player " << player << " => " << playerJoysticks[player]->getDevicePath();
+		LOG(LogInfo) << "computePlayersConfigs : Player " << player << " => " << playerJoysticks[player]->getDevicePath() << " (connected since " << mDevicePathConnectionTimestamps[playerJoysticks[player]->getDevicePath()] << ")";
 	}
 
 	return playerJoysticks;
