@@ -1143,13 +1143,6 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 	std::sort(availableConfigured.begin(), availableConfigured.end(), [this](InputConfig * a, InputConfig * b) -> bool {
 		return this->mDevicePathConnectionTimestamps[a->getDevicePath()] < this->mDevicePathConnectionTimestamps[b->getDevicePath()];
 	});
-	
-	LOG(LogError) << "All available controllers ordered by connection time:";
-	for (auto avail = availableConfigured.begin(); avail != availableConfigured.end(); avail++)
-	{
-		LOG(LogError) << (*avail)->getDeviceName() << "connected since " << mDevicePathConnectionTimestamps[(*avail)->getDevicePath()] << "";
-	}
-	LOG(LogError) << "\n";
 
 	// 2. Pour chaque joueur verifier si il y a un configurated
 	// associer le input au joueur
