@@ -611,7 +611,6 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 
 	case SDL_JOYDEVICEADDED:
 		{
-			LOG(LogError) << "Reached SDL_JOYDEVICEADDED\n";
 			std::string addedDeviceName;
 			std::string addedDevicePath;
 			bool isWheel = false;
@@ -641,7 +640,6 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 			}
 #endif
 #endif
-			LOG(LogError) << "Reached rebuildAllJoysticks\n";
 			rebuildAllJoysticks();
 
 			if (Settings::getInstance()->getBool("ShowControllerNotifications") && !addedDeviceName.empty()) {
@@ -653,12 +651,11 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 			}
 
 		}
-		LOG(LogError) << "Left SDL_JOYDEVICEADDED\n";
 		return true;
 
 	case SDL_JOYDEVICEREMOVED:
-		LOG(LogError) << "Reached SDL_JOYDEVICEREMOVED\n";
 		{
+			// Remove connection timestamp entry for the path of the disconnected device
 			auto it = mInputConfigs.find(ev.jdevice.which);
 			if (it->second != nullptr && !it->second->getDevicePath().empty()) {
 				auto disconnectedIt = mDevicePathConnectionTimestamps.find(it->second->getDevicePath());
@@ -677,7 +674,6 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 
 			rebuildAllJoysticks();
 		}
-		LOG(LogError) << "Left SDL_JOYDEVICEREMOVED\n";
 		return false;
 		
 	}
@@ -1134,7 +1130,6 @@ void InputManager::computeLastKnownPlayersDeviceIndexes()
 
 std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 {
-	LOG(LogError) << "Reached InputManager::computePlayersConfigs()\n";
 	std::unique_lock<std::mutex> lock(mJoysticksLock);
 
 	// 1. Recuperer les configurated
@@ -1148,15 +1143,12 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 	std::sort(availableConfigured.begin(), availableConfigured.end(), [this](InputConfig * a, InputConfig * b) -> bool {
 		return this->mDevicePathConnectionTimestamps[a->getDevicePath()] < this->mDevicePathConnectionTimestamps[b->getDevicePath()];
 	});
-	LOG(LogError) << "Sorting done\n";
 	
 
 	// 2. Pour chaque joueur verifier si il y a un configurated
 	// associer le input au joueur
 	// enlever des disponibles
 	std::map<int, InputConfig*> playerJoysticks;
-
-	LOG(LogError) << "Atempting to assign P1 controller\n";
 
 	int nextAvailablePlayer = 0;
 
@@ -1180,8 +1172,6 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 		}
 	}
 
-	LOG(LogError) << "Atempting to assign remaining controllers\n";
-
 	// Assign configured controllers to players
 	for (int player = nextAvailablePlayer; player < MAX_PLAYERS; player++)
 	{
@@ -1190,9 +1180,6 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 
 		for (auto controller = availableConfigured.begin(); controller != availableConfigured.end(); ++controller)
 		{
-			// Skip internal controls, they are only for player 1 if handheldAlwaysP1 is set
-			if ((*controller)->isInternal())
-				continue;
 			playerJoysticks[player] = *controller;
 			availableConfigured.erase(controller);
 			break;
