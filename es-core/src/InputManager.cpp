@@ -611,7 +611,6 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 
 	case SDL_JOYDEVICEADDED:
 		{
-			LOG(LogError) << "SDL_JOYDEVICEADDED has been reached.\n";
 			std::string addedDeviceName;
 			std::string addedDevicePath;
 			bool isWheel = false;
@@ -622,11 +621,10 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 				addedDeviceName = SDL_JoystickNameForIndex(ev.jdevice.which);
 				addedDevicePath = SDL_JoystickPathForIndex(ev.jdevice.which);
 			} else {
-				addedDeviceName = it->second->getDeviceName();
 				addedDevicePath = it->second->getDevicePath();
 			}
 
-			if (!addedDevicePath.empty()) {
+			if (!addedDevicePath.empty() && mDevicePathConnectionTimestamps.find(addedDevicePath) == mDevicePathConnectionTimestamps.cend()) {
 				mDevicePathConnectionTimestamps[addedDevicePath] = ev.jdevice.timestamp;
 			} else {
 				LOG(LogError) << "Joystick device \"" << addedDeviceName << "\" has been added without device path!\n";
@@ -1149,98 +1147,7 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 	// enlever des disponibles
 	std::map<int, InputConfig*> playerJoysticks;
 
-	// First loop, search for PATH. Ultra High Priority
-	for (int player = 0; player < MAX_PLAYERS; player++)
-	{
-		std::string playerConfigPath = Settings::getInstance()->getString(Utils::String::format("INPUT P%iPATH", player + 1));
-		if (!playerConfigPath.empty())
-		{
-			for (auto it1 = availableConfigured.begin(); it1 != availableConfigured.end(); ++it1)
-			{
-				InputConfig* config = *it1;
-				if (playerConfigPath == config->getSortDevicePath())
-				{
-					availableConfigured.erase(it1);
-					playerJoysticks[player] = config;
-					break;
-				}
-			}
-		}
-	}
-
-	// First loop, search for GUID + NAME. High Priority
-	for (int player = 0; player < MAX_PLAYERS; player++)
-	{
-		if (playerJoysticks.find(player) != playerJoysticks.cend())
-			continue;
-
-		std::string playerConfigName = Settings::getInstance()->getString(Utils::String::format("INPUT P%iNAME", player + 1));
-		std::string playerConfigGuid = Settings::getInstance()->getString(Utils::String::format("INPUT P%iGUID", player + 1));
-
-		for (auto it1 = availableConfigured.begin(); it1 != availableConfigured.end(); ++it1)
-		{
-			InputConfig* config = *it1;
-			if (playerConfigName == config->getDeviceName() && playerConfigGuid == config->getDeviceGUIDString())
-			{
-				availableConfigured.erase(it1);
-				playerJoysticks[player] = config;
-				break;
-			}
-		}
-	}
-
-	// Second loop, search for NAME. Low Priority
-	for (int player = 0; player < MAX_PLAYERS; player++)
-	{
-		if (playerJoysticks.find(player) != playerJoysticks.cend())
-			continue;
-
-		std::string playerConfigName = Settings::getInstance()->getString(Utils::String::format("INPUT P%dNAME", player + 1));
-
-		for (auto it1 = availableConfigured.begin(); it1 != availableConfigured.end(); ++it1)
-		{
-			InputConfig * config = *it1;
-			if (playerConfigName == config->getDeviceName())
-			{
-				availableConfigured.erase(it1);
-				playerJoysticks[player] = config;
-				break;
-			}
-		}
-	}
-
-	// Last loop, search for free controllers for remaining players.
-	for (int player = 0; player < MAX_PLAYERS; player++)
-	{
-		if (playerJoysticks.find(player) != playerJoysticks.cend())
-			continue;
-
-		// si aucune config a été trouvé pour le joueur, on essaie de lui filer un libre
-		for (auto it1 = availableConfigured.begin(); it1 != availableConfigured.end(); ++it1)
-		{
-			playerJoysticks[player] = *it1;
-			availableConfigured.erase(it1);
-			break;
-		}
-	}
-
-	// in case of hole (player 1 missing, but player 4 set, fill the holes with last players joysticks)
-	for (int player = 0; player < MAX_PLAYERS; player++)
-	{
-		if (playerJoysticks.find(player) != playerJoysticks.cend())
-			continue;
-
-		for (int repplayer = MAX_PLAYERS; repplayer > player; repplayer--)
-		{
-			if (playerJoysticks[player] == NULL && playerJoysticks[repplayer] != NULL)
-			{
-				playerJoysticks[player] = playerJoysticks[repplayer];
-				playerJoysticks[repplayer] = NULL;
-			}
-		}
-	}
-
-	const bool handheldAlwaysP1 = SystemConf::getInstance()->getBool("system.input.p1_handheld");
+	
 
 	// Let's find the internal handheld controls (if present)
 	InputConfig* internalControls = NULL;
@@ -1251,14 +1158,51 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 			break;
 		}
 	}
-#ifdef KNULLI
+
 	if (internalControls == NULL) {
 		LOG(LogError) << "No internal handheld controls found!\n";
 	}
-#endif
 
+	int nextAvailablePlayer = 0;
 
+	// Check if we have to force internal controls for player 1
+	const bool handheldAlwaysP1 = SystemConf::getInstance()->getBool("system.input.p1_handheld");
+	if (handheldAlwaysP1) {
+		// Find internal controls and assign them to player 1
+		for (auto controller = availableConfigured.begin(); controller != availableConfigured.end(); ++controller)
+		{
+			// Skip non-internal controls, we want internal ones for player 1
+			if (!(*controller)->isInternal())
+				continue;
+			playerJoysticks[0] = *controller;
+			availableConfigured.erase(controller);
+			nextAvailablePlayer++;
+			break;
+		}
+		if (playerJoysticks.find(0) == playerJoysticks.cend()) {
+			// No internal controls found, we cannot force player 1 to be internal
+			LOG(LogWarning) << "system.input.p1_handheld is set but no internal controls found, ignoring the setting.\n";
+		}
+	}
 
+	// Assign configured controllers to players
+	for (int player = nextAvailablePlayer; player < MAX_PLAYERS; player++)
+	{
+		if (playerJoysticks.find(player) != playerJoysticks.cend())
+			continue;
+
+		for (auto controller = availableConfigured.begin(); controller != availableConfigured.end(); ++controller)
+		{
+			// Skip internal controls, they are only for player 1 if handheldAlwaysP1 is set
+			if ((*controller)->isInternal())
+				continue;
+			playerJoysticks[player] = *controller;
+			availableConfigured.erase(controller);
+			break;
+		}
+	}
+
+	// Log controller assignments
 	for (int player = 0; player < MAX_PLAYERS; player++)
 	{
 		if (playerJoysticks.find(player) != playerJoysticks.cend())
@@ -1356,4 +1300,3 @@ void InputManager::sendMouseClick(Window* window, int button)
 	window->input(getInputConfigByDevice(DEVICE_MOUSE), Input(DEVICE_MOUSE, TYPE_BUTTON, button, true, false));
 	window->input(getInputConfigByDevice(DEVICE_MOUSE), Input(DEVICE_MOUSE, TYPE_BUTTON, button, false, false));
 }
-
