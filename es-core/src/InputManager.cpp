@@ -1168,6 +1168,7 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 		availableConfigured.erase(controller);
 		break;
 	}
+	LOG(LogError) << "search for internal done";
 	// Assign internal controls to player 1 if needed
 	if (internalController != nullptr) {
 		// Check if we have to force internal controls for player 1
@@ -1176,13 +1177,17 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 			// Assign internal controller to player 1
 			playerJoysticks[0] = internalController;
 			nextAvailablePlayer++;
+			LOG(LogError) << "internal assigned to p1";
 		} else {
 			// Put back the internal controller at the end of the list
 			availableConfigured.push_back(internalController);
+			LOG(LogError) << "internal back in queue";
 		}
 	} else {
 		LOG(LogError) << "No internal controls found!";
 	}
+	LOG(LogError) << "internal assignment done, next available player is " << nextAvailablePlayer;
+	LOG(LogError) << "internal assignment done, max players is " << MAX_PLAYERS;
 
 	// Assign configured controllers to players
 	for (int player = nextAvailablePlayer; player < MAX_PLAYERS; player++)
@@ -1200,6 +1205,7 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 			break;
 		}
 	}
+	LOG(LogError) << "remaining assignments done, now only logging";
 
 	// Log controller assignments
 	for (int player = 0; player < MAX_PLAYERS; player++)
