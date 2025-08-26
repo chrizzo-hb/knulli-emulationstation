@@ -1212,8 +1212,6 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 	// Log controller assignments
 	for (int player = 0; player < MAX_PLAYERS; player++)
 	{
-		if (playerJoysticks.find(player) != playerJoysticks.cend())
-			continue;
 		if (playerJoysticks[player] == nullptr) {
 			LOG(LogError) << "computePlayersConfigs : Player " << player << " => none";
 		} else {
