@@ -1139,7 +1139,7 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 			availableConfigured.push_back(conf.second);
 
 
-	for (avail = availableConfigured.begin(); avail != availableConfigured.end(); avail++)
+	for (auto avail = availableConfigured.begin(); avail != availableConfigured.end(); avail++)
 	{
 		LOG(LogError) << (*avail)->getDeviceName() << "connected since " << mDevicePathConnectionTimestamps[(*avail)->getDevicePath()] << ".\n";
 	}
