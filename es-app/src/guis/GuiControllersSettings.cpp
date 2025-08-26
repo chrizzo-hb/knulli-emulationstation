@@ -201,7 +201,6 @@ GuiControllersSettings::GuiControllersSettings(Window* wnd, int autoSel) : GuiSe
 	if (Settings::getInstance()->getBool("ShowControllerActivity"))
 		addSwitch(_("SHOW CONTROLLER BATTERY LEVEL"), "ShowControllerBattery", true);
 
-#ifndef KNULLI
 	addGroup(controllers_group_label);
 
 	// Here we go; for each player
@@ -378,8 +377,6 @@ GuiControllersSettings::GuiControllersSettings(Window* wnd, int autoSel) : GuiSe
 		// this is dependant of this configuration, thus update it
 		InputManager::getInstance()->computeLastKnownPlayersDeviceIndexes();
 	});
-
-#endif // KNULLI
 
 }
 
