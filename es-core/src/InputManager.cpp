@@ -1137,19 +1137,13 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 			availableConfigured.push_back(conf.second);
 
 
-	// sort available configs by how long they are connected
+	// Sort available configs by how long they are connected (older first)
+	// (Internal controls will most likely be the oldest)
 	std::sort(availableConfigured.begin(), availableConfigured.end(), [this](InputConfig * a, InputConfig * b) -> bool {
 		return this->mDevicePathConnectionTimestamps[a->getDevicePath()] < this->mDevicePathConnectionTimestamps[b->getDevicePath()];
 	});
 
-	for (auto controller = availableConfigured.begin(); controller != availableConfigured.end(); ++controller)
-	{
-		LOG(LogError) << "Available controller : " << (*controller)->getDevicePath() << " (connected since " << mDevicePathConnectionTimestamps[(*controller)->getDevicePath()] << ")";
-	}
-
-	// 2. Pour chaque joueur verifier si il y a un configurated
-	// associer le input au joueur
-	// enlever des disponibles
+	// Initialize player controller assignments
 	std::map<int, InputConfig*> playerJoysticks;
 
 	int nextAvailablePlayer = 0;
@@ -1157,7 +1151,7 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 	// If there's only one controller, assign it to player 1 and return
 	if (availableConfigured.size() == 1) {
 		playerJoysticks[0] = availableConfigured[0];
-		LOG(LogError) << "computePlayersConfigs : Player " << 0 << " => " << playerJoysticks[0]->getDevicePath() << " (connected since " << mDevicePathConnectionTimestamps[playerJoysticks[0]->getDevicePath()] << ")";
+		LOG(LogInfo) << "computePlayersConfigs : Player " << 0 << " => " << playerJoysticks[0]->getDevicePath() << " (connected since " << mDevicePathConnectionTimestamps[playerJoysticks[0]->getDevicePath()] << ")";
 		return playerJoysticks;
 	}
 	
@@ -1165,15 +1159,15 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 	InputConfig * internalController = nullptr;
 	for (auto controller = availableConfigured.begin(); controller != availableConfigured.end(); ++controller)
 	{
-		// Skip non-internal controls, we want internal controls for player 1
+		// Skip non-internal controls, we are looking for internal controls
 		if (!(*controller)->isInternal()) {
 			continue;
 		}
+		// Found internal controls, remove them from the list of available controllers
 		internalController = *controller;
 		availableConfigured.erase(controller);
 		break;
 	}
-	LOG(LogError) << "search for internal done";
 	// Assign internal controls to player 1 if needed
 	if (internalController != nullptr) {
 		// Check if we have to force internal controls for player 1
@@ -1182,19 +1176,16 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 			// Assign internal controller to player 1
 			playerJoysticks[0] = internalController;
 			nextAvailablePlayer++;
-			LOG(LogError) << "internal assigned to p1";
 		} else {
-			// Put back the internal controller at the end of the list
+			// Put the internal controller back but move it to the end of the list
 			availableConfigured.push_back(internalController);
-			LOG(LogError) << "internal back in queue";
 		}
 	} else {
 		LOG(LogError) << "No internal controls found!";
 	}
-	LOG(LogError) << "internal assignment done, next available player is " << nextAvailablePlayer;
-	LOG(LogError) << "internal assignment done, max players is " << MAX_PLAYERS;
 
-	// Assign configured controllers to players
+	// Assign configured controllers to players in order of connection time
+	// (If internal controls aren't assigned to player 1, they will be the last to be assigned)
 	for (int player = nextAvailablePlayer; player < MAX_PLAYERS; player++)
 	{
 		if (playerJoysticks.find(player) != playerJoysticks.cend())
@@ -1207,15 +1198,14 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 			break;
 		}
 	}
-	LOG(LogError) << "remaining assignments done, now only logging";
 
 	// Log controller assignments
 	for (int player = 0; player < MAX_PLAYERS; player++)
 	{
 		if (playerJoysticks[player] == nullptr) {
-			LOG(LogError) << "computePlayersConfigs : Player " << player << " => none";
+			LOG(LogInfo) << "computePlayersConfigs : Player " << player << " => none";
 		} else {
-			LOG(LogError) << "computePlayersConfigs : Player " << player << " => " << playerJoysticks[player]->getDevicePath() << " (connected since " << mDevicePathConnectionTimestamps[playerJoysticks[player]->getDevicePath()] << ")";
+			LOG(LogInfo) << "computePlayersConfigs : Player " << player << " => " << playerJoysticks[player]->getDevicePath() << " (connected since " << mDevicePathConnectionTimestamps[playerJoysticks[player]->getDevicePath()] << ")";
 		}
 	}
 return playerJoysticks;
