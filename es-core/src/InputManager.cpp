@@ -1138,7 +1138,13 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 		if (conf.second != nullptr && conf.second->isConfigured())
 			availableConfigured.push_back(conf.second);
 
-	LOG(LogError) << "Attempt sorting\n";
+
+	for (avail = availableConfigured.begin(); avail != availableConfigured.end(); avail++)
+	{
+		LOG(LogError) << (*avail)->getDeviceName() << "connected since " << mDevicePathConnectionTimestamps[(*avail)->getDevicePath()] << ".\n";
+	}
+
+
 	// sort available configs by how long they are connected
 	std::sort(availableConfigured.begin(), availableConfigured.end(), [this](InputConfig * a, InputConfig * b) -> bool {
 		return this->mDevicePathConnectionTimestamps[a->getDevicePath()] < this->mDevicePathConnectionTimestamps[b->getDevicePath()];
