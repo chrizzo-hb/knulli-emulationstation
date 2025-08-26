@@ -165,6 +165,7 @@ GuiControllersSettings::GuiControllersSettings(Window* wnd, int autoSel) : GuiSe
 	addSaveFunc([alwaysHandheld]
 	{
 		SystemConf::getInstance()->setBool("system.input.p1_handheld", alwaysHandheld->getState());
+		InputManager::getInstance()->computePlayersConfigs();
 	});
 
 #endif
