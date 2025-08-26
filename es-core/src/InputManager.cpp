@@ -1212,7 +1212,11 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 	{
 		if (playerJoysticks.find(player) != playerJoysticks.cend())
 			continue;
-		LOG(LogInfo) << "computePlayersConfigs : Player " << player << " => " << playerJoysticks[player]->getDevicePath();
+		if (playerJoysticks[player] == nullptr) {
+			LOG(LogError) << "computePlayersConfigs : Player " << player << " => none";
+			continue;
+		}
+		LOG(LogError) << "computePlayersConfigs : Player " << player << " => " << playerJoysticks[player]->getDevicePath();
 	}
 return playerJoysticks;
 }
