@@ -1153,6 +1153,7 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 	// If there's only one controller, assign it to player 1 and return
 	if (availableConfigured.size() == 1) {
 		playerJoysticks[0] = availableConfigured[0];
+		LOG(LogError) << "computePlayersConfigs : Player " << 0 << " => " << playerJoysticks[0]->getDevicePath() << " (connected since " << mDevicePathConnectionTimestamps[playerJoysticks[0]->getDevicePath()] << ")";
 		return playerJoysticks;
 	}
 
@@ -1178,12 +1179,12 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 	}
 	if (playerJoysticks.find(0) == playerJoysticks.cend()) {
 		// No internal controls found, ignore the setting
-		LOG(LogWarning) << "No internal controls found!\n";
+		LOG(LogError) << "No internal controls found!\n";
 	}
 
 
 	// Assign configured controllers to players
-	for (int player = nextAvailablePlayer; player <= lastAvailablePlayer; player++)
+	for (int player = nextAvailablePlayer; player < lastAvailablePlayer; player++)
 	{
 		if (playerJoysticks.find(player) != playerJoysticks.cend())
 			continue;
@@ -1205,7 +1206,7 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 		if (playerJoysticks.find(player) != playerJoysticks.cend())
 			continue;
 
-		LOG(LogError) << "computePlayersConfigs : Player " << player << " => " << playerJoysticks[player]->getDevicePath();
+		LOG(LogError) << "computePlayersConfigs : Player " << player << " => " << playerJoysticks[player]->getDevicePath() << " (connected since " << mDevicePathConnectionTimestamps[playerJoysticks[player]->getDevicePath()] << ")";
 	}
 
 	return playerJoysticks;
