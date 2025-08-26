@@ -1142,6 +1142,11 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 		return this->mDevicePathConnectionTimestamps[a->getDevicePath()] < this->mDevicePathConnectionTimestamps[b->getDevicePath()];
 	});
 
+	for (auto controller = availableConfigured.begin(); controller != availableConfigured.end(); ++controller)
+	{
+		LOG(LogError) << "Available controller : " << (*controller)->getDevicePath() << " (connected since " << mDevicePathConnectionTimestamps[(*controller)->getDevicePath()] << ")";
+	}
+
 	// 2. Pour chaque joueur verifier si il y a un configurated
 	// associer le input au joueur
 	// enlever des disponibles
@@ -1197,9 +1202,6 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 
 		for (auto controller = availableConfigured.begin(); controller != availableConfigured.end(); ++controller)
 		{
-			// Skip internal controls, they have been assigned to player 1 if needed
-			if ((*controller)->isInternal())
-				continue;
 			playerJoysticks[player] = *controller;
 			availableConfigured.erase(controller);
 			break;
