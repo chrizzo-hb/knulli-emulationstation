@@ -626,8 +626,6 @@ bool InputManager::parseEvent(const SDL_Event& ev, Window* window)
 
 			if (!addedDevicePath.empty() && mDevicePathConnectionTimestamps.find(addedDevicePath) == mDevicePathConnectionTimestamps.cend()) {
 				mDevicePathConnectionTimestamps[addedDevicePath] = ev.jdevice.timestamp;
-			} else {
-				LOG(LogError) << "Joystick device \"" << addedDeviceName << "\" has been added without device path!\n";
 			}
 
 #ifdef HAVE_UDEV
@@ -1207,7 +1205,7 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 		if (playerJoysticks.find(player) != playerJoysticks.cend())
 			continue;
 
-		LOG(LogInfo) << "computePlayersConfigs : Player " << player << " => " << playerJoysticks[player]->getDevicePath() << " (connected since " << mDevicePathConnectionTimestamps[playerJoysticks[player]->getDevicePath()] << ")";
+		LOG(LogError) << "computePlayersConfigs : Player " << player << " => " << playerJoysticks[player]->getDevicePath() << " (connected since " << mDevicePathConnectionTimestamps[playerJoysticks[player]->getDevicePath()] << ")";
 	}
 
 	return playerJoysticks;
