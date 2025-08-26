@@ -1160,23 +1160,32 @@ std::map<int, InputConfig*> InputManager::computePlayersConfigs()
 	// Check if we have to force internal controls for player 1
 	const bool handheldAlwaysP1 = SystemConf::getInstance()->getBool("system.input.p1_handheld");
 	
+
+	LOG(LogError) << "right before loop";
 	// Find internal controls
 	for (auto controller = availableConfigured.begin(); controller != availableConfigured.end(); ++controller)
 	{
+		LOG(LogError) << "in loop cycle";
 		// Skip non-internal controls, we want internal controls for player 1
-		if (!(*controller)->isInternal())
+		if (!(*controller)->isInternal()) {
+			LOG(LogError) << "skipping non-internal";
 			continue;
+		}
 		// Assign internal controls to player 1 or last player depending on the setting
 		if (handheldAlwaysP1) {
+			LOG(LogError) << "assigning to p1";
 			playerJoysticks[0] = *controller;
 			nextAvailablePlayer++;
 		} else {
+			LOG(LogError) << "assigning to last player";
 			playerJoysticks[lastAvailablePlayer] = *controller;
 			lastAvailablePlayer--;
 		}
+		LOG(LogError) << "erasing controller";
 		availableConfigured.erase(controller);
 		break;
 	}
+	LOG(LogError) << "right after loop";
 	if (playerJoysticks.find(0) == playerJoysticks.cend()) {
 		// No internal controls found, ignore the setting
 		LOG(LogError) << "No internal controls found!\n";
