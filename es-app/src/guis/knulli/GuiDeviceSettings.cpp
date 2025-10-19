@@ -2,9 +2,11 @@
 #include "guis/knulli/ExtendedGuiSettings.h"
 
 #include "guis/knulli/FactorySettings.h"
+#include "guis/knulli/GuiDisplaySettings.h"
 #include "guis/knulli/GuiPowerManagementSettings.h"
 #include "guis/knulli/GuiRgbSettings.h"
 #include "guis/knulli/Pico8Installer.h"
+#include "guis/knulli/syscalls/DisplaySettings.h"
 #include "components/OptionListComponent.h"
 #include "components/SliderComponent.h"
 #include "components/SwitchComponent.h"
@@ -46,6 +48,13 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : ExtendedGuiSettings(windo
 			});
 	
 		}
+	}
+	// Only add Display Settings if display settings are supported on this device.
+	if(DisplaySettings::hasDisplaySettings()) {
+		addGroup(_("DISPLAY SETTINGS"));
+		addEntry(_("DISPLAY SETTINGS"), true, [this] { 
+			mWindow->pushGui(new GuiDisplaySettings(mWindow)); 
+		});
 	}
 	if(Pico8Installer::hasInstaller()) {
 		addGroup(_("NATIVE PICO-8"));
