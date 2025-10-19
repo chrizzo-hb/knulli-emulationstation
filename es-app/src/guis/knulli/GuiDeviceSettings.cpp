@@ -52,9 +52,7 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : ExtendedGuiSettings(windo
 	// Only add Display Settings if display settings are supported on this device.
 	if(DisplaySettings::hasDisplaySettings()) {
 		addGroup(_("DISPLAY SETTINGS"));
-		addEntry(_("DISPLAY SETTINGS"), true, [this] { 
-			mWindow->pushGui(new GuiDisplaySettings(mWindow)); 
-		});
+		addEntry(_("DISPLAY SETTINGS"), true, [this] { openDisplaySettings(); });
 	}
 	if(Pico8Installer::hasInstaller()) {
 		addGroup(_("NATIVE PICO-8"));
@@ -105,6 +103,11 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : ExtendedGuiSettings(windo
 void GuiDeviceSettings::openPowerManagementSettings()
 {
 	mWindow->pushGui(new GuiPowerManagementSettings(mWindow));
+}
+
+void GuiDeviceSettings::openDisplaySettings()
+{
+	mWindow->pushGui(new GuiDisplaySettings(mWindow));
 }
 
 void GuiDeviceSettings::openRgbLedSettings()
