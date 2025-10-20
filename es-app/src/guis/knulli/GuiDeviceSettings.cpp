@@ -33,8 +33,12 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : ExtendedGuiSettings(windo
 {
 	addGroup(_("POWER SAVING AND BATTERY LIFE"));
 	addEntry(_("POWER MANAGEMENT"), true, [this] { openPowerManagementSettings(); });
-	if(CapabilityCheck::hasCapability(CapabilityCheck::RGB_CAPABILITY) || BoardCheck::isBoard(BOARDS_WITH_TOGGLE_SWITCH)) {
+	if(CapabilityCheck::hasCapability(CapabilityCheck::RGB_CAPABILITY) || BoardCheck::isBoard(BOARDS_WITH_TOGGLE_SWITCH) || DisplaySettings::hasDisplaySettings()) {
 		addGroup(_("DEVICE CUSTOMIZATION"));
+		// Only add Display Settings if display settings are supported on this device.
+		if(DisplaySettings::hasDisplaySettings()) {
+			addEntry(_("DISPLAY SETTINGS"), true, [this] { openDisplaySettings(); });
+		}
 		if(CapabilityCheck::hasCapability(CapabilityCheck::RGB_CAPABILITY)) {
 			addEntry(_("RGB LED SETTINGS"), true, [this] { openRgbLedSettings(); });
 		}
@@ -48,11 +52,6 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : ExtendedGuiSettings(windo
 			});
 	
 		}
-	}
-	// Only add Display Settings if display settings are supported on this device.
-	if(DisplaySettings::hasDisplaySettings()) {
-		addGroup(_("DISPLAY SETTINGS"));
-		addEntry(_("DISPLAY SETTINGS"), true, [this] { openDisplaySettings(); });
 	}
 	if(Pico8Installer::hasInstaller()) {
 		addGroup(_("NATIVE PICO-8"));

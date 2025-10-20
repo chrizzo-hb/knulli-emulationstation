@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 #include <string>
 
 bool SysCalls::execute(const char* cmd) {
@@ -29,6 +30,11 @@ std::string SysCalls::executeAndCatchOutput(const char* cmd) {
         throw;
     }
     pclose(pipe);
+
+    // Sanitize output by removing newlines and carriage returns
+    result.erase(std::remove(result.begin(), result.end(), '\r'), result.cend());
+    result.erase(std::remove(result.begin(), result.end(), '\n'), result.cend());
+
     return result;
 }
 
