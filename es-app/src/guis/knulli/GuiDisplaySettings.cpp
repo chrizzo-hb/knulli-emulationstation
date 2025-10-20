@@ -37,7 +37,7 @@ GuiDisplaySettings::GuiDisplaySettings(Window* window) : ExtendedGuiSettings(win
 		std::shared_ptr<SliderComponent> slider = createSlider(_(label.c_str()), 0.f, 99.f, 5.f, "", _(""), true);
 		setConfigValueForSlider(slider, 50.f, CONF_PREFIX + capability);
 
-		slider->setOnValueChanged([this](float value) {
+		slider->setOnValueChanged([this, capability](float value) {
 			DisplaySettings::set(capability, (int)value);
 		});
 
