@@ -20,7 +20,7 @@
 #include <vector>
 #include <string>
 
-constexpr char* CONF_PREFIX = "system.display.";
+const std::string CONF_PREFIX = "system.display.";
 
 GuiDisplaySettings::GuiDisplaySettings(Window* window) : ExtendedGuiSettings(window, _("DISPLAY SETTINGS").c_str())
 {
