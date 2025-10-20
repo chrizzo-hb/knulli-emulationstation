@@ -21,4 +21,13 @@ std::vector<std::string> DisplaySettings::getCapabilities()
 	 return SysCalls::executeAndCatchOutputCsv(DISPLAY_SETTINGS_COMMAND_NAME
 		+ SEPARATOR + DISPLAY_SETTINGS_ARGUMENT_GET_CAPABILITIES);
 }
+
+void DisplaySettings::set(std::string capability, int value)
+{
+	std::string command = DISPLAY_SETTINGS_COMMAND_NAME
+		+ SEPARATOR + capability
+		+ SEPARATOR + std::to_string(value);
+
+	SysCalls::execute(command);
+}
 	

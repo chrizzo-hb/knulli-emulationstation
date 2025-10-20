@@ -34,8 +34,13 @@ GuiDisplaySettings::GuiDisplaySettings(Window* window) : ExtendedGuiSettings(win
         // make an uppercase copy safely
         std::string label = capability;
         std::transform(label.begin(), label.end(), label.begin(), [](unsigned char c){ return std::toupper(c); });
-		
 		std::shared_ptr<SliderComponent> slider = createSlider(_(label.c_str()), 0.f, 99.f, 5.f, "", _(""), true);
+		setConfigValueForSlider(slider, 50.f, CONF_PREFIX + capability);
+
+		slider->setOnValueChanged([this](float value) {
+			DisplaySettings::set(capability, (int)value);
+		});
+
 		sliderLabels.push_back(capability);
 		sliders.push_back(slider);
 	}
