@@ -35,7 +35,7 @@ GuiDisplaySettings::GuiDisplaySettings(Window* window) : ExtendedGuiSettings(win
         std::string label = capability;
         std::transform(label.begin(), label.end(), label.begin(), [](unsigned char c){ return std::toupper(c); });
 		
-		std::shared_ptr<SliderComponent> slider = createSlider(_(label), 0.f, 99.f, 5.f, "", _(""), true);
+		std::shared_ptr<SliderComponent> slider = createSlider(_(label.c_str()), 0.f, 99.f, 5.f, "", _(""), true);
 		sliderLabels.push_back(capability);
 		sliders.push_back(slider);
 	}
