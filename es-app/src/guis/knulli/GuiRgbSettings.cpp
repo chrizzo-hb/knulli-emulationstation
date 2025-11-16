@@ -99,6 +99,8 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createModeOpti
 
     std::string selectedLedMode = SystemConf::getInstance()->get("led.mode");
     std::vector<ModeInfo> availableModes = RgbService::getAvailableModes();
+    LOG(LogError) << "Returned from RgbService::getAvailableModes.";
+
     if (selectedLedMode.empty())
         selectedLedMode = DEFAULT_LED_MODE;
 
@@ -116,7 +118,7 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createModeOpti
     }
 
     addWithDescription(_("MODE"), _("Set the default LED animation"), optionsLedMode);
-    optionListMode->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("led.mode", value); });
+    // optionListMode->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("led.mode", value); });
     return optionsLedMode;
 }
 
