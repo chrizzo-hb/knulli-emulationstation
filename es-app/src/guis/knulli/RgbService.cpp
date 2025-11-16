@@ -103,6 +103,13 @@ void RgbService::applyValue(std::string key, std::string value)
 {
 	HttpReqOptions options;
 	options.dataToPost = key + " " + value;
-
+	
 	HttpReq* req = new HttpReq(API_BASE_PATH + API_SET_CONFIG, &options);
+	
+	LOG(LogError) << "Posted config change to RgbService " << API_BASE_PATH + API_SET_CONFIG << " with data: " << options.dataToPost;
+	
+	if (req->wait())
+	{
+		// Optionally handle response
+	}
 }
