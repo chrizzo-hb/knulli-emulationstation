@@ -156,5 +156,5 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createBatteryI
 void GuiRgbSettings::applyValue(const std::string& key, const std::string& value)
 {
     LOG(LogError) << "GuiRgbSettings::applyValue called with key: " << key << " value: " << value;
-    RgbService::applyValue(key, value);
+    // RgbService::applyValue(key, value);
 }
