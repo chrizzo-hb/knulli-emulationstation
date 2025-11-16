@@ -41,7 +41,7 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
 
     // LED Mode Options
     optionListMode = createModeOptionList();
-    optionListMode->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("led.mode", value); });
+    optionListMode->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("mode", value); });
 
     // optionListPalettePrimary = createPaletteOptionList("led.palette", "PRIMARY PALETTE", "Select the main LED color palette.");
     // optionListPaletteSecondary = createPaletteOptionList("led.palette.secondary", "SECONDARY PALETTE", "Select an optional secondary LED color palette for secondary input. (Doesn't apply to all devices.)");
