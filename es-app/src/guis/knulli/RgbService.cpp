@@ -33,32 +33,32 @@ std::vector<ModeInfo> RgbService::getAvailableModes()
 
 	LOG(LogError) << "Waiting for HttpReq to complete.";
 
-	// if (req->wait())
-	// {
-	// 	rapidjson::Document doc;
-	// 	doc.Parse(req->getContent().c_str());
-	// 	if (doc.HasParseError())
-	// 		return modes;
+	if (req->wait())
+	{
+		rapidjson::Document doc;
+		doc.Parse(req->getContent().c_str());
+		if (doc.HasParseError())
+			return modes;
 		
 		
-	// 	if (doc.IsObject() == false)
-	// 		return modes;
+		if (doc.IsObject() == false)
+			return modes;
 
-	// 	for (auto& member : doc.GetObject())
-	// 	{
+		for (auto& member : doc.GetObject())
+		{
 
-	// 		if (member.name.IsString())
-	// 		{
-	// 			ModeInfo mode;
-	// 			mode.id = std::string(member.name.GetString());
-	// 			if (member.value.IsObject() && member.value.HasMember("name") && member.value["name"].IsString()) {
-	// 				mode.name = member.value["name"].GetString();
-	// 				modes.push_back(mode);
-	// 			}
-	// 		}
-	// 	}
+			if (member.name.IsString())
+			{
+				ModeInfo mode;
+				mode.id = std::string(member.name.GetString());
+				if (member.value.IsObject() && member.value.HasMember("name") && member.value["name"].IsString()) {
+					mode.name = member.value["name"].GetString();
+					modes.push_back(mode);
+				}
+			}
+		}
 		
-	// }
+	}
 
 	return modes;
 }

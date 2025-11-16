@@ -99,8 +99,6 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createModeOpti
 
     std::string selectedLedMode = SystemConf::getInstance()->get("led.mode");
     std::vector<ModeInfo> availableModes = RgbService::getAvailableModes();
-    LOG(LogError) << "Returned from RgbService::getAvailableModes.";
-
     if (selectedLedMode.empty())
         selectedLedMode = DEFAULT_LED_MODE;
 
@@ -110,11 +108,9 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createModeOpti
     }
     else
     {
-        LOG(LogWarning) << "RGB modes available from RgbService, adding default options anyway.";
-        optionsLedMode->add("Found trotzdem none lol", "null", selectedLedMode == "null");
-        // for (const auto& mode : availableModes) {
-        //     optionsLedMode->add(mode.name, mode.id, selectedLedMode == mode.id);
-        // }
+        for (const auto& mode : availableModes) {
+            optionsLedMode->add(mode.name, mode.id, selectedLedMode == mode.id);
+        }
     }
 
     addWithDescription(_("MODE"), _("Set the default LED animation"), optionsLedMode);
