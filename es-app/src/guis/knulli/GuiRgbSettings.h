@@ -21,17 +21,17 @@ private:
     std::shared_ptr<OptionListComponent<std::string>> createBatteryIndicationOptionList(const std::string& configKey, const std::string& title, const std::string& description);
 
     std::shared_ptr<OptionListComponent<std::string>> optionListMode;
-    std::shared_ptr<OptionListComponent<std::string>> optionListPalettePrimary;
-    std::shared_ptr<OptionListComponent<std::string>> optionListPaletteSecondary;
-    std::shared_ptr<OptionListComponent<std::string>> optionListBatteryCharging;
-    std::shared_ptr<OptionListComponent<std::string>> optionListBatteryLow;
+    // std::shared_ptr<OptionListComponent<std::string>> optionListPalettePrimary;
+    // std::shared_ptr<OptionListComponent<std::string>> optionListPaletteSecondary;
+    // std::shared_ptr<OptionListComponent<std::string>> optionListBatteryCharging;
+    // std::shared_ptr<OptionListComponent<std::string>> optionListBatteryLow;
 
-    std::shared_ptr<SliderComponent> sliderLedBrightness;
-    std::shared_ptr<SliderComponent> sliderLedSpeed;
-    std::shared_ptr<SwitchComponent> switchAdaptiveBrightness;
-    std::shared_ptr<SwitchComponent> switchPaletteSwap;
-    std::shared_ptr<SliderComponent> sliderLowBatteryThreshold;
-    std::shared_ptr<SwitchComponent> switchBatteryCharging;
-    std::shared_ptr<SwitchComponent> switchRetroAchievements;
+    // std::shared_ptr<SliderComponent> sliderLedBrightness;
+    // std::shared_ptr<SliderComponent> sliderLedSpeed;
+    // std::shared_ptr<SwitchComponent> switchAdaptiveBrightness;
+    // std::shared_ptr<SwitchComponent> switchPaletteSwap;
+    // std::shared_ptr<SliderComponent> sliderLowBatteryThreshold;
+    // std::shared_ptr<SwitchComponent> switchBatteryCharging;
+    // std::shared_ptr<SwitchComponent> switchRetroAchievements;
 
 };
