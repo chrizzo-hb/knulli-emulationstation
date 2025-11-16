@@ -53,7 +53,7 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
     switchPaletteSwap->setOnChangedCallback([this]() { RgbService::applyValue("led.palette.swap", switchPaletteSwap->getState() ? "true" : "false"); });
 
     // LED Brightness Slider
-    sliderLedBrightness = createSlider(_("BRIGHTNESS"), 0.f, 100.f, 5.f, "", "", (isH700 || isA133));
+    sliderLedBrightness = createSlider(_("BRIGHTNESS"), 0.f, 10.f, 1.f, "", "", (isH700 || isA133));
     setConfigValueForSlider(sliderLedBrightness, DEFAULT_BRIGHTNESS, "led.brightness");
     sliderLedBrightness->setOnValueChanged([this](float value) { RgbService::applyValue("led.brightness", std::to_string((int)value)); });
 
@@ -64,7 +64,7 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
     addGroup(_("BATTERY CHARGE INDICATION"));
 
     // Low battery threshold slider
-    sliderLowBatteryThreshold = createSlider(_("LOW BATTERY THRESHOLD"), 0.f, 30.f, 5.f, "%", _("Threshold for low battery indication."), (isH700 || isA133));
+    sliderLowBatteryThreshold = createSlider(_("LOW BATTERY THRESHOLD"), 0.f, 30.f, 1.f, "%", _("Threshold for low battery indication."), (isH700 || isA133));
     setConfigValueForSlider(sliderLowBatteryThreshold, DEFAULT_LOW_BATTERY_THRESHOLD, "led.battery.low.threshold");
     sliderLowBatteryThreshold->setOnValueChanged([this](float value) { RgbService::applyValue("led.battery.low.threshold", std::to_string((int)value)); });
     optionListBatteryLow = createBatteryIndicationOptionList("led.battery.low", "LOW BATTERY INDICATION", "Select the type of low battery indication.");
