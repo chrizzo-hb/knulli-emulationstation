@@ -43,53 +43,57 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
     optionListMode = createModeOptionList();
     optionListMode->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("mode", value); });
 
-    // optionListPalettePrimary = createPaletteOptionList("led.palette", "PRIMARY PALETTE", "Select the main LED color palette.");
-    // optionListPaletteSecondary = createPaletteOptionList("led.palette.secondary", "SECONDARY PALETTE", "Select an optional secondary LED color palette for secondary input. (Doesn't apply to all devices.)");
+    optionListPalettePrimary = createPaletteOptionList("led.palette", "PRIMARY PALETTE", "Select the main LED color palette.");
+    optionListPalettePrimary->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("palette", value); });
+    optionListPaletteSecondary = createPaletteOptionList("led.palette.secondary", "SECONDARY PALETTE", "Select an optional secondary LED color palette for secondary input. (Doesn't apply to all devices.)");
+    optionListPaletteSecondary->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("palette.secondary", value); });
 
-    // // Adaptive Brightness switch
-    // switchPaletteSwap = createSwitch(_("SWAP PALETTES"), "led.brightness.adaptive", _("Applies secondary palette to primary input and primary palette to secondary input."), true, false, (isH700 || isA133));
-    // switchPaletteSwap->setOnChangedCallback([this]() { RgbService::applyValue("led.palette.swap", switchPaletteSwap->getState() ? "true" : "false"); });
+    // Adaptive Brightness switch
+    switchPaletteSwap = createSwitch(_("SWAP PALETTES"), "led.brightness.adaptive", _("Applies secondary palette to primary input and primary palette to secondary input."), true, false, (isH700 || isA133));
+    switchPaletteSwap->setOnChangedCallback([this]() { RgbService::applyValue("led.palette.swap", switchPaletteSwap->getState() ? "true" : "false"); });
 
-    // // LED Brightness Slider
-    // sliderLedBrightness = createSlider(_("BRIGHTNESS"), 0.f, 100.f, 5.f, "", "", (isH700 || isA133));
-    // setConfigValueForSlider(sliderLedBrightness, DEFAULT_BRIGHTNESS, "led.brightness");
-    // sliderLedBrightness->setOnValueChanged([this](float value) { RgbService::applyValue("led.brightness", std::to_string((int)value)); });
+    // LED Brightness Slider
+    sliderLedBrightness = createSlider(_("BRIGHTNESS"), 0.f, 100.f, 5.f, "", "", (isH700 || isA133));
+    setConfigValueForSlider(sliderLedBrightness, DEFAULT_BRIGHTNESS, "led.brightness");
+    sliderLedBrightness->setOnValueChanged([this](float value) { RgbService::applyValue("led.brightness", std::to_string((int)value)); });
 
-    // // Adaptive Brightness switch
-    // switchAdaptiveBrightness = createSwitch(_("ADAPTIVE BRIGHTNESS"), "led.brightness.adaptive", _("Automatically adapts LED brightness to screen brightness (based on the brightness setting above)."), true, false, (isH700 || isA133));
-    // switchAdaptiveBrightness->setOnChangedCallback([this]() { RgbService::applyValue("led.brightness.adaptive", switchAdaptiveBrightness->getState() ? "true" : "false"); });
+    // Adaptive Brightness switch
+    switchAdaptiveBrightness = createSwitch(_("ADAPTIVE BRIGHTNESS"), "led.brightness.adaptive", _("Automatically adapts LED brightness to screen brightness (based on the brightness setting above)."), true, false, (isH700 || isA133));
+    switchAdaptiveBrightness->setOnChangedCallback([this]() { RgbService::applyValue("led.brightness.adaptive", switchAdaptiveBrightness->getState() ? "true" : "false"); });
 
-    // addGroup(_("BATTERY CHARGE INDICATION"));
+    addGroup(_("BATTERY CHARGE INDICATION"));
 
-    // // Low battery threshold slider
-    // sliderLowBatteryThreshold = createSlider(_("LOW BATTERY THRESHOLD"), 0.f, 30.f, 5.f, "%", _("Threshold for low battery indication."), (isH700 || isA133));
-    // setConfigValueForSlider(sliderLowBatteryThreshold, DEFAULT_LOW_BATTERY_THRESHOLD, "led.battery.low.threshold");
-    // sliderLowBatteryThreshold->setOnValueChanged([this](float value) { RgbService::applyValue("led.battery.low.threshold", std::to_string((int)value)); });
-    // optionListBatteryLow = createBatteryIndicationOptionList("led.battery.low", "LOW BATTERY INDICATION", "Select the type of low battery indication.");
-    // optionListBatteryCharging = createBatteryIndicationOptionList("led.battery.charging", "BATTERY CHARGING INDICATION", "Select the type of battery charging indication.");
+    // Low battery threshold slider
+    sliderLowBatteryThreshold = createSlider(_("LOW BATTERY THRESHOLD"), 0.f, 30.f, 5.f, "%", _("Threshold for low battery indication."), (isH700 || isA133));
+    setConfigValueForSlider(sliderLowBatteryThreshold, DEFAULT_LOW_BATTERY_THRESHOLD, "led.battery.low.threshold");
+    sliderLowBatteryThreshold->setOnValueChanged([this](float value) { RgbService::applyValue("led.battery.low.threshold", std::to_string((int)value)); });
+    optionListBatteryLow = createBatteryIndicationOptionList("led.battery.low", "LOW BATTERY INDICATION", "Select the type of low battery indication.");
+    optionListBatteryLow->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("battery.low", value); });
+    optionListBatteryCharging = createBatteryIndicationOptionList("led.battery.charging", "BATTERY CHARGING INDICATION", "Select the type of battery charging indication.");
+    optionListBatteryCharging->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("battery.charging", value); });
 
 
-    // addGroup(_("RETRO ACHIEVEMENT INDICATION"));
-    // switchRetroAchievements = createSwitch(_("ACHIEVEMENT EFFECT"), "led.retroachievements", _("Honor your retro achievements with a LED effect."), true, false, (isH700 || isA133));
+    addGroup(_("RETRO ACHIEVEMENT INDICATION"));
+    switchRetroAchievements = createSwitch(_("ACHIEVEMENT EFFECT"), "led.retroachievements", _("Honor your retro achievements with a LED effect."), true, false, (isH700 || isA133));
 
-    // addSaveFunc([this] {
-    //     // Read all variables from the respective UI elements and set the respective values in batocera.conf
-    //     SystemConf::getInstance()->set("led.mode", optionListMode->getSelected());
-    //     SystemConf::getInstance()->set("led.palette", optionListPalettePrimary->getSelected());
-    //     SystemConf::getInstance()->set("led.palette.secondary", optionListPaletteSecondary->getSelected());
-    //     SystemConf::getInstance()->set("led.brightness", std::to_string((int) sliderLedBrightness->getValue()));
-    //     SystemConf::getInstance()->set("led.brightness.adaptive", (switchAdaptiveBrightness->getState() ? "1" : "0"));
-    //     SystemConf::getInstance()->set("led.battery.low.threshold", std::to_string((int) sliderLowBatteryThreshold->getValue()));
-    //     SystemConf::getInstance()->set("led.battery.low", optionListBatteryLow->getSelected());
-    //     SystemConf::getInstance()->set("led.battery.charging", optionListBatteryCharging->getSelected());
-    //     SystemConf::getInstance()->set("led.retroachievements", (switchRetroAchievements->getState() ? "1" : "0"));
-    //     SystemConf::getInstance()->set("led.palette.swap", (switchPaletteSwap->getState() ? "1" : "0"));
-	// 	SystemConf::getInstance()->saveSystemConf();
-	// 	Scripting::fireEvent(MENU_EVENT_NAME);
+    addSaveFunc([this] {
+        // Read all variables from the respective UI elements and set the respective values in batocera.conf
+        SystemConf::getInstance()->set("led.mode", optionListMode->getSelected());
+        SystemConf::getInstance()->set("led.palette", optionListPalettePrimary->getSelected());
+        SystemConf::getInstance()->set("led.palette.secondary", optionListPaletteSecondary->getSelected());
+        SystemConf::getInstance()->set("led.brightness", std::to_string((int) sliderLedBrightness->getValue()));
+        SystemConf::getInstance()->set("led.brightness.adaptive", (switchAdaptiveBrightness->getState() ? "1" : "0"));
+        SystemConf::getInstance()->set("led.battery.low.threshold", std::to_string((int) sliderLowBatteryThreshold->getValue()));
+        SystemConf::getInstance()->set("led.battery.low", optionListBatteryLow->getSelected());
+        SystemConf::getInstance()->set("led.battery.charging", optionListBatteryCharging->getSelected());
+        SystemConf::getInstance()->set("led.retroachievements", (switchRetroAchievements->getState() ? "1" : "0"));
+        SystemConf::getInstance()->set("led.palette.swap", (switchPaletteSwap->getState() ? "1" : "0"));
+		SystemConf::getInstance()->saveSystemConf();
+		Scripting::fireEvent(MENU_EVENT_NAME);
 
-    //     // Force reloading settings for the RGB service
-    //     RgbService::reloadConfig();
-    // });
+        // Force reloading settings for the RGB service
+        RgbService::reloadConfig();
+    });
 
 }
 
@@ -132,7 +136,6 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createPaletteO
     }
 
     addWithDescription(_(title.c_str()), _(description.c_str()), optionsLedPalette);
-    optionsLedPalette->setSelectedChangedCallback([this, configKey](std::string value) { RgbService::applyValue(configKey, value); });
     return optionsLedPalette;
 }
 
@@ -149,7 +152,6 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createBatteryI
     optionsBatteryIndication->add("Continuous", "continuous", selectedOption == "continuous");
 
     addWithDescription(_(title.c_str()), _(description.c_str()), optionsBatteryIndication);
-    optionsBatteryIndication->setSelectedChangedCallback([this, configKey](std::string value) { RgbService::applyValue(configKey, value); });
     return optionsBatteryIndication;
 }
 
