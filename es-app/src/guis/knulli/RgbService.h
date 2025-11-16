@@ -1,10 +1,25 @@
 #pragma once
+#include <string>
+#include <vector>
+
+struct ModeInfo
+{
+  std::string id;
+  std::string name;
+};
+
+struct PaletteInfo
+{
+  std::string id;
+  std::string name;
+};
 
 class RgbService
 {
 public:
-        static void start();
-        static void stop();
-        static void setRgb(int mode, int brightness, int speed, int r, int g, int b);
+        static void reloadConfig();
+        static std::vector<ModeInfo> getAvailableModes();
+        static std::vector<PaletteInfo> getAvailablePalettes();
+        static void applyValue(std::string key, std::string value);
 
 };

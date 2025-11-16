@@ -13,21 +13,19 @@ public:
 
 private:
     std::shared_ptr<OptionListComponent<std::string>> createModeOptionList();
-
-    std::array<float, 3> getRgbValues();
-    void setRgbValues(float red, float green, float blue);
-    void initializeOnChangeListeners();
-    void applyValues();
-    void restoreDefaultColors();
+    std::shared_ptr<OptionListComponent<std::string>> createPaletteOptionList(const std::string& configKey, const std::string& title, const std::string& description);
+    std::shared_ptr<OptionListComponent<std::string>> createBatteryIndicationOptionList(const std::string& configKey, const std::string& title, const std::string& description);
 
     bool isH700;
     bool isA133;
     std::shared_ptr<OptionListComponent<std::string>> optionListMode;
+    std::shared_ptr<OptionListComponent<std::string>> optionListPalettePrimary;
+    std::shared_ptr<OptionListComponent<std::string>> optionListPaletteSecondary;
+    std::shared_ptr<OptionListComponent<std::string>> optionListBatteryCharging;
+    std::shared_ptr<OptionListComponent<std::string>> optionListBatteryLow;
+
     std::shared_ptr<SliderComponent> sliderLedBrightness;
     std::shared_ptr<SliderComponent> sliderLedSpeed;
-    std::shared_ptr<SliderComponent> sliderLedRed;
-    std::shared_ptr<SliderComponent> sliderLedGreen;
-    std::shared_ptr<SliderComponent> sliderLedBlue;
     std::shared_ptr<SwitchComponent> switchAdaptiveBrightness;
     std::shared_ptr<SliderComponent> sliderLowBatteryThreshold;
     std::shared_ptr<SwitchComponent> switchBatteryCharging;

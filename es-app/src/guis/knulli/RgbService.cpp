@@ -1,64 +1,95 @@
 #include "guis/knulli/RgbService.h"
 #include "utils/Platform.h"
 #include "Paths.h"
-#include "utils/FileSystemUtil.h"
-#include "utils/StringUtil.h"
-#include <stdio.h>
-#include <sys/wait.h>
-#include <fstream>
+#include "HttpReq.h"
+#include <rapidjson/rapidjson.h>
+#include <rapidjson/pointer.h>
+#include <rapidjson/document.h>
 
-const std::string RGB_SERVICE_NAME = "/usr/bin/knulli-rgb-led-daemon";
-const std::string RGB_COMMAND_NAME = "/usr/bin/knulli-rgb-led";
-const std::string SEPARATOR = " ";
-const std::string START = "start clear";
-const std::string STOP = "stop";
+const std::string API_BASE_PATH = "http://localhost:1235/";
+const std::string API_GET_MODES = "get-modes";
+const std::string API_GET_PALETTES = "get-palettes";
+const std::string API_RELOAD_CONFIG = "reload-config";
+const std::string API_SET_CONFIG = "set-config";
 
-void RgbService::start()
+
+void RgbService::reloadConfig()
 {
-	if (Utils::FileSystem::exists(RGB_SERVICE_NAME)) {
-		system((RGB_SERVICE_NAME + SEPARATOR + START).c_str());
-	}
+	HttpReq* req = new HttpReq(API_BASE_PATH + API_RELOAD_CONFIG);
 }
 
-void RgbService::stop()
+std::vector<ModeInfo> RgbService::getAvailableModes()
 {
-	if (Utils::FileSystem::exists(RGB_SERVICE_NAME)) {
-		system((RGB_SERVICE_NAME + SEPARATOR + STOP).c_str());
+	std::vector<ModeInfo> modes;
+
+	HttpReq* req = new HttpReq(API_BASE_PATH + API_GET_MODES);
+
+	if (req->wait())
+	{
+		rapidjson::Document doc;
+		doc.Parse(req->getContent().c_str());
+		if (doc.HasParseError())
+			return modes;
+		
+		
+		if (doc.IsObject() == false)
+			return modes;
+
+		for (auto& member : doc.GetObject())
+		{
+
+			if (member.IsObject() && member.HasMember("name") && member["name"].IsString())
+			{
+				modeInfo mode;
+				mode.id = member.name.GetString();
+				mode.name = member["name"].GetString();
+				modes.push_back(mode);
+			}
+		}
+		
 	}
+
+	return modes;
 }
 
-// TODO: This is a prototype. First improve the RGB bash scripts, then adopt the changes here.
-void RgbService::setRgb(int mode, int brightness, int speed, int r, int g, int b) {
-	
-	std::string modeString = std::to_string(mode);
-	std::string brightnessString = std::to_string(brightness);
-	std::string speedString = std::to_string(speed);
-	std::string rString = std::to_string(r);
-	std::string gString = std::to_string(g);
-	std::string bString = std::to_string(b);
+std::vector<PaletteInfo> RgbService::getAvailablePalettes()
+{
+	std::vector<PaletteInfo> palettes;
 
-	if (mode == 0) {
-		system((RGB_COMMAND_NAME + SEPARATOR + modeString).c_str());
-	}
-	else if (mode < 5) {
-		system((RGB_COMMAND_NAME
-			 + SEPARATOR + modeString
-			 + SEPARATOR + brightnessString
-			 // Right stick
-			 + SEPARATOR + rString
-			 + SEPARATOR + gString
-			 + SEPARATOR + bString
-			 // Left stick (TODO: Make this obsolete!)
-			 + SEPARATOR + rString
-			 + SEPARATOR + gString
-			 + SEPARATOR + bString
-			).c_str());
-	} else {
-		system((RGB_COMMAND_NAME
-			+ SEPARATOR + modeString
-			+ SEPARATOR + brightnessString
-			+ SEPARATOR + speedString
-			).c_str());
+	HttpReq* req = new HttpReq(API_BASE_PATH + API_GET_PALETTES);
+
+	if (req->wait())
+	{
+		rapidjson::Document doc;
+		doc.Parse(req->getContent().c_str());
+		if (doc.HasParseError())
+			return palettes;
+		
+		
+		if (doc.IsObject() == false)
+			return palettes;
+
+		for (auto& member : doc.GetObject())
+		{
+
+			if (member.IsObject() && member.HasMember("name") && member["name"].IsString())
+			{
+				PaletteInfo palette;
+				palette.id = member.name.GetString();
+				palette.name = member["name"].GetString();
+				palettes.push_back(palette);
+			}
+		}
+		
 	}
 
+	return palettes;
+}
+
+void RgbService::applyValue(std::string key, std::string value)
+{
+	HttpReqOptions options;
+	options.dataToPost = key + " " + value;
+
+	HttpReq* req = new HttpReq(API_BASE_PATH + API_SET_CONFIG, &options);
 }
