@@ -114,7 +114,7 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createModeOpti
     }
 
     addWithDescription(_("MODE"), _("Set the default LED animation"), optionsLedMode);
-    // optionListMode->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("led.mode", value); });
+    optionListMode->setSelectedChangedCallback([this](std::string value) { applyValue("led.mode", value); });
     return optionsLedMode;
 }
 
@@ -151,4 +151,10 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createBatteryI
     addWithDescription(_(title.c_str()), _(description.c_str()), optionsBatteryIndication);
     optionsBatteryIndication->setSelectedChangedCallback([this, configKey](std::string value) { RgbService::applyValue(configKey, value); });
     return optionsBatteryIndication;
+}
+
+void GuiRgbSettings::applyValue(const std::string& key, const std::string& value)
+{
+    LOG(LogError) << "GuiRgbSettings::applyValue called with key: " << key << " value: " << value;
+    RgbService::applyValue(key, value);
 }
