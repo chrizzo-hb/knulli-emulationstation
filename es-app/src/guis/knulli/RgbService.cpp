@@ -38,12 +38,14 @@ std::vector<ModeInfo> RgbService::getAvailableModes()
 		for (auto& member : doc.GetObject())
 		{
 
-			if (member.IsObject() && member.HasMember("name") && member["name"].IsString())
+			if (member.name.IsString())
 			{
-				modeInfo mode;
-				mode.id = member.name.GetString();
-				mode.name = member["name"].GetString();
-				modes.push_back(mode);
+				ModeInfo mode;
+				mode.id = std::string(member.name.GetString());
+				if (member.value.IsObject() && member.value.HasMember("name") && member.value["name"].IsString()) {
+					mode.name = member.value["name"].GetString();
+					modes.push_back(mode);
+				}
 			}
 		}
 		
@@ -72,12 +74,14 @@ std::vector<PaletteInfo> RgbService::getAvailablePalettes()
 		for (auto& member : doc.GetObject())
 		{
 
-			if (member.IsObject() && member.HasMember("name") && member["name"].IsString())
+			if (member.name.IsString())
 			{
 				PaletteInfo palette;
-				palette.id = member.name.GetString();
-				palette.name = member["name"].GetString();
-				palettes.push_back(palette);
+				palette.id = std::string(member.name.GetString());
+				if (member.value.IsObject() && member.value.HasMember("name") && member.value["name"].IsString()) {
+					palette.name = member.value["name"].GetString();
+					palettes.push_back(palette);
+				}
 			}
 		}
 		

@@ -108,7 +108,7 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createModeOpti
 
 std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createPaletteOptionList(const std::string& configKey, const std::string& title, const std::string& description)
 {
-    auto optionsLedPalette = std::make_shared<OptionListComponent<std::string>>(mWindow, _(title), false);
+    auto optionsLedPalette = std::make_shared<OptionListComponent<std::string>>(mWindow, _(title.c_str()), false);
 
     std::string selectedLedPalette = SystemConf::getInstance()->get(configKey);
     std::vector<PaletteInfo> availablePalettes = RgbService::getAvailablePalettes();
@@ -119,14 +119,14 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createPaletteO
         optionsLedPalette->add(palette.name, palette.id, selectedLedPalette == palette.id);
     }
 
-    addWithDescription(_(title), _(description), optionsLedPalette);
+    addWithDescription(_(title.c_str()), _(description.c_str()), optionsLedPalette);
     optionsLedPalette->setSelectedChangedCallback([this, configKey](std::string value) { RgbService::applyValue(configKey, value); });
     return optionsLedPalette;
 }
 
 std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createBatteryIndicationOptionList(const std::string& configKey, const std::string& title, const std::string& description)
 {
-    auto optionsBatteryIndication = std::make_shared<OptionListComponent<std::string>>(mWindow, _(title), false);
+    auto optionsBatteryIndication = std::make_shared<OptionListComponent<std::string>>(mWindow, _(title.c_str()), false);
 
     std::string selectedOption = SystemConf::getInstance()->get(configKey);
     if (selectedOption.empty())
@@ -136,7 +136,7 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createBatteryI
     optionsBatteryIndication->add("Notification", "notification", selectedOption == "notification");
     optionsBatteryIndication->add("Continuous", "continuous", selectedOption == "continuous");
 
-    addWithDescription(_(title), _(description), optionsBatteryIndication);
+    addWithDescription(_(title.c_str()), _(description.c_str()), optionsBatteryIndication);
     optionsBatteryIndication->setSelectedChangedCallback([this, configKey](std::string value) { RgbService::applyValue(configKey, value); });
     return optionsBatteryIndication;
 }
