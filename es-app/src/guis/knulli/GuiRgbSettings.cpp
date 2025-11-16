@@ -43,7 +43,11 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
     optionListMode = createModeOptionList();
 
     optionListPalettePrimary = createPaletteOptionList("led.palette", "PRIMARY PALETTE", "Select the main LED color palette.");
-    optionListPaletteSecondary = createPaletteOptionList("led.palette.secondary", "SECONDARY PALETTE", "Select the a secondary LED color palette. (Doesn't apply to all modes.)");
+    optionListPaletteSecondary = createPaletteOptionList("led.palette.secondary", "SECONDARY PALETTE", "Select an optional secondary LED color palette for secondary input. (Doesn't apply to all devices.)");
+
+    // Adaptive Brightness switch
+    switchPaletteSwap = createSwitch(_("SWAP PALETTES"), "led.brightness.adaptive", _("Applies secondary palette to primary input and primary palette to secondary input."), true, false, (isH700 || isA133));
+    switchPaletteSwap->setOnChangedCallback([this]() { RgbService::applyValue("led.palette.swap", switchPaletteSwap->getState() ? "true" : "false"); });
 
     // LED Brightness Slider
     sliderLedBrightness = createSlider(_("BRIGHTNESS"), 0.f, 100.f, 5.f, "", "", (isH700 || isA133));
@@ -78,6 +82,7 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
         SystemConf::getInstance()->set("led.battery.low", optionListBatteryLow->getSelected());
         SystemConf::getInstance()->set("led.battery.charging", optionListBatteryCharging->getSelected());
         SystemConf::getInstance()->set("led.retroachievements", (switchRetroAchievements->getState() ? "1" : "0"));
+        SystemConf::getInstance()->set("led.palette.swap", (switchPaletteSwap->getState() ? "1" : "0"));
 		SystemConf::getInstance()->saveSystemConf();
 		Scripting::fireEvent(MENU_EVENT_NAME);
 

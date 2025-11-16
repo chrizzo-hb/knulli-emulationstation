@@ -27,6 +27,7 @@ private:
     std::shared_ptr<SliderComponent> sliderLedBrightness;
     std::shared_ptr<SliderComponent> sliderLedSpeed;
     std::shared_ptr<SwitchComponent> switchAdaptiveBrightness;
+    std::shared_ptr<SwitchComponent> switchPaletteSwap;
     std::shared_ptr<SliderComponent> sliderLowBatteryThreshold;
     std::shared_ptr<SwitchComponent> switchBatteryCharging;
     std::shared_ptr<SwitchComponent> switchRetroAchievements;
