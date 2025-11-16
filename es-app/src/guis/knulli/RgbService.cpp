@@ -6,6 +6,8 @@
 #include <rapidjson/pointer.h>
 #include <rapidjson/document.h>
 
+#include "Log.h"
+
 const std::string API_BASE_PATH = "http://localhost:1235/";
 const std::string API_GET_MODES = "get-modes";
 const std::string API_GET_PALETTES = "get-palettes";
@@ -20,36 +22,43 @@ void RgbService::reloadConfig()
 
 std::vector<ModeInfo> RgbService::getAvailableModes()
 {
+
+	LOG(LogError) << "RgbService::getAvailableModes called.";
+
 	std::vector<ModeInfo> modes;
+
+	LOG(LogError) << "Creating HttpReq for get-modes.";
 
 	HttpReq* req = new HttpReq(API_BASE_PATH + API_GET_MODES);
 
-	if (req->wait())
-	{
-		// rapidjson::Document doc;
-		// doc.Parse(req->getContent().c_str());
-		// if (doc.HasParseError())
-		// 	return modes;
-		
-		
-		// if (doc.IsObject() == false)
-		// 	return modes;
+	LOG(LogError) << "Waiting for HttpReq to complete.";
 
-		// for (auto& member : doc.GetObject())
-		// {
-
-		// 	if (member.name.IsString())
-		// 	{
-		// 		ModeInfo mode;
-		// 		mode.id = std::string(member.name.GetString());
-		// 		if (member.value.IsObject() && member.value.HasMember("name") && member.value["name"].IsString()) {
-		// 			mode.name = member.value["name"].GetString();
-		// 			modes.push_back(mode);
-		// 		}
-		// 	}
-		// }
+	// if (req->wait())
+	// {
+	// 	rapidjson::Document doc;
+	// 	doc.Parse(req->getContent().c_str());
+	// 	if (doc.HasParseError())
+	// 		return modes;
 		
-	}
+		
+	// 	if (doc.IsObject() == false)
+	// 		return modes;
+
+	// 	for (auto& member : doc.GetObject())
+	// 	{
+
+	// 		if (member.name.IsString())
+	// 		{
+	// 			ModeInfo mode;
+	// 			mode.id = std::string(member.name.GetString());
+	// 			if (member.value.IsObject() && member.value.HasMember("name") && member.value["name"].IsString()) {
+	// 				mode.name = member.value["name"].GetString();
+	// 				modes.push_back(mode);
+	// 			}
+	// 		}
+	// 	}
+		
+	// }
 
 	return modes;
 }
