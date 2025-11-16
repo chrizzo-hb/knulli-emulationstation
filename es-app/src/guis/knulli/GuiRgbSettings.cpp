@@ -50,23 +50,23 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
 
     // Adaptive Brightness switch
     switchPaletteSwap = createSwitch(_("SWAP PALETTES"), "led.brightness.adaptive", _("Applies secondary palette to primary input and primary palette to secondary input."), true, false, (isH700 || isA133));
-    switchPaletteSwap->setOnChangedCallback([this]() { RgbService::applyValue("led.palette.swap", switchPaletteSwap->getState() ? "true" : "false"); });
+    switchPaletteSwap->setOnChangedCallback([this]() { RgbService::applyValue("palette.swap", switchPaletteSwap->getState() ? "true" : "false"); });
 
     // LED Brightness Slider
     sliderLedBrightness = createSlider(_("BRIGHTNESS"), 0.f, 10.f, 1.f, "", "", (isH700 || isA133));
     setConfigValueForSlider(sliderLedBrightness, DEFAULT_BRIGHTNESS, "led.brightness");
-    sliderLedBrightness->setOnValueChanged([this](float value) { RgbService::applyValue("led.brightness", std::to_string((int)value)); });
+    sliderLedBrightness->setOnValueChanged([this](float value) { RgbService::applyValue("brightness", std::to_string((int)value)); });
 
     // Adaptive Brightness switch
     switchAdaptiveBrightness = createSwitch(_("ADAPTIVE BRIGHTNESS"), "led.brightness.adaptive", _("Automatically adapts LED brightness to screen brightness (based on the brightness setting above)."), true, false, (isH700 || isA133));
-    switchAdaptiveBrightness->setOnChangedCallback([this]() { RgbService::applyValue("led.brightness.adaptive", switchAdaptiveBrightness->getState() ? "true" : "false"); });
+    switchAdaptiveBrightness->setOnChangedCallback([this]() { RgbService::applyValue("brightness.adaptive", switchAdaptiveBrightness->getState() ? "true" : "false"); });
 
     addGroup(_("BATTERY CHARGE INDICATION"));
 
     // Low battery threshold slider
     sliderLowBatteryThreshold = createSlider(_("LOW BATTERY THRESHOLD"), 0.f, 30.f, 1.f, "%", _("Threshold for low battery indication."), (isH700 || isA133));
     setConfigValueForSlider(sliderLowBatteryThreshold, DEFAULT_LOW_BATTERY_THRESHOLD, "led.battery.low.threshold");
-    sliderLowBatteryThreshold->setOnValueChanged([this](float value) { RgbService::applyValue("led.battery.low.threshold", std::to_string((int)value)); });
+    sliderLowBatteryThreshold->setOnValueChanged([this](float value) { RgbService::applyValue("battery.low.threshold", std::to_string((int)value)); });
     optionListBatteryLow = createBatteryIndicationOptionList("led.battery.low", "LOW BATTERY INDICATION", "Select the type of low battery indication.");
     optionListBatteryLow->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("battery.low", value); });
     optionListBatteryCharging = createBatteryIndicationOptionList("led.battery.charging", "BATTERY CHARGING INDICATION", "Select the type of battery charging indication.");
