@@ -102,13 +102,21 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createModeOpti
     if (selectedLedMode.empty())
         selectedLedMode = DEFAULT_LED_MODE;
 
-    optionsLedMode->add("TEST", "test", selectedLedMode == "test");
-    // for (const auto& mode : availableModes) {
-    //     optionsLedMode->add(mode.name, mode.id, selectedLedMode == mode.id);
-    // }
+    if (availableModes.empty()) {
+        LOG(LogWarning) << "No RGB modes available from RgbService, adding default options.";
+        optionsLedMode->add("None", "null", selectedLedMode == "null");
+    }
+    else
+    {
+        LOG(LogWarning) << "RGB modes available from RgbService, adding default options anyway.";
+        optionsLedMode->add("Found trotzdem none lol", "null", selectedLedMode == "null");
+        // for (const auto& mode : availableModes) {
+        //     optionsLedMode->add(mode.name, mode.id, selectedLedMode == mode.id);
+        // }
+    }
 
     addWithDescription(_("MODE"), _("Set the default LED animation"), optionsLedMode);
-    // optionListMode->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("led.mode", value); });
+    optionListMode->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("led.mode", value); });
     return optionsLedMode;
 }
 
