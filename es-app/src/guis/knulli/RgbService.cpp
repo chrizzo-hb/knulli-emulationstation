@@ -18,6 +18,11 @@ const std::string API_SET_CONFIG = "set-config";
 void RgbService::reloadConfig()
 {
 	HttpReq* req = new HttpReq(API_BASE_PATH + API_RELOAD_CONFIG);
+
+	if (req->wait())
+	{
+		// TODO: Handle response if needed
+	}
 }
 
 std::vector<ModeInfo> RgbService::getAvailableModes()
