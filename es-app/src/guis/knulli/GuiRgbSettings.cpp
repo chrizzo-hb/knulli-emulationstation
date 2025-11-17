@@ -25,6 +25,7 @@ const std::vector<std::string> RGB_BOARDS_A133 = {"trimui-smart-pro", "trimui-br
 
 // Still required
 constexpr const char* DEFAULT_LED_MODE = "static";
+constexpr const char* DEFAULT_LED_PALETTE = "knulli";
 constexpr float DEFAULT_LOW_BATTERY_THRESHOLD = 20;
 constexpr float DEFAULT_BRIGHTNESS = 100;
 
@@ -43,13 +44,13 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
     optionListMode = createModeOptionList();
     optionListMode->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("mode", value); });
 
-    optionListPalettePrimary = createPaletteOptionList("led.palette", "PRIMARY PALETTE", "Select the main LED color palette.");
+    optionListPalettePrimary = createPaletteOptionList("led.palette", "PRIMARY PALETTE", "Select the main color palette.");
     optionListPalettePrimary->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("palette", value); });
-    optionListPaletteSecondary = createPaletteOptionList("led.palette.secondary", "SECONDARY PALETTE", "Select an optional secondary LED color palette for secondary input. (Doesn't apply to all devices.)");
+    optionListPaletteSecondary = createPaletteOptionList("led.palette.secondary", "SECONDARY PALETTE", "Select the secondary color palette.");
     optionListPaletteSecondary->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("palette.secondary", value); });
 
     // Adaptive Brightness switch
-    switchPaletteSwap = createSwitch(_("SWAP PALETTES"), "led.brightness.adaptive", _("Applies secondary palette to primary input and primary palette to secondary input."), true, false, (isH700 || isA133));
+    switchPaletteSwap = createSwitch(_("SWAP PALETTES"), "led.palette.swap", _("Swaps main and secondary color palettes."), true, false, (isH700 || isA133));
     switchPaletteSwap->setOnChangedCallback([this]() { RgbService::applyValue("palette.swap", switchPaletteSwap->getState() ? "true" : "false"); });
 
     // LED Brightness Slider
@@ -129,10 +130,14 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createPaletteO
     std::string selectedLedPalette = SystemConf::getInstance()->get(configKey);
     std::vector<PaletteInfo> availablePalettes = RgbService::getAvailablePalettes();
     if (selectedLedPalette.empty() && !availablePalettes.empty())
-        selectedLedPalette = availablePalettes[0].id;
+        selectedLedPalette = DEFAULT_LED_PALETTE;
 
     for (const auto& palette : availablePalettes) {
-        optionsLedPalette->add(palette.name, palette.id, selectedLedPalette == palette.id);
+        // XXX: Shorten the palette name by removing the color specification in parentheses
+        // e.g., "Cotton Candy (Pink, Sky Blue)" becomes "Cotton Candy", just because the
+        // overly long names cause misalignment in the GUI.
+        std::string shortenedName = palette.name.substr(0, palette.name.find(" ("));
+        optionsLedPalette->add(shortenedName, palette.id, selectedLedPalette == palette.id);
     }
 
     addWithDescription(_(title.c_str()), _(description.c_str()), optionsLedPalette);
