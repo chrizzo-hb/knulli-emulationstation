@@ -150,7 +150,7 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createBatteryI
 
     std::string selectedOption = SystemConf::getInstance()->get(configKey);
     if (selectedOption.empty())
-        selectedOption = "none";
+        selectedOption = "off";
 
     optionsBatteryIndication->add("None", "off", selectedOption == "off");
     optionsBatteryIndication->add("Notification", "notification", selectedOption == "notification");
