@@ -25,7 +25,7 @@ const std::vector<std::string> RGB_BOARDS_A133 = {"trimui-smart-pro", "trimui-br
 
 // Still required
 constexpr const char* DEFAULT_LED_MODE = "static";
-constexpr const char* DEFAULT_LED_PALETTE = "knulli";
+constexpr const char* DEFAULT_LED_PALETTE = "Knulli";
 constexpr float DEFAULT_LOW_BATTERY_THRESHOLD = 20;
 constexpr float DEFAULT_BRIGHTNESS = 100;
 
