@@ -50,7 +50,7 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
     optionListPaletteSecondary->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("palette.secondary", value); });
 
     // Adaptive Brightness switch
-    switchPaletteSwap = createSwitch(_("SWAP PALETTES"), "led.palette.swap", _("Swaps main and secondary color palettes."), true, false, (isH700 || isA133));
+    switchPaletteSwap = createSwitch(_("SWAP PALETTES"), "led.palette.swap", _("Swaps main and secondary color palettes."), false, false, (isH700 || isA133));
     switchPaletteSwap->setOnChangedCallback([this]() { RgbService::applyValue("palette.swap", switchPaletteSwap->getState() ? "true" : "false"); });
 
     // LED Brightness Slider
