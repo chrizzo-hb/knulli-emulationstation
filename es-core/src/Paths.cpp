@@ -63,6 +63,34 @@ Paths::Paths()
 	mKodiPath = "/usr/bin/kodi";
 #endif
 
+#if KNULLI
+	mRootPath = "/userdata";
+	mEmulationStationPath = "/usr/share/emulationstation";
+	mUserEmulationStationPath = "/userdata/system/configs/emulationstation";
+
+	mLogPath = "/userdata/system/logs";
+	mScreenShotsPath = "/userdata/screenshots";
+	mSaveStatesPath = "/userdata/saves";
+	mMusicPath = "/usr/share/knulli/music";
+	mUserMusicPath = "/userdata/music";
+	mThemesPath = "/usr/share/emulationstation/themes";
+	mUserThemesPath = "/userdata/themes";
+	mKeyboardMappingsPath = "/usr/share/evmapy";
+	mUserKeyboardMappingsPath = "/userdata/system/configs/evmapy";
+	mDecorationsPath = "/usr/share/knulli/datainit/decorations";
+	mUserDecorationsPath = "/userdata/decorations";
+	mShadersPath = "/usr/share/knulli/shaders/configs";
+	mUserShadersPath = "/userdata/shaders/configs";
+	mTimeZonesPath = "/usr/share/zoneinfo/";
+	mRetroachivementSounds = "/usr/share/libretro/assets/sounds";
+	mUserRetroachivementSounds = "/userdata/sounds/retroachievements";
+	
+	mSystemConfFilePath = "/userdata/system/knulli.conf";
+	mUserManualPath = "/usr/share/knulli/doc/notice.pdf";
+	mVersionInfoPath = "/usr/share/knulli/knulli.version";
+	mKodiPath = "/usr/bin/kodi";
+#endif
+
 /* EmuElec sample locations.
 #ifdef _ENABLEEMUELEC
 	mRootPath = "/storage/roms"; // ?
