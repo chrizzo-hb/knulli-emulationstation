@@ -36,8 +36,12 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
     if (requiredSettings.empty()) {
         LOG(LogWarning) << "No required RGB settings available from RgbService, RGB settings menu will be empty.";
     }
-    if ((hasRequiredSetting("mode") == true || hasRequiredSetting("palette") == true))
+    if ((hasRequiredSetting("mode") == true || hasRequiredSetting("palette") == true)
+            || hasRequiredSetting("palette.swap") || hasRequiredSetting("palette.swap.secondary")
+            || hasRequiredSetting("brightness") == true || hasRequiredSetting("brightness.adaptive") == true)
+    {
         addGroup(_("REGULAR LED MODE AND COLOR"));
+    }
 
     // LED Mode Options
     optionListMode = createModeOptionList();
@@ -63,7 +67,8 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
     switchAdaptiveBrightness = createSwitch(_("ADAPTIVE BRIGHTNESS"), "led.brightness.adaptive", _("Automatically adapts LED brightness to screen brightness (based on the brightness setting above)."), true, false, hasRequiredSetting("brightness.adaptive"));
     switchAdaptiveBrightness->setOnChangedCallback([this]() { RgbService::applyValue("brightness.adaptive", switchAdaptiveBrightness->getState() ? "1" : "0"); });
 
-    addGroup(_("BATTERY CHARGE INDICATION"));
+    if (hasRequiredSetting("battery.low") == true || hasRequiredSetting("battery.charging") == true || hasRequiredSetting("battery.low.threshold") == true)
+        addGroup(_("BATTERY CHARGE INDICATION"));
 
     // Low battery threshold slider
     sliderLowBatteryThreshold = createSlider(_("LOW BATTERY THRESHOLD"), 0.f, 30.f, 1.f, "%", _("Threshold for low battery indication."), hasRequiredSetting("battery.low.threshold"));
@@ -75,7 +80,8 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
     optionListBatteryCharging->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("battery.charging", value); });
 
 
-    addGroup(_("RETRO ACHIEVEMENT INDICATION"));
+    if (hasRequiredSetting("retroachievements") == true)
+        addGroup(_("RETRO ACHIEVEMENT INDICATION"));
     switchRetroAchievements = createSwitch(_("ACHIEVEMENT EFFECT"), "led.retroachievements", _("Honor your retro achievements with a LED effect."), true, false, hasRequiredSetting("retroachievements"));
 
     addSaveFunc([this] {
