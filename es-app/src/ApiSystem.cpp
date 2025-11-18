@@ -209,7 +209,9 @@ std::string ApiSystem::getApplicationName()
 		return aboutInfo;
 	}
 
-#if BATOCERA
+#if KNULLI
+	return "KNULLI";
+#elif BATOCERA
 	return "BATOCERA";
 #else
 	return "EMULATIONSTATION";
