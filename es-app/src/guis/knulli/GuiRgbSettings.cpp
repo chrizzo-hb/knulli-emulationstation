@@ -44,14 +44,16 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
     optionListMode = createModeOptionList();
     optionListMode->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("mode", value); });
 
-    optionListPalettePrimary = createPaletteOptionList("led.palette", "PRIMARY PALETTE", "Select the main color palette.");
+    optionListPalettePrimary = createPaletteOptionList("led.palette", "PRIMARY PALETTE", "Select the color palette.");
     optionListPalettePrimary->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("palette", value); });
-    optionListPaletteSecondary = createPaletteOptionList("led.palette.secondary", "SECONDARY PALETTE", "Select the secondary color palette.");
-    optionListPaletteSecondary->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("palette.secondary", value); });
-
-    // Adaptive Brightness switch
-    switchPaletteSwap = createSwitch(_("SWAP PALETTES"), "led.palette.swap", _("Swaps main and secondary color palettes."), false, false, (isH700 || isA133));
+    
+    // Swap colors switch
+    switchPaletteSwap = createSwitch(_("SWAP PALETTES"), "led.palette.swap", _("Swaps primary and secondary color of the color palette."), false, false, (isH700 || isA133));
     switchPaletteSwap->setOnChangedCallback([this]() { RgbService::applyValue("palette.swap", switchPaletteSwap->getState() ? "1" : "0"); });
+
+    // Swap colors switch
+    switchPaletteSwapSecondary = createSwitch(_("SWAP PALETTES (SECONDARY)"), "led.palette.swap.secondary", _("Swaps primary and secondary color of the color palette on secondary LEDs."), false, false, (isH700 || isA133));
+    switchPaletteSwapSecondary->setOnChangedCallback([this]() { RgbService::applyValue("palette.swap.secondary", switchPaletteSwapSecondary->getState() ? "1" : "0"); });
 
     // LED Brightness Slider
     sliderLedBrightness = createSlider(_("BRIGHTNESS"), 0.f, 10.f, 1.f, "", "", (isH700 || isA133));
@@ -81,7 +83,6 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
         // Read all variables from the respective UI elements and set the respective values in batocera.conf
         SystemConf::getInstance()->set("led.mode", optionListMode->getSelected());
         SystemConf::getInstance()->set("led.palette", optionListPalettePrimary->getSelected());
-        SystemConf::getInstance()->set("led.palette.secondary", optionListPaletteSecondary->getSelected());
         SystemConf::getInstance()->set("led.brightness", std::to_string((int) sliderLedBrightness->getValue()));
         SystemConf::getInstance()->set("led.brightness.adaptive", (switchAdaptiveBrightness->getState() ? "1" : "0"));
         SystemConf::getInstance()->set("led.battery.low.threshold", std::to_string((int) sliderLowBatteryThreshold->getValue()));
@@ -89,6 +90,7 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
         SystemConf::getInstance()->set("led.battery.charging", optionListBatteryCharging->getSelected());
         SystemConf::getInstance()->set("led.retroachievements", (switchRetroAchievements->getState() ? "1" : "0"));
         SystemConf::getInstance()->set("led.palette.swap", (switchPaletteSwap->getState() ? "1" : "0"));
+        SystemConf::getInstance()->set("led.palette.swap.secondary", (switchPaletteSwapSecondary->getState() ? "1" : "0"));
 		SystemConf::getInstance()->saveSystemConf();
 		Scripting::fireEvent(MENU_EVENT_NAME);
 

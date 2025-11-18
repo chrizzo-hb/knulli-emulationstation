@@ -23,7 +23,6 @@ private:
 
     std::shared_ptr<OptionListComponent<std::string>> optionListMode;
     std::shared_ptr<OptionListComponent<std::string>> optionListPalettePrimary;
-    std::shared_ptr<OptionListComponent<std::string>> optionListPaletteSecondary;
     std::shared_ptr<OptionListComponent<std::string>> optionListBatteryCharging;
     std::shared_ptr<OptionListComponent<std::string>> optionListBatteryLow;
 
@@ -31,6 +30,7 @@ private:
     std::shared_ptr<SliderComponent> sliderLedSpeed;
     std::shared_ptr<SwitchComponent> switchAdaptiveBrightness;
     std::shared_ptr<SwitchComponent> switchPaletteSwap;
+    std::shared_ptr<SwitchComponent> switchPaletteSwapSecondary;
     std::shared_ptr<SliderComponent> sliderLowBatteryThreshold;
     std::shared_ptr<SwitchComponent> switchBatteryCharging;
     std::shared_ptr<SwitchComponent> switchRetroAchievements;
