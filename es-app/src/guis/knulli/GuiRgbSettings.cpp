@@ -20,12 +20,9 @@
 
 #include "Log.h"
 
-const std::vector<std::string> RGB_BOARDS_H700 = {"rg40xx-h", "rg40xx-v", "rg-cubexx"};
-const std::vector<std::string> RGB_BOARDS_A133 = {"trimui-smart-pro", "trimui-brick"};
-
-// Still required
 constexpr const char* DEFAULT_LED_MODE = "static";
 constexpr const char* DEFAULT_LED_PALETTE = "Knulli";
+constexpr const char* DEFAULT_BATTERY_MODE = "notification";
 constexpr float DEFAULT_LOW_BATTERY_THRESHOLD = 20;
 constexpr float DEFAULT_BRIGHTNESS = 100;
 
@@ -34,40 +31,42 @@ constexpr const char* MENU_EVENT_NAME = "rgb-changed";
 // Constructor creates a new GuiRgbSettings menu.
 GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RGB LED SETTINGS")
 {
-    // TODO: This should not be hard-coded, it should be read from a file or a service.
-    isH700 = BoardCheck::isBoard(RGB_BOARDS_H700);
-    isA133 = BoardCheck::isBoard(RGB_BOARDS_A133);
+    requiredSettings = RgbService::requiredSettings();
 
-    addGroup(_("REGULAR LED MODE AND COLOR"));
+    if (requiredSettings.empty()) {
+        LOG(LogWarning) << "No required RGB settings available from RgbService, RGB settings menu will be empty.";
+    }
+    if ((hasRequiredSetting("mode") == true || hasRequiredSetting("palette") == true))
+        addGroup(_("REGULAR LED MODE AND COLOR"));
 
     // LED Mode Options
     optionListMode = createModeOptionList();
     optionListMode->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("mode", value); });
 
-    optionListPalettePrimary = createPaletteOptionList("led.palette", "PRIMARY PALETTE", "Select the color palette.");
+    optionListPalettePrimary = createPaletteOptionList("palette", "PRIMARY PALETTE", "Select the color palette.");
     optionListPalettePrimary->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("palette", value); });
     
     // Swap colors switch
-    switchPaletteSwap = createSwitch(_("SWAP PALETTES"), "led.palette.swap", _("Swaps primary and secondary color of the color palette."), false, false, (isH700 || isA133));
+    switchPaletteSwap = createSwitch(_("SWAP PALETTES"), "led.palette.swap", _("Swaps primary and secondary color of the color palette."), false, false, hasRequiredSetting("palette.swap"));
     switchPaletteSwap->setOnChangedCallback([this]() { RgbService::applyValue("palette.swap", switchPaletteSwap->getState() ? "1" : "0"); });
 
     // Swap colors switch
-    switchPaletteSwapSecondary = createSwitch(_("SWAP PALETTES (SECONDARY)"), "led.palette.swap.secondary", _("Swaps primary and secondary color of the color palette on secondary LEDs."), false, false, (isH700 || isA133));
+    switchPaletteSwapSecondary = createSwitch(_("SWAP PALETTES (SECONDARY)"), "led.palette.swap.secondary", _("Swaps primary and secondary color of the color palette on secondary LEDs."), false, false, hasRequiredSetting("palette.swap.secondary"));
     switchPaletteSwapSecondary->setOnChangedCallback([this]() { RgbService::applyValue("palette.swap.secondary", switchPaletteSwapSecondary->getState() ? "1" : "0"); });
 
     // LED Brightness Slider
-    sliderLedBrightness = createSlider(_("BRIGHTNESS"), 0.f, 10.f, 1.f, "", "", (isH700 || isA133));
+    sliderLedBrightness = createSlider(_("BRIGHTNESS"), 0.f, 10.f, 1.f, "", "", hasRequiredSetting("brightness"));
     setConfigValueForSlider(sliderLedBrightness, DEFAULT_BRIGHTNESS, "led.brightness");
     sliderLedBrightness->setOnValueChanged([this](float value) { RgbService::applyValue("brightness", std::to_string((int)value)); });
 
     // Adaptive Brightness switch
-    switchAdaptiveBrightness = createSwitch(_("ADAPTIVE BRIGHTNESS"), "led.brightness.adaptive", _("Automatically adapts LED brightness to screen brightness (based on the brightness setting above)."), true, false, (isH700 || isA133));
+    switchAdaptiveBrightness = createSwitch(_("ADAPTIVE BRIGHTNESS"), "led.brightness.adaptive", _("Automatically adapts LED brightness to screen brightness (based on the brightness setting above)."), true, false, hasRequiredSetting("brightness.adaptive"));
     switchAdaptiveBrightness->setOnChangedCallback([this]() { RgbService::applyValue("brightness.adaptive", switchAdaptiveBrightness->getState() ? "1" : "0"); });
 
     addGroup(_("BATTERY CHARGE INDICATION"));
 
     // Low battery threshold slider
-    sliderLowBatteryThreshold = createSlider(_("LOW BATTERY THRESHOLD"), 0.f, 30.f, 1.f, "%", _("Threshold for low battery indication."), (isH700 || isA133));
+    sliderLowBatteryThreshold = createSlider(_("LOW BATTERY THRESHOLD"), 0.f, 30.f, 1.f, "%", _("Threshold for low battery indication."), hasRequiredSetting("battery.low.threshold"));
     setConfigValueForSlider(sliderLowBatteryThreshold, DEFAULT_LOW_BATTERY_THRESHOLD, "led.battery.low.threshold");
     sliderLowBatteryThreshold->setOnValueChanged([this](float value) { RgbService::applyValue("battery.low.threshold", std::to_string((int)value)); });
     optionListBatteryLow = createBatteryIndicationOptionList("led.battery.low", "LOW BATTERY INDICATION", "Select the type of low battery indication.");
@@ -77,7 +76,7 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
 
 
     addGroup(_("RETRO ACHIEVEMENT INDICATION"));
-    switchRetroAchievements = createSwitch(_("ACHIEVEMENT EFFECT"), "led.retroachievements", _("Honor your retro achievements with a LED effect."), true, false, (isH700 || isA133));
+    switchRetroAchievements = createSwitch(_("ACHIEVEMENT EFFECT"), "led.retroachievements", _("Honor your retro achievements with a LED effect."), true, false, hasRequiredSetting("retroachievements"));
 
     addSaveFunc([this] {
         // Read all variables from the respective UI elements and set the respective values in batocera.conf
@@ -121,14 +120,16 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createModeOpti
         }
     }
 
-    addWithDescription(_("MODE"), _("Set the default LED animation"), optionsLedMode);
+    if (hasRequiredSetting("mode") == true)
+        addWithDescription(_("MODE"), _("Set the default LED animation"), optionsLedMode);
     return optionsLedMode;
 }
 
-std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createPaletteOptionList(const std::string& configKey, const std::string& title, const std::string& description)
+std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createPaletteOptionList(const std::string& setting, const std::string& title, const std::string& description)
 {
     auto optionsLedPalette = std::make_shared<OptionListComponent<std::string>>(mWindow, _(title.c_str()), false);
 
+    std::string configKey = "led." + setting;
     std::string selectedLedPalette = SystemConf::getInstance()->get(configKey);
     std::vector<PaletteInfo> availablePalettes = RgbService::getAvailablePalettes();
     if (selectedLedPalette.empty() && !availablePalettes.empty())
@@ -142,23 +143,26 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createPaletteO
         optionsLedPalette->add(shortenedName, palette.id, selectedLedPalette == palette.id);
     }
 
-    addWithDescription(_(title.c_str()), _(description.c_str()), optionsLedPalette);
+    if (hasRequiredSetting(setting) == true)
+        addWithDescription(_(title.c_str()), _(description.c_str()), optionsLedPalette);
     return optionsLedPalette;
 }
 
-std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createBatteryIndicationOptionList(const std::string& configKey, const std::string& title, const std::string& description)
+std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createBatteryIndicationOptionList(const std::string& setting, const std::string& title, const std::string& description)
 {
     auto optionsBatteryIndication = std::make_shared<OptionListComponent<std::string>>(mWindow, _(title.c_str()), false);
 
+    std::string configKey = "led." + setting;
     std::string selectedOption = SystemConf::getInstance()->get(configKey);
     if (selectedOption.empty())
-        selectedOption = "off";
+        selectedOption = DEFAULT_BATTERY_MODE;
 
     optionsBatteryIndication->add("None", "off", selectedOption == "off");
     optionsBatteryIndication->add("Notification", "notification", selectedOption == "notification");
     optionsBatteryIndication->add("Continuous", "continuous", selectedOption == "continuous");
 
-    addWithDescription(_(title.c_str()), _(description.c_str()), optionsBatteryIndication);
+    if (hasRequiredSetting(setting) == true)
+        addWithDescription(_(title.c_str()), _(description.c_str()), optionsBatteryIndication);
     return optionsBatteryIndication;
 }
 
@@ -166,4 +170,9 @@ void GuiRgbSettings::applyValue(const std::string& key, const std::string& value
 {
     LOG(LogError) << "GuiRgbSettings::applyValue called with key: " << key << " value: " << value;
     RgbService::applyValue(key, value);
+}
+
+bool GuiRgbSettings::hasRequiredSetting(std::string setting)
+{
+    return std::find(requiredSettings.begin(), requiredSettings.end(), setting) != requiredSettings.end();
 }

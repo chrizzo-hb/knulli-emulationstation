@@ -12,14 +12,14 @@ public:
     GuiRgbSettings(Window* window);
 
 private:
-
-    bool isH700;
-    bool isA133;
     
     std::shared_ptr<OptionListComponent<std::string>> createModeOptionList();
     std::shared_ptr<OptionListComponent<std::string>> createPaletteOptionList(const std::string& configKey, const std::string& title, const std::string& description);
     std::shared_ptr<OptionListComponent<std::string>> createBatteryIndicationOptionList(const std::string& configKey, const std::string& title, const std::string& description);
     void applyValue(const std::string& key, const std::string& value);
+    bool hasRequiredSetting(std::string setting);
+
+    std::vector<std::string> requiredSettings;
 
     std::shared_ptr<OptionListComponent<std::string>> optionListMode;
     std::shared_ptr<OptionListComponent<std::string>> optionListPalettePrimary;

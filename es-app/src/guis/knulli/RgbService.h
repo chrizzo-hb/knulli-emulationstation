@@ -18,6 +18,7 @@ class RgbService
 {
 public:
         static void reloadConfig();
+        static std::vector<std::string> requiredSettings();
         static std::vector<ModeInfo> getAvailableModes();
         static std::vector<PaletteInfo> getAvailablePalettes();
         static void applyValue(std::string key, std::string value);

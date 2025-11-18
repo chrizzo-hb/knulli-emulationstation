@@ -9,6 +9,7 @@
 #include "Log.h"
 
 const std::string API_BASE_PATH = "http://localhost:1235/";
+const std::string API_GET_SETTINGS = "get-settings";
 const std::string API_GET_MODES = "get-modes";
 const std::string API_GET_PALETTES = "get-palettes";
 const std::string API_RELOAD_CONFIG = "reload-config";
@@ -25,19 +26,37 @@ void RgbService::reloadConfig()
 	}
 }
 
+std::vector<std::string> RgbService::requiredSettings()
+{
+	std::vector<std::string> settings;
+
+	HttpReq* req = new HttpReq(API_BASE_PATH + API_GET_SETTINGS);
+	if (req->wait())
+	{
+		rapidjson::Document doc;
+		doc.Parse(req->getContent().c_str());
+		if (doc.HasParseError())
+			return settings;
+
+		if (doc.IsObject() == false)
+			return settings;
+
+		for (auto& member : doc.GetObject())
+		{
+			if (member.name.IsString())
+			{
+				settings.push_back(std::string(member.name.GetString()));
+			}
+		}
+	}
+
+	return settings;
+}
+
 std::vector<ModeInfo> RgbService::getAvailableModes()
 {
-
-	LOG(LogError) << "RgbService::getAvailableModes called.";
-
 	std::vector<ModeInfo> modes;
-
-	LOG(LogError) << "Creating HttpReq for get-modes.";
-
 	HttpReq* req = new HttpReq(API_BASE_PATH + API_GET_MODES);
-
-	LOG(LogError) << "Waiting for HttpReq to complete.";
-
 	if (req->wait())
 	{
 		rapidjson::Document doc;
@@ -71,9 +90,7 @@ std::vector<ModeInfo> RgbService::getAvailableModes()
 std::vector<PaletteInfo> RgbService::getAvailablePalettes()
 {
 	std::vector<PaletteInfo> palettes;
-
 	HttpReq* req = new HttpReq(API_BASE_PATH + API_GET_PALETTES);
-
 	if (req->wait())
 	{
 		rapidjson::Document doc;
@@ -108,7 +125,6 @@ void RgbService::applyValue(std::string key, std::string value)
 {
 	HttpReqOptions options;
 	options.dataToPost = key + " " + value;
-	
 	HttpReq* req = new HttpReq(API_BASE_PATH + API_SET_CONFIG, &options);
 
 	if (req->wait())
