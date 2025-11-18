@@ -69,9 +69,9 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
     sliderLowBatteryThreshold = createSlider(_("LOW BATTERY THRESHOLD"), 0.f, 30.f, 1.f, "%", _("Threshold for low battery indication."), hasRequiredSetting("battery.low.threshold"));
     setConfigValueForSlider(sliderLowBatteryThreshold, DEFAULT_LOW_BATTERY_THRESHOLD, "led.battery.low.threshold");
     sliderLowBatteryThreshold->setOnValueChanged([this](float value) { RgbService::applyValue("battery.low.threshold", std::to_string((int)value)); });
-    optionListBatteryLow = createBatteryIndicationOptionList("led.battery.low", "LOW BATTERY INDICATION", "Select the type of low battery indication.");
+    optionListBatteryLow = createBatteryIndicationOptionList("battery.low", "LOW BATTERY INDICATION", "Select the type of low battery indication.");
     optionListBatteryLow->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("battery.low", value); });
-    optionListBatteryCharging = createBatteryIndicationOptionList("led.battery.charging", "BATTERY CHARGING INDICATION", "Select the type of battery charging indication.");
+    optionListBatteryCharging = createBatteryIndicationOptionList("battery.charging", "BATTERY CHARGING INDICATION", "Select the type of battery charging indication.");
     optionListBatteryCharging->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("battery.charging", value); });
 
 
