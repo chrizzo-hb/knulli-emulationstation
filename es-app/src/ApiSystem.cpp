@@ -2216,7 +2216,7 @@ std::string ApiSystem::getRunningArchitecture()
 
 std::string ApiSystem::getRunningBoard()
 {
-	auto res = executeEnumerationScript("cat /boot/boot/batocera.board");
+	auto res = executeEnumerationScript("cat /boot/boot/knulli.board");
 	if (res.size() > 0)
 		return res[0];
 
