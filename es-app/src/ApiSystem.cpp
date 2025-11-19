@@ -834,7 +834,7 @@ std::string ApiSystem::getUpdateUrl()
 	if (!systemsetting.empty())
 		return systemsetting;
 
-	return "https://updates.batocera.org";
+	return "https://updates.knulli.org";
 }
 
 std::string ApiSystem::getThemesUrl()
