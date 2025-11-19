@@ -550,7 +550,7 @@ int main(int argc, char* argv[])
 
 	PowerSaver::init();
 
-	bool splashScreen = true; // Settings::getInstance()->getBool("SplashScreen");
+	bool splashScreen = Settings::getInstance()->getBool("SplashScreen");
 	bool splashScreenProgress = Settings::getInstance()->getBool("SplashScreenProgress");
 
 	LOG(LogError) << "Splash Screen: " << (splashScreen ? "Enabled" : "Disabled");
