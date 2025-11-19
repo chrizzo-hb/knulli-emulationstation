@@ -28,7 +28,7 @@ Paths::Paths()
 	mUserManualPath = mUserEmulationStationPath + "/notice.pdf";
 
 #if defined(WIN32) && defined(_DEBUG)
-	mSystemConfFilePath = mUserEmulationStationPath + "/batocera.conf";
+	mSystemConfFilePath = mUserEmulationStationPath + "/knulli.conf";
 #endif
 
 	loadCustomConfiguration(false); // Try to detect alternate paths ( Decorations, Shaders... ) without loading overrides
