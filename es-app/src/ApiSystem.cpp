@@ -209,7 +209,9 @@ std::string ApiSystem::getApplicationName()
 		return aboutInfo;
 	}
 
-#if BATOCERA
+#if KNULLI
+	return "KNULLI";
+#elif BATOCERA
 	return "BATOCERA";
 #else
 	return "EMULATIONSTATION";
@@ -832,7 +834,7 @@ std::string ApiSystem::getUpdateUrl()
 	if (!systemsetting.empty())
 		return systemsetting;
 
-	return "https://updates.batocera.org";
+	return "https://updates.knulli.org";
 }
 
 std::string ApiSystem::getThemesUrl()
@@ -2214,7 +2216,7 @@ std::string ApiSystem::getRunningArchitecture()
 
 std::string ApiSystem::getRunningBoard()
 {
-	auto res = executeEnumerationScript("cat /boot/boot/batocera.board");
+	auto res = executeEnumerationScript("cat /boot/boot/knulli.board");
 	if (res.size() > 0)
 		return res[0];
 
