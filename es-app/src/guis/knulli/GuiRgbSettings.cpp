@@ -59,8 +59,8 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
     switchPaletteSwapSecondary->setOnChangedCallback([this]() { RgbService::applyValue("palette.swap.secondary", switchPaletteSwapSecondary->getState() ? "1" : "0"); });
 
     // Stealth mode switch
-    switchStealthMode = createSwitch(_("STEALTH MODE"), "led.stealth", _("Shhh! Enables stealth mode for the LEDs."), false, false, hasRequiredSetting("stealth"));
-    switchStealthMode->setOnChangedCallback([this]() { RgbService::applyValue("stealth", switchStealthMode->getState() ? "1" : "0"); });
+    switchStealthMode = createSwitch(_("STEALTH MODE"), "led.palette.stealth", _("Shhh! Enables stealth mode for the LEDs."), false, false, hasRequiredSetting("palette.stealth"));
+    switchStealthMode->setOnChangedCallback([this]() { RgbService::applyValue("palette.stealth", switchStealthMode->getState() ? "1" : "0"); });
 
     // LED Brightness Slider
     sliderLedBrightness = createSlider(_("BRIGHTNESS"), 0.f, 10.f, 1.f, "", "", hasRequiredSetting("brightness"));
@@ -99,7 +99,7 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
         SystemConf::getInstance()->set("led.battery.charging", optionListBatteryCharging->getSelected());
         SystemConf::getInstance()->set("led.retroachievements", (switchRetroAchievements->getState() ? "1" : "0"));
         SystemConf::getInstance()->set("led.palette.swap", (switchPaletteSwap->getState() ? "1" : "0"));
-        SystemConf::getInstance()->set("led.stealth", (switchStealthMode->getState() ? "1" : "0"));
+        SystemConf::getInstance()->set("led.palette.stealth", (switchStealthMode->getState() ? "1" : "0"));
 		SystemConf::getInstance()->saveSystemConf();
 		Scripting::fireEvent(MENU_EVENT_NAME);
 
