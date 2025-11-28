@@ -22,7 +22,7 @@
 
 constexpr const char* DEFAULT_LED_MODE = "static";
 constexpr const char* DEFAULT_LED_PALETTE = "Knulli";
-constexpr const char* DEFAULT_BATTERY_MODE = "notification";
+constexpr const char* DEFAULT_BATTERY_MODE = "continuous";
 constexpr float DEFAULT_LOW_BATTERY_THRESHOLD = 20;
 constexpr float DEFAULT_BRIGHTNESS = 100;
 
@@ -119,7 +119,7 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createModeOpti
 
     if (availableModes.empty()) {
         LOG(LogWarning) << "No RGB modes available from RgbService, adding default options.";
-        optionsLedMode->add("None", "null", selectedLedMode == "null");
+        optionsLedMode->add(_("None"), "null", selectedLedMode == "null");
     }
     else
     {   
@@ -130,7 +130,7 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createModeOpti
 
         selectedLedMode = DEFAULT_LED_MODE;
         for (const auto& mode : availableModes) {
-            optionsLedMode->add(mode.name, mode.id, selectedLedMode == mode.id);
+            optionsLedMode->add(_(mode.name.c_str()), mode.id, selectedLedMode == mode.id);
             if (configuredLedMode == mode.id) {
                 selectedLedMode = configuredLedMode;
             }
@@ -174,9 +174,9 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createBatteryI
     if (selectedOption.empty() || (selectedOption != "off" && selectedOption != "notification" && selectedOption != "continuous"))
         selectedOption = DEFAULT_BATTERY_MODE;
 
-    optionsBatteryIndication->add("None", "off", selectedOption == "off");
-    optionsBatteryIndication->add("Notification", "notification", selectedOption == "notification");
-    optionsBatteryIndication->add("Continuous", "continuous", selectedOption == "continuous");
+    optionsBatteryIndication->add(_("None"), "off", selectedOption == "off");
+    optionsBatteryIndication->add(_("Notification"), "notification", selectedOption == "notification");
+    optionsBatteryIndication->add(_("Continuous"), "continuous", selectedOption == "continuous");
 
     if (hasRequiredSetting(setting) == true)
         addWithDescription(_(title.c_str()), _(description.c_str()), optionsBatteryIndication);
