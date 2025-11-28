@@ -125,7 +125,7 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createModeOpti
     {   
         std::string configuredLedMode = SystemConf::getInstance()->get("led.mode");
         if (configuredLedMode.empty()) {
-            selectedLedMode = DEFAULT_LED_MODE;
+            configuredLedMode = DEFAULT_LED_MODE;
         }
 
         selectedLedMode = DEFAULT_LED_MODE;
