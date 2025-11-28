@@ -114,19 +114,26 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createModeOpti
 {
     auto optionsLedMode = std::make_shared<OptionListComponent<std::string>>(mWindow, _("MODE"), false);
 
-    std::string selectedLedMode = SystemConf::getInstance()->get("led.mode");
+    std::string selectedLedMode = "null";
     std::vector<ModeInfo> availableModes = RgbService::getAvailableModes();
-    if (selectedLedMode.empty())
-        selectedLedMode = DEFAULT_LED_MODE;
 
     if (availableModes.empty()) {
         LOG(LogWarning) << "No RGB modes available from RgbService, adding default options.";
         optionsLedMode->add("None", "null", selectedLedMode == "null");
     }
     else
-    {
+    {   
+        std::string configuredLedMode = SystemConf::getInstance()->get("led.mode");
+        if (configuredLedMode.empty()) {
+            selectedLedMode = DEFAULT_LED_MODE;
+        }
+
+        selectedLedMode = DEFAULT_LED_MODE;
         for (const auto& mode : availableModes) {
             optionsLedMode->add(mode.name, mode.id, selectedLedMode == mode.id);
+            if (configuredLedMode == mode.id) {
+                selectedLedMode = configuredLedMode;
+            }
         }
     }
 
@@ -164,7 +171,7 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createBatteryI
 
     std::string configKey = "led." + setting;
     std::string selectedOption = SystemConf::getInstance()->get(configKey);
-    if (selectedOption.empty())
+    if (selectedOption.empty() || (selectedOption != "off" && selectedOption != "notification" && selectedOption != "continuous"))
         selectedOption = DEFAULT_BATTERY_MODE;
 
     optionsBatteryIndication->add("None", "off", selectedOption == "off");
