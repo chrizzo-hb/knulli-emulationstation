@@ -130,10 +130,13 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createModeOpti
 
         selectedLedMode = DEFAULT_LED_MODE;
         for (const auto& mode : availableModes) {
-            optionsLedMode->add(_(mode.name.c_str()), mode.id, selectedLedMode == mode.id);
             if (configuredLedMode == mode.id) {
                 selectedLedMode = configuredLedMode;
+                optionsLedMode->add(_(mode.name.c_str()), mode.id, true);
+            } else {
+                optionsLedMode->add(_(mode.name.c_str()), mode.id, false);
             }
+            
         }
     }
 
