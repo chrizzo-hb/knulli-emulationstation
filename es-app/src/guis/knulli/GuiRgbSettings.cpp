@@ -37,7 +37,7 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
         LOG(LogWarning) << "No required RGB settings available from RgbService, RGB settings menu will be empty.";
     }
     if ((hasRequiredSetting("mode") == true || hasRequiredSetting("palette") == true)
-            || hasRequiredSetting("palette.swap") || hasRequiredSetting("palette.swap.secondary")
+            || hasRequiredSetting("palette.invert") || hasRequiredSetting("palette.invert.secondary")
             || hasRequiredSetting("brightness") == true || hasRequiredSetting("brightness.adaptive") == true)
     {
         addGroup(_("REGULAR LED MODE AND COLOR"));
@@ -47,20 +47,20 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
     optionListMode = createModeOptionList();
     optionListMode->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("mode", value); });
 
-    optionListPalettePrimary = createPaletteOptionList("palette", "PRIMARY PALETTE", "Select the color palette.");
+    optionListPalettePrimary = createPaletteOptionList("palette", "COLOR PALETTE", "Select the color palette.");
     optionListPalettePrimary->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("palette", value); });
     
     // Swap colors switch
-    switchPaletteSwap = createSwitch(_("SWAP PALETTES"), "led.palette.swap", _("Swaps primary and secondary color of the color palette."), false, false, hasRequiredSetting("palette.swap"));
-    switchPaletteSwap->setOnChangedCallback([this]() { RgbService::applyValue("palette.swap", switchPaletteSwap->getState() ? "1" : "0"); });
+    switchPaletteInvert = createSwitch(_("INVERT COLORS"), "led.palette.invert", _("Inverts primary and secondary color of the color palette."), false, false, hasRequiredSetting("palette.invert"));
+    switchPaletteInvert->setOnChangedCallback([this]() { RgbService::applyValue("palette.invert", switchPaletteInvert->getState() ? "1" : "0"); });
 
     // Swap colors switch
-    switchPaletteSwapSecondary = createSwitch(_("SWAP PALETTES (SECONDARY)"), "led.palette.swap.secondary", _("Swaps primary and secondary color of the color palette on secondary LEDs."), false, false, hasRequiredSetting("palette.swap.secondary"));
-    switchPaletteSwapSecondary->setOnChangedCallback([this]() { RgbService::applyValue("palette.swap.secondary", switchPaletteSwapSecondary->getState() ? "1" : "0"); });
+    switchPaletteInvertSecondary = createSwitch(_("INVERT COLORS (SECONDARY)"), "led.palette.invert.secondary", _("Inverts primary and secondary color of the color palette on secondary LEDs."), false, false, hasRequiredSetting("palette.invert.secondary"));
+    switchPaletteInvertSecondary->setOnChangedCallback([this]() { RgbService::applyValue("palette.invert.secondary", switchPaletteInvertSecondary->getState() ? "1" : "0"); });
 
-    // Stealth mode switch
-    switchStealthMode = createSwitch(_("STEALTH MODE"), "led.palette.stealth", _("Shhh! Enables stealth mode for the LEDs."), false, false, hasRequiredSetting("palette.stealth"));
-    switchStealthMode->setOnChangedCallback([this]() { RgbService::applyValue("palette.stealth", switchStealthMode->getState() ? "1" : "0"); });
+    // Palette modification options
+    optionListPaletteMod = createPaletteModOptionList();
+    optionListPaletteMod->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("palette.mod", value); }); 
 
     // LED Brightness Slider
     sliderLedBrightness = createSlider(_("BRIGHTNESS"), 0.f, 10.f, 1.f, "", "", hasRequiredSetting("brightness"));
@@ -98,8 +98,9 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
         SystemConf::getInstance()->set("led.battery.low", optionListBatteryLow->getSelected());
         SystemConf::getInstance()->set("led.battery.charging", optionListBatteryCharging->getSelected());
         SystemConf::getInstance()->set("led.retroachievements", (switchRetroAchievements->getState() ? "1" : "0"));
-        SystemConf::getInstance()->set("led.palette.swap", (switchPaletteSwap->getState() ? "1" : "0"));
-        SystemConf::getInstance()->set("led.palette.stealth", (switchStealthMode->getState() ? "1" : "0"));
+        SystemConf::getInstance()->set("led.palette.invert", (switchPaletteInvert->getState() ? "1" : "0"));
+        SystemConf::getInstance()->set("led.palette.invert.secondary", (switchPaletteInvertSecondary->getState() ? "1" : "0"));
+        SystemConf::getInstance()->set("led.palette.mod", optionListPaletteMod->getSelected());
 		SystemConf::getInstance()->saveSystemConf();
 		Scripting::fireEvent(MENU_EVENT_NAME);
 
@@ -184,6 +185,24 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createBatteryI
     if (hasRequiredSetting(setting) == true)
         addWithDescription(_(title.c_str()), _(description.c_str()), optionsBatteryIndication);
     return optionsBatteryIndication;
+}
+
+std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createPaletteModOptionList()
+{
+    auto optionsPaletteMod = std::make_shared<OptionListComponent<std::string>>(mWindow, _("PALETTE MODIFICATION"), false);
+
+    std::string selectedPaletteMod = SystemConf::getInstance()->get("led.palette.mod");
+    if (selectedPaletteMod.empty())
+        selectedPaletteMod = "none";
+
+    optionsPaletteMod->add(_("None"), "none", selectedPaletteMod == "none");
+    optionsPaletteMod->add(_("Twilight"), "twilight", selectedPaletteMod == "twilight");
+    optionsPaletteMod->add(_("Sparkle"), "sparkle", selectedPaletteMod == "sparkle");
+    optionsPaletteMod->add(_("Haze"), "haze", selectedPaletteMod == "haze");
+
+    if (hasRequiredSetting("palette.mod") == true)
+        addWithDescription(_("PALETTE MOD"), _("Select a modification effect for the color palette."), optionsPaletteMod);
+    return optionsPaletteMod;
 }
 
 void GuiRgbSettings::applyValue(const std::string& key, const std::string& value)
