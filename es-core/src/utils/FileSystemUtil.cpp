@@ -1244,7 +1244,7 @@ namespace Utils
 		{
 			std::ifstream t(WINSTRINGW(fileName));
 
-			skipUtf8Bom(t);
+			// skipUtf8Bom(t);
 
 			std::stringstream buffer;
 			buffer << t.rdbuf();
