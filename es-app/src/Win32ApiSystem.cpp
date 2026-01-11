@@ -26,10 +26,10 @@
 #pragma comment(lib, "comsuppw.lib" ) // link with "comsuppw.lib" (or debug version: "comsuppwd.lib")
 #pragma comment(lib, "ws2_32.lib")
 
-#define VERSIONURL "https://github.com/fabricecaruso/batocera-emulationstation/releases/download/continuous-stable/version.info"
-#define UPDATEURL  "https://github.com/fabricecaruso/batocera-emulationstation/releases/download/continuous-stable/EmulationStation-Win32.zip"
+#define VERSIONURL "https://github.com/fabricecaruso/knulli-emulationstation/releases/download/continuous-stable/version.info"
+#define UPDATEURL  "https://github.com/fabricecaruso/knulli-emulationstation/releases/download/continuous-stable/EmulationStation-Win32.zip"
 
-#define LAUNCHERURL "https://github.com/fabricecaruso/batocera-ports/releases/download/continuous/batocera-ports.zip"
+#define LAUNCHERURL "https://github.com/fabricecaruso/knulli-ports/releases/download/continuous/knulli-ports.zip"
 
 Win32ApiSystem::Win32ApiSystem()
 {

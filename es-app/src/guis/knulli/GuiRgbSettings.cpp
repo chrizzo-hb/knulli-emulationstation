@@ -20,85 +20,92 @@
 
 #include "Log.h"
 
-const std::vector<std::string> RGB_BOARDS_H700 = {"rg40xx-h", "rg40xx-v", "rg-cubexx"};
-const std::vector<std::string> RGB_BOARDS_A133 = {"trimui-smart-pro", "trimui-brick"};
+constexpr const char* DEFAULT_LED_MODE = "static";
+constexpr const char* DEFAULT_LED_PALETTE = "Knulli";
+constexpr const char* DEFAULT_BATTERY_MODE = "continuous";
+constexpr float DEFAULT_LOW_BATTERY_THRESHOLD = 20;
+constexpr float DEFAULT_BRIGHTNESS = 100;
 
 constexpr const char* MENU_EVENT_NAME = "rgb-changed";
-
-constexpr char RGB_DELIMITER = ' ';
-constexpr const char* DEFAULT_LED_MODE = "1";
-constexpr float DEFAULT_COLOR_RED = 148;
-constexpr float DEFAULT_COLOR_GREEN = 255;
-constexpr float DEFAULT_COLOR_BLUE = 0;
-constexpr float DEFAULT_BRIGHTNESS = 100;
-constexpr float DEFAULT_SPEED = 15;
-constexpr float DEFAULT_LOW_BATTERY_THRESHOLD = 20;
 
 // Constructor creates a new GuiRgbSettings menu.
 GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RGB LED SETTINGS")
 {
+    requiredSettings = RgbService::requiredSettings();
 
-    // Temporary disable RgbService to be able to interact with the RGB LEDs directly
-    RgbService::stop();
-
-    // TODO: This should not be hard-coded, it should be read from a file or a service.
-    isH700 = BoardCheck::isBoard(RGB_BOARDS_H700);
-    isA133 = BoardCheck::isBoard(RGB_BOARDS_A133);
-
-    addGroup(_("REGULAR LED MODE AND COLOR"));
+    if (requiredSettings.empty()) {
+        LOG(LogWarning) << "No required RGB settings available from RgbService, RGB settings menu will be empty.";
+    }
+    if ((hasRequiredSetting("mode") == true || hasRequiredSetting("palette") == true)
+            || hasRequiredSetting("palette.invert") || hasRequiredSetting("palette.invert.secondary")
+            || hasRequiredSetting("brightness") == true || hasRequiredSetting("brightness.adaptive") == true)
+    {
+        addGroup(_("REGULAR LED MODE AND COLOR"));
+    }
 
     // LED Mode Options
     optionListMode = createModeOptionList();
+    optionListMode->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("mode", value); });
+
+    optionListPalettePrimary = createPaletteOptionList("palette", "COLOR PALETTE", "Select the color palette.");
+    optionListPalettePrimary->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("palette", value); });
+    
+    // Swap colors switch
+    switchPaletteInvert = createSwitch(_("INVERT COLORS"), "led.palette.invert", _("Inverts primary and secondary color of the color palette."), false, false, hasRequiredSetting("palette.invert"));
+    switchPaletteInvert->setOnChangedCallback([this]() { RgbService::applyValue("palette.invert", switchPaletteInvert->getState() ? "1" : "0"); });
+
+    // Swap colors switch
+    switchPaletteInvertSecondary = createSwitch(_("INVERT COLORS (SECONDARY)"), "led.palette.invert.secondary", _("Inverts primary and secondary color of the color palette on secondary LEDs."), false, false, hasRequiredSetting("palette.invert.secondary"));
+    switchPaletteInvertSecondary->setOnChangedCallback([this]() { RgbService::applyValue("palette.invert.secondary", switchPaletteInvertSecondary->getState() ? "1" : "0"); });
+
+    // Palette modification options
+    optionListPaletteMod = createPaletteModOptionList();
+    optionListPaletteMod->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("palette.mod", value); }); 
 
     // LED Brightness Slider
-    sliderLedBrightness = createSlider(_("BRIGHTNESS"), 0.f, 100.f, 5.f, "", "", (isH700 || isA133));    
+    sliderLedBrightness = createSlider(_("BRIGHTNESS"), 0.f, 10.f, 1.f, "", "", hasRequiredSetting("brightness"));
     setConfigValueForSlider(sliderLedBrightness, DEFAULT_BRIGHTNESS, "led.brightness");
+    sliderLedBrightness->setOnValueChanged([this](float value) { RgbService::applyValue("brightness", std::to_string((int)value)); });
 
     // Adaptive Brightness switch
-    switchAdaptiveBrightness = createSwitch(_("ADAPTIVE BRIGHTNESS"), "led.brightness.adaptive", _("Automatically adapts LED brightness to screen brightness (based on the brightness setting above)."), true, false, (isH700 || isA133));
+    switchAdaptiveBrightness = createSwitch(_("ADAPTIVE BRIGHTNESS"), "led.brightness.adaptive", _("Automatically adapts LED brightness to screen brightness (based on the brightness setting above)."), true, false, hasRequiredSetting("brightness.adaptive"));
+    switchAdaptiveBrightness->setOnChangedCallback([this]() { RgbService::applyValue("brightness.adaptive", switchAdaptiveBrightness->getState() ? "1" : "0"); });
 
-    // LED Speed Slider
-    sliderLedSpeed = createSlider(_("SPEED"), 1.f, 100.f, 5.f, "", _("Not applicable for all devices/modes. Warning: High speed may cause seizures for people with photosensitive epilepsy."), isH700);
-    setConfigValueForSlider(sliderLedSpeed, DEFAULT_SPEED, "led.speed");
-
-    // LED Colour Sliders
-    std::array<float, 3> rgbValues = getRgbValues();
-    sliderLedRed = createSlider(_("RED"), 0.f, 255.f, 10.f, "", "", (isH700 || isA133));
-    sliderLedRed->setValue(rgbValues[0]);
-    sliderLedGreen = createSlider(_("GREEN"), 0.f, 255.f, 10.f, "", "", (isH700 || isA133));
-    sliderLedGreen->setValue(rgbValues[1]);
-    sliderLedBlue = createSlider(_("BLUE"), 0.f, 255.f, 10.f, "", "", (isH700 || isA133));
-    sliderLedBlue->setValue(rgbValues[2]);
-    addEntry(_("RESTORE DEFAULT COLORS"), true, [this] { restoreDefaultColors(); });
-
-    addGroup(_("BATTERY CHARGE INDICATION"));
+    if (hasRequiredSetting("battery.low") == true || hasRequiredSetting("battery.charging") == true || hasRequiredSetting("battery.low.threshold") == true)
+        addGroup(_("BATTERY CHARGE INDICATION"));
 
     // Low battery threshold slider
-    sliderLowBatteryThreshold = createSlider(_("LOW BATTERY THRESHOLD"), 0.f, 100.f, 5.f, "%", _("Show yellow/red breathing when battery is below this threshold. Set to 0 to disable."), (isH700 || isA133));
-    setConfigValueForSlider(sliderLowBatteryThreshold, DEFAULT_LOW_BATTERY_THRESHOLD, "led.battery.low");
-    switchBatteryCharging = createSwitch(_("BATTERY CHARGING"), "led.battery.charging", _("Show green breathing while device is charging."), true, false, (isH700 || isA133));
+    sliderLowBatteryThreshold = createSlider(_("LOW BATTERY THRESHOLD"), 0.f, 30.f, 1.f, "%", _("Threshold for low battery indication."), hasRequiredSetting("battery.low.threshold"));
+    setConfigValueForSlider(sliderLowBatteryThreshold, DEFAULT_LOW_BATTERY_THRESHOLD, "led.battery.low.threshold");
+    sliderLowBatteryThreshold->setOnValueChanged([this](float value) { RgbService::applyValue("battery.low.threshold", std::to_string((int)value)); });
+    optionListBatteryLow = createBatteryIndicationOptionList("battery.low", "LOW BATTERY INDICATION", "Select the type of low battery indication.");
+    optionListBatteryLow->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("battery.low", value); });
+    optionListBatteryCharging = createBatteryIndicationOptionList("battery.charging", "BATTERY CHARGING INDICATION", "Select the type of battery charging indication.");
+    optionListBatteryCharging->setSelectedChangedCallback([this](std::string value) { RgbService::applyValue("battery.charging", value); });
 
 
-    addGroup(_("RETRO ACHIEVEMENT INDICATION"));
-    switchRetroAchievements = createSwitch(_("ACHIEVEMENT EFFECT"), "led.retroachievements", _("Honor your retro achievements with a LED effect."), true, false, (isH700 || isA133));
+    if (hasRequiredSetting("retroachievements") == true)
+        addGroup(_("RETRO ACHIEVEMENT INDICATION"));
+    switchRetroAchievements = createSwitch(_("ACHIEVEMENT EFFECT"), "led.retroachievements", _("Honor your retro achievements with a LED effect."), true, false, hasRequiredSetting("retroachievements"));
 
-    initializeOnChangeListeners();
-    applyValues();
     addSaveFunc([this] {
         // Read all variables from the respective UI elements and set the respective values in batocera.conf
         SystemConf::getInstance()->set("led.mode", optionListMode->getSelected());
+        SystemConf::getInstance()->set("led.palette", optionListPalettePrimary->getSelected());
         SystemConf::getInstance()->set("led.brightness", std::to_string((int) sliderLedBrightness->getValue()));
         SystemConf::getInstance()->set("led.brightness.adaptive", (switchAdaptiveBrightness->getState() ? "1" : "0"));
-        SystemConf::getInstance()->set("led.speed", std::to_string((int) sliderLedSpeed->getValue()));
-        setRgbValues(sliderLedRed->getValue(), sliderLedGreen->getValue(), sliderLedBlue->getValue());
-        SystemConf::getInstance()->set("led.battery.low", std::to_string((int) sliderLowBatteryThreshold->getValue()));
-        SystemConf::getInstance()->set("led.battery.charging", (switchBatteryCharging->getState() ? "1" : "0"));
+        SystemConf::getInstance()->set("led.battery.low.threshold", std::to_string((int) sliderLowBatteryThreshold->getValue()));
+        SystemConf::getInstance()->set("led.battery.low", optionListBatteryLow->getSelected());
+        SystemConf::getInstance()->set("led.battery.charging", optionListBatteryCharging->getSelected());
         SystemConf::getInstance()->set("led.retroachievements", (switchRetroAchievements->getState() ? "1" : "0"));
+        SystemConf::getInstance()->set("led.palette.invert", (switchPaletteInvert->getState() ? "1" : "0"));
+        SystemConf::getInstance()->set("led.palette.invert.secondary", (switchPaletteInvertSecondary->getState() ? "1" : "0"));
+        SystemConf::getInstance()->set("led.palette.mod", optionListPaletteMod->getSelected());
 		SystemConf::getInstance()->saveSystemConf();
 		Scripting::fireEvent(MENU_EVENT_NAME);
 
-        // Reactivate the RGB Service
-        RgbService::start();
+        // Force reloading settings for the RGB service
+        RgbService::reloadConfig();
     });
 
 }
@@ -108,102 +115,103 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createModeOpti
 {
     auto optionsLedMode = std::make_shared<OptionListComponent<std::string>>(mWindow, _("MODE"), false);
 
-    std::string selectedLedMode = SystemConf::getInstance()->get("led.mode");
-    if (selectedLedMode.empty())
-        selectedLedMode = DEFAULT_LED_MODE;
+    std::string selectedLedMode = "null";
+    std::vector<ModeInfo> availableModes = RgbService::getAvailableModes();
 
-    optionsLedMode->add(_("NONE"), "0", selectedLedMode == "0");
-    if (isH700 || isA133) {
-        optionsLedMode->add(_("STATIC"), "1", selectedLedMode == "1");
-    } else if (selectedLedMode == "1") {
-        selectedLedMode = DEFAULT_LED_MODE;
+    if (availableModes.empty()) {
+        LOG(LogWarning) << "No RGB modes available from RgbService, adding default options.";
+        optionsLedMode->add(_("None"), "null", selectedLedMode == "null");
     }
-    if (isH700) {
-        optionsLedMode->add(_("BREATHING (FAST)"), "2", selectedLedMode == "2");
-    } else if (selectedLedMode == "2") {
+    else
+    {   
+        std::string configuredLedMode = SystemConf::getInstance()->get("led.mode");
+        if (configuredLedMode.empty()) {
+            configuredLedMode = DEFAULT_LED_MODE;
+        }
+
         selectedLedMode = DEFAULT_LED_MODE;
-    }
-    if (isH700 || isA133) {
-        optionsLedMode->add(_("BREATHING (MEDIUM)"), "3", selectedLedMode == "3");
-    } else if (selectedLedMode == "3") {
-        selectedLedMode = DEFAULT_LED_MODE;
-    }
-    if (isH700) {
-        optionsLedMode->add(_("BREATHING (SLOW)"), "4", selectedLedMode == "4");
-    } else if (selectedLedMode == "4") {
-        selectedLedMode = DEFAULT_LED_MODE;
-    }
-    if (isH700 || isA133) {
-        optionsLedMode->add(_("SINGLE RAINBOW"), "5", selectedLedMode == "5");
-    } else if (selectedLedMode == "5") {
-        selectedLedMode = DEFAULT_LED_MODE;
-    }
-    if (isH700) {
-        optionsLedMode->add(_("MULTI RAINBOW"), "6", selectedLedMode == "6");
-    } else if (selectedLedMode == "6") {
-        selectedLedMode = DEFAULT_LED_MODE;
+        for (const auto& mode : availableModes) {
+            if (configuredLedMode == mode.id) {
+                selectedLedMode = configuredLedMode;
+                optionsLedMode->add(_(mode.name.c_str()), mode.id, true);
+            } else {
+                optionsLedMode->add(_(mode.name.c_str()), mode.id, false);
+            }
+            
+        }
     }
 
-    addWithDescription(_("MODE"), _("Set the default LED animation. (Not all of the settings below are applicable to every mode.)"), optionsLedMode);
+    if (hasRequiredSetting("mode") == true)
+        addWithDescription(_("MODE"), _("Set the default LED animation"), optionsLedMode);
     return optionsLedMode;
 }
 
-
-// Retrieves RGB value settings from batocera.conf as an array of floats
-std::array<float, 3> GuiRgbSettings::getRgbValues()
+std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createPaletteOptionList(const std::string& setting, const std::string& title, const std::string& description)
 {
-    std::string colour = SystemConf::getInstance()->get("led.colour");
-    if (colour.empty()) {
-        return {DEFAULT_COLOR_RED, DEFAULT_COLOR_GREEN, DEFAULT_COLOR_BLUE};
+    auto optionsLedPalette = std::make_shared<OptionListComponent<std::string>>(mWindow, _(title.c_str()), false);
+
+    std::string configKey = "led." + setting;
+    std::string selectedLedPalette = SystemConf::getInstance()->get(configKey);
+    std::vector<PaletteInfo> availablePalettes = RgbService::getAvailablePalettes();
+    if (selectedLedPalette.empty() && !availablePalettes.empty())
+        selectedLedPalette = DEFAULT_LED_PALETTE;
+
+    for (const auto& palette : availablePalettes) {
+        // XXX: Shorten the palette name by removing the color specification in parentheses
+        // e.g., "Cotton Candy (Pink, Sky Blue)" becomes "Cotton Candy", just because the
+        // overly long names cause misalignment in the GUI.
+        std::string shortenedName = palette.name.substr(0, palette.name.find(" ("));
+        optionsLedPalette->add(shortenedName, palette.id, selectedLedPalette == palette.id);
     }
 
-    std::vector<std::string> rgbValues;
-    std::stringstream stringStream(colour);
-    std::string item;
-
-    while (getline(stringStream, item, RGB_DELIMITER)) {
-        rgbValues.push_back(item);
-    }
-
-    int red = std::stoi(rgbValues[0]);
-    int green = std::stoi(rgbValues[1]);
-    int blue = std::stoi(rgbValues[2]);
-
-    return { static_cast<float>(red), static_cast<float>(green), static_cast<float>(blue) };
+    if (hasRequiredSetting(setting) == true)
+        addWithDescription(_(title.c_str()), _(description.c_str()), optionsLedPalette);
+    return optionsLedPalette;
 }
 
-// Concatenates the RGB values and stores them in batocera.conf.
-void GuiRgbSettings::setRgbValues(float red, float green, float blue)
+std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createBatteryIndicationOptionList(const std::string& setting, const std::string& title, const std::string& description)
 {
-    std::string colour = std::to_string((int) red) + RGB_DELIMITER + std::to_string((int) green) + RGB_DELIMITER + std::to_string((int) blue);
-    SystemConf::getInstance()->set("led.colour", colour);
+    auto optionsBatteryIndication = std::make_shared<OptionListComponent<std::string>>(mWindow, _(title.c_str()), false);
+
+    std::string configKey = "led." + setting;
+    std::string selectedOption = SystemConf::getInstance()->get(configKey);
+    if (selectedOption.empty() || (selectedOption != "off" && selectedOption != "notification" && selectedOption != "continuous"))
+        selectedOption = DEFAULT_BATTERY_MODE;
+
+    optionsBatteryIndication->add(_("None"), "off", selectedOption == "off");
+    optionsBatteryIndication->add(_("Notification"), "notification", selectedOption == "notification");
+    optionsBatteryIndication->add(_("Continuous"), "continuous", selectedOption == "continuous");
+
+    if (hasRequiredSetting(setting) == true)
+        addWithDescription(_(title.c_str()), _(description.c_str()), optionsBatteryIndication);
+    return optionsBatteryIndication;
 }
 
-void GuiRgbSettings::initializeOnChangeListeners()
+std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createPaletteModOptionList()
 {
-        optionListMode->setSelectedChangedCallback([this](std::string value) { applyValues(); });
-        sliderLedBrightness->setOnValueChanged([this](float value) { applyValues(); });
-        sliderLedSpeed->setOnValueChanged([this](float value) { applyValues(); });
-        sliderLedRed->setOnValueChanged([this](float value) { applyValues(); });
-        sliderLedGreen->setOnValueChanged([this](float value) { applyValues(); });
-        sliderLedBlue->setOnValueChanged([this](float value) { applyValues(); });
+    auto optionsPaletteMod = std::make_shared<OptionListComponent<std::string>>(mWindow, _("PALETTE MODIFICATION"), false);
+
+    std::string selectedPaletteMod = SystemConf::getInstance()->get("led.palette.mod");
+    if (selectedPaletteMod.empty())
+        selectedPaletteMod = "none";
+
+    optionsPaletteMod->add(_("None"), "none", selectedPaletteMod == "none");
+    optionsPaletteMod->add(_("Twilight"), "twilight", selectedPaletteMod == "twilight");
+    optionsPaletteMod->add(_("Sparkle"), "sparkle", selectedPaletteMod == "sparkle");
+    optionsPaletteMod->add(_("Haze"), "haze", selectedPaletteMod == "haze");
+
+    if (hasRequiredSetting("palette.mod") == true)
+        addWithDescription(_("PALETTE MOD"), _("Select a modification effect for the color palette."), optionsPaletteMod);
+    return optionsPaletteMod;
 }
 
-void GuiRgbSettings::applyValues()
+void GuiRgbSettings::applyValue(const std::string& key, const std::string& value)
 {
-    std::string selectedMode = optionListMode->getSelected();
-    int selectedBrightness = (int) sliderLedBrightness->getValue();
-    int selectedSpeed = (int) sliderLedSpeed->getValue();
-    int selectedRed = (int) sliderLedRed->getValue();
-    int selectedGreen = (int) sliderLedGreen->getValue();
-    int selectedBlue = (int) sliderLedBlue->getValue();
-    RgbService::setRgb(std::stoi(selectedMode), selectedBrightness, selectedSpeed, selectedRed, selectedGreen, selectedBlue);
+    LOG(LogError) << "GuiRgbSettings::applyValue called with key: " << key << " value: " << value;
+    RgbService::applyValue(key, value);
 }
 
-void GuiRgbSettings::restoreDefaultColors()
+bool GuiRgbSettings::hasRequiredSetting(std::string setting)
 {
-    sliderLedRed->setValue(DEFAULT_COLOR_RED);
-    sliderLedGreen->setValue(DEFAULT_COLOR_GREEN);
-    sliderLedBlue->setValue(DEFAULT_COLOR_BLUE);
-    applyValues();
+    return std::find(requiredSettings.begin(), requiredSettings.end(), setting) != requiredSettings.end();
 }
