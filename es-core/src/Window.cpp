@@ -1131,14 +1131,14 @@ void Window::renderAsyncNotifications(const Transform4x4f& trans)
 
 #define PADDING_H  (Renderer::getScreenWidth()*0.01)
 
-	float posY = Renderer::getScreenHeight() * 0.02f;
+	float posY = Renderer::getScreenHeight() * 0.02f + 100;
 
 	bool first = true;
 	for (auto child : mAsyncNotificationComponent)
 	{		
 		float posX = Renderer::getScreenWidth()*0.99f - child->getSize().x();
 
-		float offset = child->getSize().y() + PADDING_H + 100.0f;
+		float offset = child->getSize().y() + PADDING_H;
 
 		float fadingOut = child->getFading();
 		if (fadingOut != 0)
