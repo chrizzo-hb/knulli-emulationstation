@@ -1262,7 +1262,7 @@ void Window::onThemeChanged(const std::shared_ptr<ThemeData>& theme)
 	if (mBackgroundOverlay)
 		mBackgroundOverlay->setImage(ThemeData::getMenuTheme()->Background.fadePath);
 
-	auto elem = theme->getElement("screen", "notificationOffset", "stackpanel");
+	auto elem = theme->getElement("screen", "notificationOffset", "notificationOffset");
 	if (elem && elem->has("y"))
 		mNotificationOffsetY = elem->get<float>("y");
 	else
