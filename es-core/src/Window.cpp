@@ -1138,7 +1138,7 @@ void Window::renderAsyncNotifications(const Transform4x4f& trans)
 	{		
 		float posX = Renderer::getScreenWidth()*0.99f - child->getSize().x();
 
-		float offset = child->getSize().y() + PADDING_H;
+		float offset = child->getSize().y() + PADDING_H + 100.0f;
 
 		float fadingOut = child->getFading();
 		if (fadingOut != 0)
