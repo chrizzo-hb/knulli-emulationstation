@@ -208,8 +208,7 @@ std::map<std::string, std::map<std::string, ThemeData::ElementPropertyType>> The
 
 	{ "clock", {} }, // Inherits text
 
-	{ "offset", {
-		{ "x", FLOAT },
+	{ "notification", {
 		{ "y", FLOAT } } },
 
 	{ "networkIcon", {  // Inherits image
