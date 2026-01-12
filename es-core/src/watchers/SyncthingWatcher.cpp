@@ -6,7 +6,6 @@
 SyncthingWatcher::SyncthingWatcher(Window* window) : mWindow(window)
 	, mSyncthingUtil(SyncthingUtil::getInstance())
 {
-	// Do nothing
 }
 
 bool SyncthingWatcher::enabled()
@@ -34,11 +33,15 @@ bool SyncthingWatcher::check()
 			wndNotification = mWindow->createAsyncNotificationComponent();
 			wndNotification->updateTitle(GUIICON + _("SYNCTHING"));
 		}
+		
 		int currentTransferTransferredFiles = mCurrentTransferNeededFiles - (state.itemsTotal - state.itemsSynced);
-		std::string idx = std::to_string(currentTransferTransferredFiles) + "/" + std::to_string(mCurrentTransferNeededFiles);
-		int percentDone = currentTransferTransferredFiles * 100 / mCurrentTransferNeededFiles;
-		wndNotification->updateText(_("Transferring file") + " " + idx);
-		wndNotification->updatePercent(percentDone);
+		
+		if (mCurrentTransferNeededFiles > 0) {
+			std::string idx = std::to_string(currentTransferTransferredFiles) + "/" + std::to_string(mCurrentTransferNeededFiles);
+			int percentDone = (currentTransferTransferredFiles * 100) / mCurrentTransferNeededFiles;
+			wndNotification->updateText(_("Transferring file") + " " + idx);
+			wndNotification->updatePercent(percentDone);
+		}
 		return true;
 	} else {
 		if (wndNotification != nullptr)
@@ -46,14 +49,12 @@ bool SyncthingWatcher::check()
 			if (mCurrentTransferNeededFiles > 0) {
 				wndNotification->updateText(_("Synchronization complete."));
 				wndNotification->updatePercent(100);
+				mCurrentTransferNeededFiles = 0; 
 			} else {
 				wndNotification->close();
 				wndNotification = nullptr;
 			}
 		}
-		mCurrentTransferNeededFiles = 0;
 		return false;
 	}
-
-	return false;
 }
