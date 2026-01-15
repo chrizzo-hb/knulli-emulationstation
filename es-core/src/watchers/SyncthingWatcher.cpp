@@ -1,5 +1,6 @@
 #include "SyncthingWatcher.h"
 #include "LocaleES.h"
+#include "Log.h"
 
 #define GUIICON _U("\uF07C ")
 
@@ -27,8 +28,12 @@ bool SyncthingWatcher::check()
 	SyncthingState state = mSyncthingUtil.getState();
 	if (state.isSyncing())
 	{
+		mStateUpdateCounter++;
+
 		if (wndNotification == nullptr)
 		{
+			LOG(LogError) << "Syncthing: opened notification window at state itemsSynced=" << state.itemsSynced << " itemsTotal=" << state.itemsTotal << " transferSpeed=" << state.transferSpeed;
+			mStateUpdateCounter = 1;
 			mCurrentTransferNeededFiles = state.itemsTotal - state.itemsSynced;
 			wndNotification = mWindow->createAsyncNotificationComponent();
 			wndNotification->updateTitle(GUIICON + _("SYNCTHING"));
@@ -51,6 +56,7 @@ bool SyncthingWatcher::check()
 				wndNotification->updatePercent(100);
 				mCurrentTransferNeededFiles = 0; 
 			} else {
+				LOG(LogError) << "Syncthing: closed notification window after " << mStateUpdateCounter << " iterations.";
 				wndNotification->close();
 				wndNotification = nullptr;
 			}

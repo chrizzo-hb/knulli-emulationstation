@@ -24,4 +24,7 @@ private:
 	Window* mWindow;
 	AsyncNotificationComponent* wndNotification = nullptr;
 	int mCurrentTransferNeededFiles = 0;
+
+	int mStateUpdateCounter = 0;
+
 };
