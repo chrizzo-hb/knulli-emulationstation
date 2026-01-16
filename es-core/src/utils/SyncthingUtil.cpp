@@ -224,6 +224,15 @@ SyncthingState SyncthingUtil::getState() {
 		globalItems += device->globalItems;
 		needItems += device->needItems;
 		totalSpeed += device->transferSpeed;
+		if (device->needItems > 0) {
+			state.dirtyDevices.push_back(device->name);
+		} else {
+			// Remove device from dirty list if it has no more unsynced items
+			auto it = std::find(state.dirtyDevices.begin(), state.dirtyDevices.end(), device->name);
+			if (it != state.dirtyDevices.end()) {
+				state.dirtyDevices.erase(it);
+			}
+		}
 	}
 
 	int syncedItems = globalItems - needItems;

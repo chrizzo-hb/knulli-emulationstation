@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+#include <vector>
 #include "WatchersManager.h"
 #include "utils/Platform.h"
 #include "utils/SyncthingUtil.h"
@@ -23,6 +25,9 @@ private:
 	SyncthingUtil& mSyncthingUtil;
 	Window* mWindow;
 	AsyncNotificationComponent* wndNotification = nullptr;
+
+	std::vector<std::string> mDirtyDevices;
+
 	int mCurrentTransferNeededFiles = 0;
 
 	int mStateUpdateCounter = 0;

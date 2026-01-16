@@ -26,6 +26,26 @@ bool SyncthingWatcher::check()
 	}
 
 	SyncthingState state = mSyncthingUtil.getState();
+
+	std::vector<std::string> syncedDevices;
+
+	if (state.dirtyDevices.size() > 0) {
+		for (const auto& dev : mDirtyDevices) {
+			if (std::find(state.dirtyDevices.begin(), state.dirtyDevices.end(), dev) == state.dirtyDevices.end()) {
+				LOG(LogError) << "Syncthing: Device " << dev << " is no longer dirty.";
+				mDirtyDevices.erase(std::remove(mDirtyDevices.begin(), mDirtyDevices.end(), dev), mDirtyDevices.end());
+				syncedDevices.push_back(dev);
+			}
+		}
+		for (const auto& dev : state.dirtyDevices) {
+			if (std::find(mDirtyDevices.begin(), mDirtyDevices.end(), dev) == mDirtyDevices.end()) {
+				LOG(LogError) << "Syncthing: Device " << dev << " is now dirty.";
+				mDirtyDevices.push_back(dev);
+			}
+		}
+	}
+
+
 	if (state.isSyncing())
 	{
 		mStateUpdateCounter++;
@@ -52,7 +72,11 @@ bool SyncthingWatcher::check()
 		if (wndNotification != nullptr)
 		{
 			if (mCurrentTransferNeededFiles > 0) {
-				wndNotification->updateText(_("Synchronization complete."));
+				if (syncedDevices.size() == 0) {
+					wndNotification->updateText(_("Finished synchronization."));
+				} else {
+					wndNotification->updateText(_("Finished synchronization with") + " " + toSyncedDevicesNameString(syncedDevices) + ".");
+				}
 				wndNotification->updatePercent(100);
 				mCurrentTransferNeededFiles = 0; 
 			} else {
@@ -60,7 +84,25 @@ bool SyncthingWatcher::check()
 				wndNotification->close();
 				wndNotification = nullptr;
 			}
+		} else if (syncedDevices.size() > 0) {
+			wndNotification = mWindow->createAsyncNotificationComponent();
+			wndNotification->updateTitle(GUIICON + _("SYNCTHING"));
+			wndNotification->updateText(_("Finished synchronization with") + " " + toSyncedDevicesNameString(syncedDevices) + ".");
+			wndNotification->updatePercent(100);
 		}
-		return false;
 	}
+
+	return false;
+
+}
+
+std::string toSyncedDevicesNameString(const std::vector<std::string>& deviceNames) {
+	std::string result;
+	for (size_t i = 0; i < deviceNames.size(); i++) {
+		result += deviceNames[i];
+		if (i < deviceNames.size() - 1) {
+			result += ", ";
+		}
+	}
+	return result;
 }

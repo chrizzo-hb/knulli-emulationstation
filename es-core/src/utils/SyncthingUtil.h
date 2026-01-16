@@ -28,6 +28,7 @@ struct SyncthingState
 	int itemsSynced;
 	int itemsTotal;
 	int transferSpeed;
+	std::vector<std::string> dirtyDevices; // IDs of devices with unsynced changes
 
 	int isSyncing() {
 		return transferSpeed > 0;
