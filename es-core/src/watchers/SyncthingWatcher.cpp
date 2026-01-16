@@ -66,7 +66,7 @@ bool SyncthingWatcher::check() {
 				wndNotification = nullptr;
 			} else if (mCurrentTransferNeededFiles == 0) {
 				if (syncedDevices.size() == 0) {
-					wndNotification->updateText(_("Synchronization."));
+					wndNotification->updateText(_("Synchronization finished."));
 				} else {
 					wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(syncedDevices) + ".");
 				}
