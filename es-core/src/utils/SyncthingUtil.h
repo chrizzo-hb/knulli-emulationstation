@@ -11,6 +11,7 @@ struct Device {
 	int completion;
 	int needItems;
 	int globalItems;
+	int needBytes;
 	int bytesReceived;
 	int bytesSent;
 	int transferSpeed;
@@ -86,6 +87,7 @@ private:
 		.completion = 0,
 		.needItems = 0,
 		.globalItems = 0,
+		.needBytes = 0,
 		.bytesReceived = 0,
 		.bytesSent = 0,
 		.transferSpeed = 0
