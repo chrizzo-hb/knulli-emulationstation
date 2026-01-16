@@ -292,7 +292,7 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 		if (doc.HasParseError())
 			return deviceIds;
 
-		if (doc.isObject() == false)
+		if (doc.IsObject() == false)
 			return deviceIds;
 		if (doc.HasMember("total")) {
 			self.bytesReceived = doc["total"].GetObject()["inBytesTotal"].GetInt();
