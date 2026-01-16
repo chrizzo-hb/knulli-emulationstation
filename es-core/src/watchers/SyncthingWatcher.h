@@ -26,6 +26,7 @@ private:
 
 	std::vector<std::string> mDirtyDevices;
 
+	bool mkillNotificationInNextCycle = false;
 	int mCurrentTransferNeededFiles = 0;
 	int mTotalBytesTransferred = 0;
 

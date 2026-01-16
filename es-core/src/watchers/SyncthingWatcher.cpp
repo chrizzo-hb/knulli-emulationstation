@@ -53,22 +53,26 @@ bool SyncthingWatcher::check() {
 			int percentDone = (currentTransferTransferredFiles * 100) / mCurrentTransferNeededFiles;
 			wndNotification->updateText(_("Transferring file") + " " + idx);
 			wndNotification->updatePercent(percentDone);
+		} else {
+			wndNotification->updateText(_("Preparing synchronization..."));
+			wndNotification->updatePercent(0);
 		}
 	} else {
 		if (wndNotification != nullptr) {
 			// If we were just syncing, show the finished message
-			if (mCurrentTransferNeededFiles > 0) {
+			if (mkillNotificationInNextCycle) {
+				mkillNotificationInNextCycle = false;
+				wndNotification->close();
+				wndNotification = nullptr;
+			} else if (mCurrentTransferNeededFiles == 0) {
 				if (syncedDevices.size() == 0) {
-					wndNotification->updateText(_("Finished synchronization."));
+					wndNotification->updateText(_("Synchronization."));
 				} else {
 					wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(syncedDevices) + ".");
 				}
 				wndNotification->updatePercent(100);
 				mCurrentTransferNeededFiles = 0;
-			} else {
-				// Otherwise close the window after some time
-				wndNotification->close();
-				wndNotification = nullptr;
+				mkillNotificationInNextCycle = true;
 			}
 		} else if (mWindow != nullptr) {
 			int bytesTransferred = state.totalBytesTransferred - lastTotalBytesTransferred;
@@ -104,10 +108,10 @@ void SyncthingWatcher::createSyncedNotification(const std::vector<std::string>& 
 	if (mWindow == nullptr || wndNotification != nullptr) {
 		return;
 	}
-	if (deviceNames.size() == 0) {
-		createNotification(_("Finished synchronization."), 100);
-	} else {
+	if (deviceNames.size() > 0) {
 		createNotification(_("Synced with") + " " + toSyncedDevicesNameString(deviceNames) + ".", 100);
+	} else {
+		createNotification(_("Finished synchronization."), 100);
 	}
 }
 
