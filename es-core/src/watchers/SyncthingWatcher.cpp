@@ -13,6 +13,9 @@ bool SyncthingWatcher::enabled() {
 }
 
 bool SyncthingWatcher::check() {
+
+	int lastTotalBytesTransferred = mTotalBytesTransferred;
+
 	if (!SyncthingUtil::isEnabled() || !mSyncthingUtil.isConnected()) {
 		if (wndNotification != nullptr) {
 			wndNotification->close();
@@ -50,6 +53,7 @@ bool SyncthingWatcher::check() {
 			int percentDone = (currentTransferTransferredFiles * 100) / mCurrentTransferNeededFiles;
 			wndNotification->updateText(_("Transferring file") + " " + idx);
 			wndNotification->updatePercent(percentDone);
+			mTotalBytesTransferred = state.totalBytesTransferred;
 		}
 		return true;
 	} else {
@@ -59,10 +63,11 @@ bool SyncthingWatcher::check() {
 				if (syncedDevices.size() == 0) {
 					wndNotification->updateText(_("Finished synchronization."));
 				} else {
-					wndNotification->updateText(_("Synced") + " " + toSyncedDevicesNameString(syncedDevices) + ".");
+					wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(syncedDevices) + ".");
 				}
 				wndNotification->updatePercent(100);
-				mCurrentTransferNeededFiles = 0; 
+				mCurrentTransferNeededFiles = 0;
+				mTotalBytesTransferred = state.totalBytesTransferred;
 			} else {
 				// Otherwise close the window after some time
 				wndNotification->close();
@@ -76,10 +81,12 @@ bool SyncthingWatcher::check() {
 			// If no devices were syncing but bytes were transferred, show a brief notification
 			} else if (state.totalBytesTransferred > mTotalBytesTransferred) {
 				createSyncedNotification(cleanDevices);
+				mTotalBytesTransferred = state.totalBytesTransferred;
 			}
 		}
 	}
-	mTotalBytesTransferred = state.totalBytesTransferred;
+	if (lastTotalBytesTransferred != mTotalBytesTransferred)
+	Log(LogError) << "Syncthing: Total bytes transferred updated to " << mTotalBytesTransferred;
 	return false;
 }
 
@@ -101,7 +108,7 @@ void SyncthingWatcher::createSyncedNotification(const std::vector<std::string>& 
 	if (deviceNames.size() == 0) {
 		createNotification(_("Finished synchronization."), 100);
 	} else {
-		createNotification(_("Synced") + " " + toSyncedDevicesNameString(deviceNames) + ".", 100);
+		createNotification(_("Synced with") + " " + toSyncedDevicesNameString(deviceNames) + ".", 100);
 	}
 }
 
