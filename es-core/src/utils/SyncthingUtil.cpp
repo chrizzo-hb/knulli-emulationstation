@@ -156,7 +156,7 @@ void SyncthingUtil::scan(Window* window, std::string const* folderId) {
 
 	std::unique_ptr<HttpReq> req;
 
-	if(!folder) {
+	if(folder == nullptr) {
 		// Sync all folders
 		req.reset(new HttpReq("http://127.0.0.1:8384/rest/db/scan", &options));
 	} else {
@@ -206,7 +206,7 @@ SyncthingState SyncthingUtil::getState() {
 
 	for (auto& deviceId : getConnectedDeviceIds()) {
 		Device* device = getDeviceById(deviceId);
-		if (!device) continue;
+		if (device == nullptr) continue;
 		updateDevice(device);
 		if (device->paused) continue;
 		globalItems += device->globalItems;
@@ -303,7 +303,7 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 			if (member.name.IsString() == false || std::string(member.name.GetString()) == self.id)
 				continue;
 			Device* device = getDeviceById(member.name.GetString());
-			if (device->paused)	
+			if (device == nullptr ||device->paused)	
 				continue;
 			deviceIds.push_back(member.name.GetString());
 		}
@@ -326,7 +326,8 @@ void SyncthingUtil::updateDevice(Device* device) {
 		doc.Parse(req->getContent().c_str());
 		if (doc.HasParseError())
 			return;
-
+		if (doc.IsObject() == false)
+			return;
 		if (doc.GetObject().HasMember("completion") && doc.GetObject()["completion"].IsInt())
 			device->completion = doc.GetObject()["completion"].GetInt();
 		if (doc.GetObject().HasMember("needItems") && doc.GetObject()["needItems"].IsInt())

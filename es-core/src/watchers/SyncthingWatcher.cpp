@@ -44,7 +44,7 @@ bool SyncthingWatcher::check() {
 	if (state.isSyncing()) {
 		mStateUpdateCounter++;
 
-		if (wndNotification == nullptr) {
+		if (wndNotification == nullptr && mWindow != nullptr) {
 			LOG(LogError) << "Syncthing: opened notification window at state itemsSynced=" << state.itemsSynced << " itemsTotal=" << state.itemsTotal << " transferSpeed=" << state.transferSpeed;
 			mStateUpdateCounter = 1;
 			mCurrentTransferNeededFiles = state.itemsTotal - state.itemsSynced;
@@ -78,7 +78,7 @@ bool SyncthingWatcher::check() {
 				wndNotification->close();
 				wndNotification = nullptr;
 			}
-		} else if (syncedDevices.size() > 0) {
+		} else if (syncedDevices.size() > 0 && mWindow != nullptr) {
 			// If we weren't syncing but a device just finished, show finished message
 			wndNotification = mWindow->createAsyncNotificationComponent();
 			wndNotification->updateTitle(GUIICON + _("SYNCTHING"));
