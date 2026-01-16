@@ -61,9 +61,9 @@ bool SyncthingWatcher::check() {
 		if (wndNotification != nullptr) {
 			// If we were just syncing, show the finished message
 			if (mkillNotificationInNextCycle) {
-				mkillNotificationInNextCycle = false;
 				wndNotification->close();
 				wndNotification = nullptr;
+				mkillNotificationInNextCycle = false;
 			} else if (mCurrentTransferNeededFiles == 0) {
 				if (syncedDevices.size() == 0) {
 					wndNotification->updateText(_("Synchronization finished."));
@@ -113,6 +113,7 @@ void SyncthingWatcher::createSyncedNotification(const std::vector<std::string>& 
 	} else {
 		createNotification(_("Finished synchronization."), 100);
 	}
+	mkillNotificationInNextCycle = true;
 }
 
 void SyncthingWatcher::createNotification(const std::string& message, int percent) {
