@@ -32,4 +32,5 @@ private:
 
 	int mStateUpdateCounter = 0;
 
+	std::string toSyncedDevicesNameString();
 };
