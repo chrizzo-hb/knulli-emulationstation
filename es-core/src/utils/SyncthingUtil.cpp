@@ -327,6 +327,7 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 				device->bytesReceived = member.value["inBytesTotal"].GetInt();
 			if (member.value.HasMember("outBytesTotal") == true && member.value["outBytesTotal"].IsInt())
 				device->bytesSent = member.value["outBytesTotal"].GetInt();
+			LOG(LogDebug) << "Syncthing: Device " << device->name << " - connected=" << device->connected << " paused=" << device->paused << " bytesReceived=" << device->bytesReceived << " bytesSent=" << device->bytesSent;
 			if (!device->connected || device->paused)
 				continue;
 			deviceIds.push_back(member.name.GetString());
