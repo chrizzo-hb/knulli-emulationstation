@@ -14,15 +14,15 @@ bool SyncthingWatcher::enabled() {
 
 bool SyncthingWatcher::check() {
 
-	int lastTotalBytesTransferred = mTotalBytesTransferred;
-
 	if (!SyncthingUtil::isEnabled() || !mSyncthingUtil.isConnected()) {
 		if (wndNotification != nullptr) {
 			wndNotification->close();
 			wndNotification = nullptr;
 		}
-		return false;
+		return true;
 	}
+
+	int lastTotalBytesTransferred = mTotalBytesTransferred;
 
 	SyncthingState state = mSyncthingUtil.getState();
 	std::vector<std::string> syncedDevices;
@@ -54,7 +54,6 @@ bool SyncthingWatcher::check() {
 			wndNotification->updateText(_("Transferring file") + " " + idx);
 			wndNotification->updatePercent(percentDone);
 		}
-		return true;
 	} else {
 		if (wndNotification != nullptr) {
 			// If we were just syncing, show the finished message
@@ -86,7 +85,7 @@ bool SyncthingWatcher::check() {
 	if (lastTotalBytesTransferred != mTotalBytesTransferred) {
 		LOG(LogError) << "Syncthing: Total bytes transferred updated to " << mTotalBytesTransferred;
 	}
-	return false;
+	return true;
 }
 
 std::string SyncthingWatcher::toSyncedDevicesNameString(const std::vector<std::string>& deviceNames) {
