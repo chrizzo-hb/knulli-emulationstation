@@ -40,31 +40,21 @@ bool SyncthingWatcher::check() {
 			cleanDevices.push_back(dev);
 		}
 	}
-	if (mDirtyDevices.size() > 0 || state.isSyncing()) {
-		if (wndNotification == nullptr && mWindow != nullptr) {
-			LOG(LogError) << "Syncthing: opened notification window at state itemsSynced=" << state.itemsSynced << " itemsTotal=" << state.itemsTotal << " transferSpeed=" << state.transferSpeed;
-			mCurrentTransferNeededFiles = state.itemsTotal - state.itemsSynced;
-			wndNotification = mWindow->createAsyncNotificationComponent();
-			wndNotification->updateTitle(GUIICON + _("SYNCTHING"));
-		}		
-		int currentTransferTransferredFiles = mCurrentTransferNeededFiles - (state.itemsTotal - state.itemsSynced);		
-		if (mCurrentTransferNeededFiles > 0) {
-			std::string idx = std::to_string(currentTransferTransferredFiles) + "/" + std::to_string(mCurrentTransferNeededFiles);
-			int percentDone = (currentTransferTransferredFiles * 100) / mCurrentTransferNeededFiles;
-			wndNotification->updateText(_("Transferring file") + " " + idx);
-			wndNotification->updatePercent(percentDone);
-		} else {
-			wndNotification->updateText(_("Preparing synchronization..."));
-			wndNotification->updatePercent(0);
-		}
-	} else {
-		if (wndNotification != nullptr) {
-			// If we were just syncing, show the finished message
+
+	int transferredBytesSinceLastCheck = state.totalBytesTransferred - mTotalBytesTransferred;
+
+
+	// If nothing is syncing and no devices are dirty, and no bytes have been transferred since last check, close notification
+	if (!state.isSyncing() && mDirtyDevices.size() == 0 && transferredBytesSinceLastCheck == 0) {
+		if (wndNotification != nullptr)
+		{
+			// If previous cycle already showed finished message, close notification
 			if (mkillNotificationInNextCycle) {
 				wndNotification->close();
 				wndNotification = nullptr;
 				mkillNotificationInNextCycle = false;
-			} else if (mCurrentTransferNeededFiles == 0) {
+			// Show finished message
+			} else {
 				if (syncedDevices.size() == 0) {
 					wndNotification->updateText(_("Synchronization finished."));
 				} else {
@@ -74,19 +64,56 @@ bool SyncthingWatcher::check() {
 				mCurrentTransferNeededFiles = 0;
 				mkillNotificationInNextCycle = true;
 			}
-		} else if (mWindow != nullptr) {
-			int bytesTransferred = state.totalBytesTransferred - lastTotalBytesTransferred;
-			// If we didn't catch the syncing but at least one device has finished, show finished message
-			if (syncedDevices.size() > 0) {
-				createSyncedNotification(syncedDevices);
-			// If we didn't catch the syncing but more than 128 bytes have been transferred
-			// (because there's noise), show generic finished message
-			} else if (bytesTransferred > 128) {
-				createSyncedNotification(cleanDevices);
+		}
+		return true;
+	} else {
+		// Start new syncing notification
+		LOG(LogError) << "Syncthing: Starting new syncing notification at state itemsSynced=" << state.itemsSynced << " itemsTotal=" << state.itemsTotal << " transferSpeed=" << state.transferSpeed << " transferredBytesSinceLastCheck=" << transferredBytesSinceLastCheck << " dirtyDevices=" << mDirtyDevices.size();
+		
+		// Calculate number of files to be transferred
+		mCurrentTransferNeededFiles = state.itemsTotal - state.itemsSynced;
+
+		// Create notification window if not existing yet
+		if (wndNotification == nullptr) {
+			if (mWindow != nullptr) {
+				wndNotification = mWindow->createAsyncNotificationComponent();
+				wndNotification->updateTitle(GUIICON + _("SYNCTHING"));
+			} else {
+				LOG(LogError) << "Syncthing: Cannot create syncing notification window because Window is null.";
+				return false;
 			}
 		}
+		// If we know how many files need to be transferred, show progress
+		if (mCurrentTransferNeededFiles > 0) {
+			int currentTransferTransferredFiles = mCurrentTransferNeededFiles - (state.itemsTotal - state.itemsSynced);
+			std::string idx = std::to_string(currentTransferTransferredFiles) + "/" + std::to_string(mCurrentTransferNeededFiles);
+			int percentDone = (currentTransferTransferredFiles * 100) / mCurrentTransferNeededFiles;
+			wndNotification->updateText(_("Transferring file") + " " + idx);
+			wndNotification->updatePercent(percentDone);
+			return true;
+		// If we know which devices are dirty, but not how many files need to be transferred, list dirty devices
+		} else if (mDirtyDevices.size() > 0) {
+			wndNotification->updateText(_("Syncing with") + " " + toSyncedDevicesNameString(mDirtyDevices) + ".");
+			wndNotification->updatePercent(0);
+			return true;
+		// If we don't know which devices are dirty, but bytes have been transferred since last check, show generic syncing message
+		} else if (state.isSyncing()) {
+			wndNotification->updateText(_("Transfer in progress."));
+			wndNotification->updatePercent(0);
+			return true;
+		// If no devices are dirty and no transfer is in progress, but at least one device has finished syncing
+		} else if (syncedDevices.size() > 0) {
+			wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(syncedDevices) + ".");
+			wndNotification->updatePercent(100);
+			return true;
+		// If no devices are dirty and no transfer is in progress, but more than 128 bytes have been transferred since last check
+		} else if (transferredBytesSinceLastCheck > 128) {
+			wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(cleanDevices) + ".");
+			wndNotification->updatePercent(100);
+			return true;
+		}
+
 	}
-	
 	mTotalBytesTransferred = state.totalBytesTransferred;
 	if (lastTotalBytesTransferred != mTotalBytesTransferred) {
 		LOG(LogError) << "Syncthing: Total bytes transferred updated to " << mTotalBytesTransferred;
