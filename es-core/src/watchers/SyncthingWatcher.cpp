@@ -60,7 +60,7 @@ bool SyncthingWatcher::check() {
 				if (syncedDevices.size() == 0) {
 					wndNotification->updateText(_("Finished synchronization."));
 				} else {
-					wndNotification->updateText(_("Finished synchronization with") + " " + toSyncedDevicesNameString(syncedDevices) + ".");
+					wndNotification->updateText(_("Synced") + " " + toSyncedDevicesNameString(syncedDevices) + ".");
 				}
 				wndNotification->updatePercent(100);
 				mCurrentTransferNeededFiles = 0; 
@@ -74,7 +74,7 @@ bool SyncthingWatcher::check() {
 			// If we weren't syncing but a device just finished, show finished message
 			wndNotification = mWindow->createAsyncNotificationComponent();
 			wndNotification->updateTitle(GUIICON + _("SYNCTHING"));
-			wndNotification->updateText(_("Finished synchronization with") + " " + toSyncedDevicesNameString(syncedDevices) + ".");
+			wndNotification->updateText(_("Synced") + " " + toSyncedDevicesNameString(syncedDevices) + ".");
 			wndNotification->updatePercent(100);
 		}
 	}
