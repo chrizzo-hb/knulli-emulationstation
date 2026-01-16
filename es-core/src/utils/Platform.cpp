@@ -389,26 +389,20 @@ namespace Utils
 	if (Utils::FileSystem::exists(pctPath)) {
 		std::string s = Utils::FileSystem::readAllText(pctPath);
 
-		LOG(LogError) << "Read battery percent from " << pctPath << ": '" << s << "'";
-
 		// Strip all trailing whitespaces
 		while (!s.empty() && std::isspace(static_cast<unsigned char>(s.back()))) {
 			s.pop_back();
 		}
-
-		LOG(LogError) << "Read battery percent from " << pctPath << " after trimming: '" << s << "'";
 
 		bool isPercentValid = false;
 		int val = 0;
 
 		if (!s.empty() &&
 			std::all_of(s.begin(), s.end(), [](unsigned char c) {
-				LOG(LogError) << "  Checking char '" << c << "' for isdigit -> " << std::isdigit(c);
 				return std::isdigit(c);
 			}))
 		{
 			int parsed = Utils::String::toInteger(s);
-			LOG(LogError) << "Parsed battery percent: " << parsed;
 			if (parsed >= 0 && parsed <= 100) {
 				val = parsed;
 				isPercentValid = true;
@@ -416,7 +410,6 @@ namespace Utils
 		}
 
 		if (isPercentValid) {
-			LOG(LogError) << "Using valid battery percent from " << pctPath << ": " << val;
 			s_lastPercent = val;
 		}
 
