@@ -106,14 +106,17 @@ bool SyncthingWatcher::check() {
 		} else if (syncedDevices.size() > 0) {
 			wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(syncedDevices) + ".");
 			wndNotification->updatePercent(100);
+			mkillNotificationInNextCycle = true;
 		// If no devices are dirty and no transfer is in progress, but more than 128 bytes have been transferred since last check
 		} else if (transferredBytesSinceLastCheck > 128) {
 			wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(cleanDevices) + ".");
 			wndNotification->updatePercent(100);
+			mkillNotificationInNextCycle = true;
 		} else if (transferredBytesSinceLastCheck == 0 && (mCurrentTransferNeededFiles > 0 || mDirtyDevices.size() > 0)) {
 			// No bytes transferred since last check, but there are still files to transfer or dirty devices
 			wndNotification->updateText(_("All devices are disconnected."));
 			wndNotification->updatePercent(0);
+			mkillNotificationInNextCycle = true;
 		}
 
 	}
