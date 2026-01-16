@@ -31,6 +31,4 @@ private:
 	int mTotalBytesTransferred = 0;
 
 	std::string toSyncedDevicesNameString(const std::vector<std::string>& deviceNames);
-	void createSyncedNotification(const std::vector<std::string>& deviceNames);
-	void createNotification(const std::string& message, int percent);
 };

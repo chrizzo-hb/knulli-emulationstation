@@ -138,25 +138,3 @@ std::string SyncthingWatcher::toSyncedDevicesNameString(const std::vector<std::s
 	}
 	return result;
 }
-
-void SyncthingWatcher::createSyncedNotification(const std::vector<std::string>& deviceNames) {
-	if (mWindow == nullptr || wndNotification != nullptr) {
-		return;
-	}
-	if (deviceNames.size() > 0) {
-		createNotification(_("Synced with") + " " + toSyncedDevicesNameString(deviceNames) + ".", 100);
-	} else {
-		createNotification(_("Finished synchronization."), 100);
-	}
-	mkillNotificationInNextCycle = true;
-}
-
-void SyncthingWatcher::createNotification(const std::string& message, int percent) {
-	if (mWindow == nullptr || wndNotification != nullptr) {
-		return;
-	}
-	wndNotification = mWindow->createAsyncNotificationComponent();
-	wndNotification->updateTitle(GUIICON + _("SYNCTHING"));
-	wndNotification->updateText(message);
-	wndNotification->updatePercent(percent);
-}
