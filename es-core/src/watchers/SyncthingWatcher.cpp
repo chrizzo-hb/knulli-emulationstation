@@ -23,7 +23,6 @@ bool SyncthingWatcher::check() {
 
 	SyncthingState state = mSyncthingUtil.getState();
 	std::vector<std::string> syncedDevices;
-
 	// Check if any devices have become dirty or are no longer dirty
 	for (const auto& dev : mDirtyDevices) {
 		if (std::find(state.dirtyDevices.begin(), state.dirtyDevices.end(), dev) == state.dirtyDevices.end()) {
@@ -32,20 +31,20 @@ bool SyncthingWatcher::check() {
 		}
 	}
 	mDirtyDevices = state.dirtyDevices;
-
+	std::vector<std::string> cleanDevices;
+	for (const auto& dev : state.connectedDevices) {
+		if (std::find(state.dirtyDevices.begin(), state.dirtyDevices.end(), dev) == state.dirtyDevices.end()) {
+			cleanDevices.push_back(dev);
+		}
+	}
 	if (state.isSyncing()) {
-		mStateUpdateCounter++;
-
 		if (wndNotification == nullptr && mWindow != nullptr) {
 			LOG(LogError) << "Syncthing: opened notification window at state itemsSynced=" << state.itemsSynced << " itemsTotal=" << state.itemsTotal << " transferSpeed=" << state.transferSpeed;
-			mStateUpdateCounter = 1;
 			mCurrentTransferNeededFiles = state.itemsTotal - state.itemsSynced;
 			wndNotification = mWindow->createAsyncNotificationComponent();
 			wndNotification->updateTitle(GUIICON + _("SYNCTHING"));
-		}
-		
-		int currentTransferTransferredFiles = mCurrentTransferNeededFiles - (state.itemsTotal - state.itemsSynced);
-		
+		}		
+		int currentTransferTransferredFiles = mCurrentTransferNeededFiles - (state.itemsTotal - state.itemsSynced);		
 		if (mCurrentTransferNeededFiles > 0) {
 			std::string idx = std::to_string(currentTransferTransferredFiles) + "/" + std::to_string(mCurrentTransferNeededFiles);
 			int percentDone = (currentTransferTransferredFiles * 100) / mCurrentTransferNeededFiles;
@@ -66,19 +65,21 @@ bool SyncthingWatcher::check() {
 				mCurrentTransferNeededFiles = 0; 
 			} else {
 				// Otherwise close the window after some time
-				LOG(LogError) << "Syncthing: closed notification window after " << mStateUpdateCounter << " iterations.";
 				wndNotification->close();
 				wndNotification = nullptr;
 			}
-		} else if (syncedDevices.size() > 0 && mWindow != nullptr) {
-			// If we weren't syncing but a device just finished, show finished message
-			wndNotification = mWindow->createAsyncNotificationComponent();
-			wndNotification->updateTitle(GUIICON + _("SYNCTHING"));
-			wndNotification->updateText(_("Synced") + " " + toSyncedDevicesNameString(syncedDevices) + ".");
-			wndNotification->updatePercent(100);
+		} else if (mWindow != nullptr) {
+
+			// If we didn't catch the syncing but at least one device has finished, show finished message
+			if (syncedDevices.size() > 0) {
+				createSyncedNotification(syncedDevices);
+			// If no devices were syncing but bytes were transferred, show a brief notification
+			} else if (state.totalBytesTransferred > mTotalBytesTransferred) {
+				createSyncedNotification(cleanDevices);
+			}
 		}
 	}
-
+	mTotalBytesTransferred = state.totalBytesTransferred;
 	return false;
 }
 
@@ -91,4 +92,25 @@ std::string SyncthingWatcher::toSyncedDevicesNameString(const std::vector<std::s
 		}
 	}
 	return result;
+}
+
+void SyncthingWatcher::createSyncedNotification(const std::vector<std::string>& deviceNames) {
+	if (mWindow == nullptr || wndNotification != nullptr) {
+		return;
+	}
+	if (deviceNames.size() == 0) {
+		createNotification(_("Finished synchronization."), 100);
+	} else {
+		createNotification(_("Synced") + " " + toSyncedDevicesNameString(deviceNames) + ".", 100);
+	}
+}
+
+void SyncthingWatcher::createNotification(const std::string& message, int percent) {
+	if (mWindow == nullptr || wndNotification != nullptr) {
+		return;
+	}
+	wndNotification = mWindow->createAsyncNotificationComponent();
+	wndNotification->updateTitle(GUIICON + _("SYNCTHING"));
+	wndNotification->updateText(message);
+	wndNotification->updatePercent(percent);
 }

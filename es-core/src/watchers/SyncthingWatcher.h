@@ -27,8 +27,9 @@ private:
 	std::vector<std::string> mDirtyDevices;
 
 	int mCurrentTransferNeededFiles = 0;
-
-	int mStateUpdateCounter = 0;
+	int mTotalBytesTransferred = 0;
 
 	std::string toSyncedDevicesNameString(const std::vector<std::string>& deviceNames);
+	void createSyncedNotification(const std::vector<std::string>& deviceNames);
+	void createNotification(const std::string& message, int percent);
 };

@@ -7,10 +7,12 @@ struct Device {
 	std::string id;
 	std::string name;
 	bool paused;
+	bool connected;
 	int completion;
 	int needItems;
 	int globalItems;
-	int needBytes;
+	int bytesReceived;
+	int bytesSent;
 	int transferSpeed;
 };
 
@@ -25,6 +27,8 @@ struct SyncthingState {
 	int itemsSynced;
 	int itemsTotal;
 	int transferSpeed;
+	int totalBytesTransferred;
+	std::vector<std::string> connectedDevices;
 	std::vector<std::string> dirtyDevices; // IDs of devices with unsynced changes
 
 	int isSyncing() {
@@ -78,16 +82,18 @@ private:
 		.id = "self",
 		.name = "self",
 		.paused = false,
+		.connected = false,
 		.completion = 0,
 		.needItems = 0,
 		.globalItems = 0,
-		.needBytes = 0,
+		.bytesReceived = 0,
+		.bytesSent = 0,
 		.transferSpeed = 0
 	};
 
 	std::string getMyId();
 	std::vector<std::string> getConnectedDeviceIds();
-	void updateDevice(Device* device);
+	void updateDeviceCompletion(Device* device);
 	Device *getDeviceById(const std::string& deviceId);
 	Folder *getFolderById(const std::string& folderId);
 };

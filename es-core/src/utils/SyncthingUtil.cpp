@@ -198,20 +198,25 @@ SyncthingState SyncthingUtil::getState() {
 	int globalItems = 0;
 	int needItems = 0;
 	int totalSpeed = 0;
+	int totalBytesTransferred = 0;
 
-	updateDevice(&self);
+	updateDeviceCompletion(&self);
 	globalItems += self.globalItems;
 	needItems += self.needItems;
 	totalSpeed += self.transferSpeed;
 
+	state.connectedDevices.clear();
+
 	for (auto& deviceId : getConnectedDeviceIds()) {
 		Device* device = getDeviceById(deviceId);
 		if (device == nullptr) continue;
-		updateDevice(device);
-		if (device->paused) continue;
+		updateDeviceCompletion(device);
+		if (!device->connected || device->paused) continue;
+		state.connectedDevices.push_back(device->name);
 		globalItems += device->globalItems;
 		needItems += device->needItems;
 		totalSpeed += device->transferSpeed;
+		totalBytesTransferred += device->bytesReceived + device->bytesSent;
 		if (device->needItems > 0) {
 			state.dirtyDevices.push_back(device->name);
 		} else {
@@ -238,6 +243,7 @@ SyncthingState SyncthingUtil::getState() {
 	state.itemsSynced = syncedItems;
 	state.itemsTotal = globalItems;
 	state.transferSpeed = totalSpeed;
+	state.totalBytesTransferred = totalBytesTransferred;
 	return state;
 }
 
@@ -303,7 +309,25 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 			if (member.name.IsString() == false || std::string(member.name.GetString()) == self.id)
 				continue;
 			Device* device = getDeviceById(member.name.GetString());
-			if (device == nullptr || device->paused)	
+			
+			// Handle unknown device TODO: Create new device instead of skipping?
+			if (device == nullptr)
+				continue;
+
+			// Skip invalid entires
+			if (member.value.IsObject() == false)
+				continue;
+
+			// Update device metadata
+			if (member.value.HasMember("paused") == true)
+				device->paused = member.value["paused"].GetBool();
+			if (member.value.HasMember("connected") == true)
+				device->connected = member.value["connected"].GetBool();
+			if (member.value.HasMember("inBytesTotal") == true && member.value["inBytesTotal"].IsInt())
+				device->bytesReceived = member.value["inBytesTotal"].GetInt();
+			if (member.value.HasMember("outBytesTotal") == true && member.value["outBytesTotal"].IsInt())
+				device->bytesSent = member.value["outBytesTotal"].GetInt();
+			if (!device->connected || device->paused)
 				continue;
 			deviceIds.push_back(member.name.GetString());
 		}
@@ -313,7 +337,7 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 }
 
 // Updates the status of a specific device by querying the syncthing API.
-void SyncthingUtil::updateDevice(Device* device) {
+void SyncthingUtil::updateDeviceCompletion(Device* device) {
 	if (!device) return;
 
 	HttpReqOptions options;
