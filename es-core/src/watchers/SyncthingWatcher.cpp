@@ -86,7 +86,7 @@ bool SyncthingWatcher::check() {
 		}
 	}
 	if (lastTotalBytesTransferred != mTotalBytesTransferred)
-	Log(LogError) << "Syncthing: Total bytes transferred updated to " << mTotalBytesTransferred;
+	LOG(LogError) << "Syncthing: Total bytes transferred updated to " << mTotalBytesTransferred;
 	return false;
 }
 
