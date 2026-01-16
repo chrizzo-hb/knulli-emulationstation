@@ -40,7 +40,7 @@ bool SyncthingWatcher::check() {
 			cleanDevices.push_back(dev);
 		}
 	}
-	if (state.isSyncing()) {
+	if (mDirtyDevices.size() > 0 && state.isSyncing()) {
 		if (wndNotification == nullptr && mWindow != nullptr) {
 			LOG(LogError) << "Syncthing: opened notification window at state itemsSynced=" << state.itemsSynced << " itemsTotal=" << state.itemsTotal << " transferSpeed=" << state.transferSpeed;
 			mCurrentTransferNeededFiles = state.itemsTotal - state.itemsSynced;
