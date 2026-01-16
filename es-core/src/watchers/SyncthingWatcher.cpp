@@ -27,7 +27,7 @@ bool SyncthingWatcher::check() {
 	// Check if any devices have become dirty or are no longer dirty
 	for (const auto& dev : mDirtyDevices) {
 		if (std::find(state.dirtyDevices.begin(), state.dirtyDevices.end(), dev) == state.dirtyDevices.end()) {
-			LOG(LogError) << "Syncthing: Device " << dev << " is no longer dirty.";
+			LOG(LogInfo) << "Syncthing: Device " << dev << " is no longer dirty.";
 			syncedDevices.push_back(dev);
 		}
 	}
@@ -47,7 +47,7 @@ bool SyncthingWatcher::check() {
 
 	// Debug logging
 	if (transferredBytesSinceLastCheck > 0) {
-		LOG(LogError) << "Syncthing: Total bytes transferred updated to " << mTotalBytesTransferred;
+		LOG(LogInfo) << "Syncthing: Total bytes transferred updated to " << mTotalBytesTransferred;
 	}
 
 	// If nothing is syncing and no devices are dirty, and only 128 bytes or less have been transferred since last check, skip or close notification
@@ -63,19 +63,21 @@ bool SyncthingWatcher::check() {
 			} else {
 				if (syncedDevices.size() == 0 && mDirtyDevices.size() > 0) {
 					wndNotification->updateText(_("No device available for sync."));
+					wndNotification->updatePercent(0);
 				} else if (syncedDevices.size() == 0 && mDirtyDevices.size() == 0) {
 					wndNotification->updateText(_("Synchronization complete."));
+					wndNotification->updatePercent(100);
 				} else {
 					wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(syncedDevices) + ".");
+					wndNotification->updatePercent(100);
 				}
-				wndNotification->updatePercent(100);
 				mCurrentTransferNeededFiles = 0;
 				mkillNotificationInNextCycle = true;
 			}
 		}
 	} else {
 		// Start new syncing notification
-		LOG(LogError) << "Syncthing: Starting new syncing notification at state itemsSynced=" << state.itemsSynced << " itemsTotal=" << state.itemsTotal << " transferSpeed=" << state.transferSpeed << " transferredBytesSinceLastCheck=" << transferredBytesSinceLastCheck << " dirtyDevices=" << mDirtyDevices.size();
+		LOG(LogInfo) << "Syncthing: Starting new syncing notification at state itemsSynced=" << state.itemsSynced << " itemsTotal=" << state.itemsTotal << " transferSpeed=" << state.transferSpeed << " transferredBytesSinceLastCheck=" << transferredBytesSinceLastCheck << " dirtyDevices=" << mDirtyDevices.size();
 		
 		// Create notification window if not existing yet
 		if (wndNotification == nullptr) {
