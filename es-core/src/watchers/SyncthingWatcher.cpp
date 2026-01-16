@@ -22,8 +22,6 @@ bool SyncthingWatcher::check() {
 		return true;
 	}
 
-	int lastTotalBytesTransferred = mTotalBytesTransferred;
-
 	SyncthingState state = mSyncthingUtil.getState();
 	std::vector<std::string> syncedDevices;
 	// Check if any devices have become dirty or are no longer dirty
@@ -41,7 +39,17 @@ bool SyncthingWatcher::check() {
 		}
 	}
 
+	// Calculate number of bytes transferred since last check
 	int transferredBytesSinceLastCheck = state.totalBytesTransferred - mTotalBytesTransferred;
+
+	// Update total bytes transferred
+	mTotalBytesTransferred = state.totalBytesTransferred;
+
+	// Debug logging
+	if (transferredBytesSinceLastCheck > 0) {
+		LOG(LogError) << "Syncthing: Total bytes transferred updated to " << mTotalBytesTransferred;
+	}
+
 	// If nothing is syncing and no devices are dirty, and only 128 bytes or less have been transferred since last check, skip or close notification
 	if (!state.isSyncing() && mDirtyDevices.size() == 0 && transferredBytesSinceLastCheck <= 128) {
 		if (wndNotification != nullptr)
@@ -67,14 +75,13 @@ bool SyncthingWatcher::check() {
 		// Start new syncing notification
 		LOG(LogError) << "Syncthing: Starting new syncing notification at state itemsSynced=" << state.itemsSynced << " itemsTotal=" << state.itemsTotal << " transferSpeed=" << state.transferSpeed << " transferredBytesSinceLastCheck=" << transferredBytesSinceLastCheck << " dirtyDevices=" << mDirtyDevices.size();
 		
-		// Calculate number of files to be transferred
-		mCurrentTransferNeededFiles = state.itemsTotal - state.itemsSynced;
-
 		// Create notification window if not existing yet
 		if (wndNotification == nullptr) {
 			if (mWindow != nullptr) {
 				wndNotification = mWindow->createAsyncNotificationComponent();
 				wndNotification->updateTitle(GUIICON + _("SYNCTHING"));
+				// Calculate number of files to be transferred
+				mCurrentTransferNeededFiles = state.itemsTotal - state.itemsSynced;
 			} else {
 				LOG(LogError) << "Syncthing: Cannot create syncing notification window because Window is null.";
 				return false;
@@ -105,10 +112,6 @@ bool SyncthingWatcher::check() {
 			wndNotification->updatePercent(100);
 		}
 
-	}
-	mTotalBytesTransferred = state.totalBytesTransferred;
-	if (lastTotalBytesTransferred != mTotalBytesTransferred) {
-		LOG(LogError) << "Syncthing: Total bytes transferred updated to " << mTotalBytesTransferred;
 	}
 	return true;
 }
