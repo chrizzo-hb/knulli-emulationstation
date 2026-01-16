@@ -227,23 +227,14 @@ SyncthingState SyncthingUtil::getState() {
 			}
 		}
 	}
-
 	int syncedItems = globalItems - needItems;
-	std::string idx = std::to_string(syncedItems) + "/" + std::to_string(globalItems);
-
-	if (needItems == 0) {
-		return state;
-	}
-
-	if (totalSpeed == 0) {
-		LOG(LogDebug) << "Syncthing: No transfer speed detected, assuming sync is complete even though " << needItems << " files have not been synced yet.";
-		return state;
-	}
-
 	state.itemsSynced = syncedItems;
 	state.itemsTotal = globalItems;
 	state.transferSpeed = totalSpeed;
 	state.totalBytesTransferred = totalBytesTransferred;
+	if (totalSpeed == 0) {
+		LOG(LogDebug) << "Syncthing: No transfer speed detected, assuming sync is complete even though " << needItems << " files have not been synced yet.";
+	}
 	return state;
 }
 
@@ -327,7 +318,6 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 				device->bytesReceived = member.value["inBytesTotal"].GetInt();
 			if (member.value.HasMember("outBytesTotal") == true && member.value["outBytesTotal"].IsInt())
 				device->bytesSent = member.value["outBytesTotal"].GetInt();
-			LOG(LogDebug) << "Syncthing: Device " << device->name << " - connected=" << device->connected << " paused=" << device->paused << " bytesReceived=" << device->bytesReceived << " bytesSent=" << device->bytesSent;
 			if (!device->connected || device->paused)
 				continue;
 			deviceIds.push_back(member.name.GetString());
