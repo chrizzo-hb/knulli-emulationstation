@@ -32,5 +32,5 @@ private:
 
 	int mStateUpdateCounter = 0;
 
-	std::string toSyncedDevicesNameString();
+	std::string toSyncedDevicesNameString(const std::vector<std::string>& deviceNames);
 };
