@@ -355,12 +355,11 @@ void SyncthingUtil::updateDevice(Device* device)
 			int distance = 0;
 			if (currentNeedBytes > device->needBytes) {
 				device->needBytes = currentNeedBytes;
-				device->transferSpeed = 1;
 			} else {
 				distance = device->needBytes - currentNeedBytes;
 				device->needBytes = currentNeedBytes;
-				device->transferSpeed = distance;
 			}
+			device->transferSpeed = distance;
 		}
 	}
 
