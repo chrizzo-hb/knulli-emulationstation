@@ -1,6 +1,7 @@
 #include "SyncthingWatcher.h"
 #include "LocaleES.h"
 #include "Log.h"
+#include <algorithm>
 
 #define GUIICON _U("\uF07C ")
 
@@ -96,7 +97,7 @@ bool SyncthingWatcher::check()
 
 }
 
-std::string toSyncedDevicesNameString(const std::vector<std::string>& deviceNames) {
+std::string SyncthingWatcher::toSyncedDevicesNameString(const std::vector<std::string>& deviceNames) {
 	std::string result;
 	for (size_t i = 0; i < deviceNames.size(); i++) {
 		result += deviceNames[i];
