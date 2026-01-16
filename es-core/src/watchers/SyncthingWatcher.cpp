@@ -81,7 +81,7 @@ bool SyncthingWatcher::check() {
 				createSyncedNotification(syncedDevices);
 			// If we didn't catch the syncing but more than 128 bytes have been transferred
 			// (because there's noise), show generic finished message
-			} else if (bytesTransferred >= 128) {
+			} else if (bytesTransferred > 128) {
 				createSyncedNotification(cleanDevices);
 			}
 		}
