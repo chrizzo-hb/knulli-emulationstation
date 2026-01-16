@@ -42,10 +42,8 @@ bool SyncthingWatcher::check() {
 	}
 
 	int transferredBytesSinceLastCheck = state.totalBytesTransferred - mTotalBytesTransferred;
-
-
-	// If nothing is syncing and no devices are dirty, and no bytes have been transferred since last check, close notification
-	if (!state.isSyncing() && mDirtyDevices.size() == 0 && transferredBytesSinceLastCheck == 0) {
+	// If nothing is syncing and no devices are dirty, and only 128 bytes or less have been transferred since last check, skip or close notification
+	if (!state.isSyncing() && mDirtyDevices.size() == 0 && transferredBytesSinceLastCheck <= 128) {
 		if (wndNotification != nullptr)
 		{
 			// If previous cycle already showed finished message, close notification
@@ -65,7 +63,6 @@ bool SyncthingWatcher::check() {
 				mkillNotificationInNextCycle = true;
 			}
 		}
-		return true;
 	} else {
 		// Start new syncing notification
 		LOG(LogError) << "Syncthing: Starting new syncing notification at state itemsSynced=" << state.itemsSynced << " itemsTotal=" << state.itemsTotal << " transferSpeed=" << state.transferSpeed << " transferredBytesSinceLastCheck=" << transferredBytesSinceLastCheck << " dirtyDevices=" << mDirtyDevices.size();
@@ -90,27 +87,22 @@ bool SyncthingWatcher::check() {
 			int percentDone = (currentTransferTransferredFiles * 100) / mCurrentTransferNeededFiles;
 			wndNotification->updateText(_("Transferring file") + " " + idx);
 			wndNotification->updatePercent(percentDone);
-			return true;
 		// If we know which devices are dirty, but not how many files need to be transferred, list dirty devices
 		} else if (mDirtyDevices.size() > 0) {
 			wndNotification->updateText(_("Syncing with") + " " + toSyncedDevicesNameString(mDirtyDevices) + ".");
 			wndNotification->updatePercent(0);
-			return true;
 		// If we don't know which devices are dirty, but bytes have been transferred since last check, show generic syncing message
 		} else if (state.isSyncing()) {
 			wndNotification->updateText(_("Transfer in progress."));
 			wndNotification->updatePercent(0);
-			return true;
 		// If no devices are dirty and no transfer is in progress, but at least one device has finished syncing
 		} else if (syncedDevices.size() > 0) {
 			wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(syncedDevices) + ".");
 			wndNotification->updatePercent(100);
-			return true;
 		// If no devices are dirty and no transfer is in progress, but more than 128 bytes have been transferred since last check
 		} else if (transferredBytesSinceLastCheck > 128) {
 			wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(cleanDevices) + ".");
 			wndNotification->updatePercent(100);
-			return true;
 		}
 
 	}
