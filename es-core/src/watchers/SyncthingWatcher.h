@@ -7,9 +7,7 @@
 #include "utils/SyncthingUtil.h"
 #include "components/AsyncNotificationComponent.h"
 
-class SyncthingWatcher : public IWatcher
-{
-
+class SyncthingWatcher : public IWatcher {
 public:
 	SyncthingWatcher(Window* window);
 

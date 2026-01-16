@@ -5,20 +5,15 @@
 
 #define GUIICON _U("\uF07C ")
 
-SyncthingWatcher::SyncthingWatcher(Window* window) : mWindow(window)
-	, mSyncthingUtil(SyncthingUtil::getInstance())
-{
+SyncthingWatcher::SyncthingWatcher(Window* window) : mWindow(window), mSyncthingUtil(SyncthingUtil::getInstance()) {
 }
 
-bool SyncthingWatcher::enabled()
-{
+bool SyncthingWatcher::enabled() {
 	return mSyncthingUtil.isEnabled();
 }
 
-bool SyncthingWatcher::check()
-{
-	if (!SyncthingUtil::isEnabled() || !mSyncthingUtil.isConnected())
-	{
+bool SyncthingWatcher::check() {
+	if (!SyncthingUtil::isEnabled() || !mSyncthingUtil.isConnected()) {
 		if (wndNotification != nullptr) {
 			wndNotification->close();
 			wndNotification = nullptr;
@@ -27,7 +22,6 @@ bool SyncthingWatcher::check()
 	}
 
 	SyncthingState state = mSyncthingUtil.getState();
-
 	std::vector<std::string> syncedDevices;
 
 	if (state.dirtyDevices.size() > 0) {
@@ -46,13 +40,10 @@ bool SyncthingWatcher::check()
 		}
 	}
 
-
-	if (state.isSyncing())
-	{
+	if (state.isSyncing()) {
 		mStateUpdateCounter++;
 
-		if (wndNotification == nullptr)
-		{
+		if (wndNotification == nullptr) {
 			LOG(LogError) << "Syncthing: opened notification window at state itemsSynced=" << state.itemsSynced << " itemsTotal=" << state.itemsTotal << " transferSpeed=" << state.transferSpeed;
 			mStateUpdateCounter = 1;
 			mCurrentTransferNeededFiles = state.itemsTotal - state.itemsSynced;
@@ -70,8 +61,7 @@ bool SyncthingWatcher::check()
 		}
 		return true;
 	} else {
-		if (wndNotification != nullptr)
-		{
+		if (wndNotification != nullptr) {
 			if (mCurrentTransferNeededFiles > 0) {
 				if (syncedDevices.size() == 0) {
 					wndNotification->updateText(_("Finished synchronization."));
@@ -94,7 +84,6 @@ bool SyncthingWatcher::check()
 	}
 
 	return false;
-
 }
 
 std::string SyncthingWatcher::toSyncedDevicesNameString(const std::vector<std::string>& deviceNames) {

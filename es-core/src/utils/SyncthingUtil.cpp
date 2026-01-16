@@ -25,13 +25,10 @@
 const std::string SYNCTHING_CONFIG_XML = "/userdata/system/configs/syncthing/config.xml";
 
 // Returns true if syncthing is enabled and reachable and the respective config file exists.
-bool SyncthingUtil::isEnabled()
-{
-
+bool SyncthingUtil::isEnabled() {
 	// Check if syncthing API is up
 	std::unique_ptr<HttpReq> req(new HttpReq("http://127.0.0.1:8384"));
-	if (!req->wait())
-	{
+	if (!req->wait()) {
 		return false;
 	}
 
@@ -44,8 +41,7 @@ bool SyncthingUtil::isEnabled()
 
 // Establishes a connection to the syncthing API by verifying the syncthing API
 // is reachable and loading all relevant devices and folders from the config XML.
-bool SyncthingUtil::connect()
-{
+bool SyncthingUtil::connect() {
 	if (mConnected)
 		return true;
 
@@ -57,8 +53,7 @@ bool SyncthingUtil::connect()
 	// Load syncthing config XML
 	pugi::xml_document document;
 	pugi::xml_parse_result result = document.load_file(SYNCTHING_CONFIG_XML.c_str());
-	if (!result)
-	{
+	if (!result) {
 		LOG(LogError) << "Unable to parse packages";
 		mConnected = false;
 		return false;
@@ -104,8 +99,7 @@ bool SyncthingUtil::connect()
 }
 
 // Disconnects from the syncthing API by clearing all configuration data.
-void SyncthingUtil::disconnect()
-{
+void SyncthingUtil::disconnect() {
 	mConnected = false;
 
 	// Reset status of own device
@@ -126,15 +120,13 @@ void SyncthingUtil::disconnect()
 }
 
 // Reconnects to the syncthing API by first disconnecting and then connecting again.
-bool SyncthingUtil::reconnect()
-{
+bool SyncthingUtil::reconnect() {
 	disconnect();
 	return connect();
 }
 
 // Starts a rescan of all folders or of a specific folder if folderId is provided.
-void SyncthingUtil::scan(Window* window, std::string const* folderId)
-{
+void SyncthingUtil::scan(Window* window, std::string const* folderId) {
 	if (!reconnect()) {
 		LOG(LogError) << "Syncthing: Unable to (re-)connect, cannot start scan";
 		return;
@@ -173,13 +165,10 @@ void SyncthingUtil::scan(Window* window, std::string const* folderId)
 	}
 
 	LOG(LogDebug) << "Syncthing: Scan request sent";
-	if (req->wait())
-	{
+	if (req->wait()) {
 		wndNotification->close();
 		wndNotification = nullptr;
-	}
-	else
-	{
+	} else {
 		wndNotification->updateText("Error starting scan: " + req->getErrorMsg());
 		std::this_thread::sleep_for(std::chrono::seconds(3));
 		wndNotification->close();
@@ -191,7 +180,6 @@ void SyncthingUtil::scan(Window* window, std::string const* folderId)
 
 // Retrieves the current synchronization state from the syncthing API.
 SyncthingState SyncthingUtil::getState() {
-
 	SyncthingState state;
 	state.itemsSynced = 0;
 	state.itemsTotal = 0;
@@ -245,14 +233,12 @@ SyncthingState SyncthingUtil::getState() {
 	if (totalSpeed == 0) {
 		LOG(LogDebug) << "Syncthing: No transfer speed detected, assuming sync is complete even though " << needItems << " files have not been synced yet.";
 		return state;
-	
 	}
 
 	state.itemsSynced = syncedItems;
 	state.itemsTotal = globalItems;
 	state.transferSpeed = totalSpeed;
 	return state;
-
 }
 
 // Retrieves a device by its ID, or nullptr if not found.
@@ -276,24 +262,20 @@ Folder* SyncthingUtil::getFolderById(const std::string& folderId) {
 }
 
 // Retrieves own device ID from the syncthing API.
-std::string SyncthingUtil::getMyId()
-{
+std::string SyncthingUtil::getMyId() {
 	HttpReqOptions options;
 	options.customHeaders.push_back("X-Api-Key: " + mApiKey);
 
 	std::unique_ptr<HttpReq> req(new HttpReq("http://127.0.0.1:8384/rest/system/status", &options));
 	
-	if (req->wait())
-	{
+	if (req->wait()) {
 		rapidjson::Document doc;
 		doc.Parse(req->getContent().c_str());
 		if (doc.HasParseError())
 			return "OWN_ID_UNKNOWN";
 
-
 		if (doc.GetObject().HasMember("myID") && doc.GetObject()["myID"].IsString())
 			return doc.GetObject()["myID"].GetString();
-
 	}
 	return "OWN_ID_UNKNOWN";
 }
@@ -307,19 +289,16 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 
 	std::unique_ptr<HttpReq> req(new HttpReq("http://127.0.0.1:8384/rest/system/connections", &options));
 
-	if (req->wait())
-	{
+	if (req->wait()) {
 		rapidjson::Document doc;
 		doc.Parse(req->getContent().c_str());
 		if (doc.HasParseError())
 			return deviceIds;
 		
-		
 		if (doc.IsObject() == false || doc.HasMember("connections") == false)
 			return deviceIds;
 
-		for (auto& member : doc["connections"].GetObject())
-		{
+		for (auto& member : doc["connections"].GetObject()) {
 			// Exclude self and paused devices from list of connected devices
 			if (member.name.IsString() == false || std::string(member.name.GetString()) == self.id)
 				continue;
@@ -328,15 +307,13 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 				continue;
 			deviceIds.push_back(member.name.GetString());
 		}
-		
 	}
 
 	return deviceIds;
 }
 
 // Updates the status of a specific device by querying the syncthing API.
-void SyncthingUtil::updateDevice(Device* device)
-{
+void SyncthingUtil::updateDevice(Device* device) {
 	if (!device) return;
 
 	HttpReqOptions options;
@@ -344,8 +321,7 @@ void SyncthingUtil::updateDevice(Device* device)
 
 	std::unique_ptr<HttpReq> req(new HttpReq("http://127.0.0.1:8384/rest/db/completion?device=" + device->id, &options));
 
-	if (req->wait())
-	{
+	if (req->wait()) {
 		rapidjson::Document doc;
 		doc.Parse(req->getContent().c_str());
 		if (doc.HasParseError())
@@ -371,5 +347,4 @@ void SyncthingUtil::updateDevice(Device* device)
 			device->transferSpeed = distance;
 		}
 	}
-
 }
