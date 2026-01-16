@@ -271,7 +271,7 @@ std::string SyncthingUtil::getMyId() {
 	if (req->wait()) {
 		rapidjson::Document doc;
 		doc.Parse(req->getContent().c_str());
-		if (doc.HasParseError())
+		if (doc.HasParseError() || doc.IsObject() == false)
 			return "OWN_ID_UNKNOWN";
 
 		if (doc.GetObject().HasMember("myID") && doc.GetObject()["myID"].IsString())
@@ -303,7 +303,7 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 			if (member.name.IsString() == false || std::string(member.name.GetString()) == self.id)
 				continue;
 			Device* device = getDeviceById(member.name.GetString());
-			if (device == nullptr ||device->paused)	
+			if (device == nullptr || device->paused)	
 				continue;
 			deviceIds.push_back(member.name.GetString());
 		}

@@ -25,21 +25,13 @@ bool SyncthingWatcher::check() {
 	std::vector<std::string> syncedDevices;
 
 	// Check if any devices have become dirty or are no longer dirty
-	if (state.dirtyDevices.size() > 0) {
-		for (const auto& dev : mDirtyDevices) {
-			if (std::find(state.dirtyDevices.begin(), state.dirtyDevices.end(), dev) == state.dirtyDevices.end()) {
-				LOG(LogError) << "Syncthing: Device " << dev << " is no longer dirty.";
-				mDirtyDevices.erase(std::remove(mDirtyDevices.begin(), mDirtyDevices.end(), dev), mDirtyDevices.end());
-				syncedDevices.push_back(dev);
-			}
-		}
-		for (const auto& dev : state.dirtyDevices) {
-			if (std::find(mDirtyDevices.begin(), mDirtyDevices.end(), dev) == mDirtyDevices.end()) {
-				LOG(LogError) << "Syncthing: Device " << dev << " is now dirty.";
-				mDirtyDevices.push_back(dev);
-			}
+	for (const auto& dev : mDirtyDevices) {
+		if (std::find(state.dirtyDevices.begin(), state.dirtyDevices.end(), dev) == state.dirtyDevices.end()) {
+			LOG(LogError) << "Syncthing: Device " << dev << " is no longer dirty.";
+			syncedDevices.push_back(dev);
 		}
 	}
+	mDirtyDevices = state.dirtyDevices;
 
 	if (state.isSyncing()) {
 		mStateUpdateCounter++;
