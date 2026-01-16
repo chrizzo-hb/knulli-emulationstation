@@ -61,8 +61,10 @@ bool SyncthingWatcher::check() {
 				mkillNotificationInNextCycle = false;
 			// Show finished message
 			} else {
-				if (syncedDevices.size() == 0) {
-					wndNotification->updateText(_("Synchronization finished."));
+				if (syncedDevices.size() == 0 && mDirtyDevices.size() > 0) {
+					wndNotification->updateText(_("No device available for sync."));
+				} else if (syncedDevices.size() == 0 && mDirtyDevices.size() == 0) {
+					wndNotification->updateText(_("Synchronization complete."));
 				} else {
 					wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(syncedDevices) + ".");
 				}
