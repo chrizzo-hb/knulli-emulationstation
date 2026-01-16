@@ -24,6 +24,7 @@ bool SyncthingWatcher::check() {
 	SyncthingState state = mSyncthingUtil.getState();
 	std::vector<std::string> syncedDevices;
 
+	// Check if any devices have become dirty or are no longer dirty
 	if (state.dirtyDevices.size() > 0) {
 		for (const auto& dev : mDirtyDevices) {
 			if (std::find(state.dirtyDevices.begin(), state.dirtyDevices.end(), dev) == state.dirtyDevices.end()) {
@@ -62,6 +63,7 @@ bool SyncthingWatcher::check() {
 		return true;
 	} else {
 		if (wndNotification != nullptr) {
+			// If we were just syncing, show the finished message
 			if (mCurrentTransferNeededFiles > 0) {
 				if (syncedDevices.size() == 0) {
 					wndNotification->updateText(_("Finished synchronization."));
@@ -71,11 +73,13 @@ bool SyncthingWatcher::check() {
 				wndNotification->updatePercent(100);
 				mCurrentTransferNeededFiles = 0; 
 			} else {
+				// Otherwise close the window after some time
 				LOG(LogError) << "Syncthing: closed notification window after " << mStateUpdateCounter << " iterations.";
 				wndNotification->close();
 				wndNotification = nullptr;
 			}
 		} else if (syncedDevices.size() > 0) {
+			// If we weren't syncing but a device just finished, show finished message
 			wndNotification = mWindow->createAsyncNotificationComponent();
 			wndNotification->updateTitle(GUIICON + _("SYNCTHING"));
 			wndNotification->updateText(_("Finished synchronization with") + " " + toSyncedDevicesNameString(syncedDevices) + ".");
