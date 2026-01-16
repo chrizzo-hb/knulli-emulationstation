@@ -71,13 +71,11 @@ bool SyncthingWatcher::check() {
 				wndNotification = nullptr;
 			}
 		} else if (mWindow != nullptr) {
+			int bytesTransferred = state.totalBytesTransferred - lastTotalBytesTransferred;
 			// If we didn't catch the syncing but at least one device has finished, show finished message
 			if (syncedDevices.size() > 0) {
 				createSyncedNotification(syncedDevices);
-			// If no devices were syncing but bytes were transferred, show a brief notification
-
-			int bytesTransferred = state.totalBytesTransferred - lastTotalBytesTransferred;
-			// Show notification only if at least 1 KB was transferred
+			// If we didn't catch the syncing but more than 1KB has been transferred, show finished message
 			} else if (bytesTransferred >= 1024) {
 				createSyncedNotification(cleanDevices);
 			}
