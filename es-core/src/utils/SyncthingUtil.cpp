@@ -111,6 +111,8 @@ void SyncthingUtil::disconnect() {
 		.needItems = 0,
 		.globalItems = 0,
 		.needBytes = 0,
+		.bytesReceived = 0,
+		.bytesSent = 0,
 		.transferSpeed = 0
 	};
 
@@ -198,7 +200,6 @@ SyncthingState SyncthingUtil::getState() {
 	int globalItems = 0;
 	int needItems = 0;
 	int totalSpeed = 0;
-	int totalBytesTransferred = 0;
 
 	updateDeviceCompletion(&self);
 	globalItems += self.globalItems;
@@ -216,7 +217,6 @@ SyncthingState SyncthingUtil::getState() {
 		globalItems += device->globalItems;
 		needItems += device->needItems;
 		totalSpeed += device->transferSpeed;
-		totalBytesTransferred += device->bytesReceived + device->bytesSent;
 		if (device->needItems > 0) {
 			state.dirtyDevices.push_back(device->name);
 		} else {
@@ -231,7 +231,7 @@ SyncthingState SyncthingUtil::getState() {
 	state.itemsSynced = syncedItems;
 	state.itemsTotal = globalItems;
 	state.transferSpeed = totalSpeed;
-	state.totalBytesTransferred = totalBytesTransferred;
+	state.totalBytesTransferred = self.bytesReceived + self.bytesSent;
 	if (totalSpeed == 0) {
 		LOG(LogDebug) << "Syncthing: No transfer speed detected, assuming sync is complete even though " << needItems << " files have not been synced yet.";
 	}
@@ -291,39 +291,43 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 		doc.Parse(req->getContent().c_str());
 		if (doc.HasParseError())
 			return deviceIds;
-		
-		if (doc.IsObject() == false || doc.HasMember("connections") == false)
+
+		if (doc.isObject() == false)
 			return deviceIds;
+		if (doc.HasMember("total")) {
+			self.bytesReceived = doc["total"].GetObject()["inBytesTotal"].GetInt();
+			self.bytesSent = doc["total"].GetObject()["outBytesTotal"].GetInt();
+		}
+		if (doc.HasMember("connections")) {
+			for (auto& member : doc["connections"].GetObject()) {
+				// Exclude self and paused devices from list of connected devices
+				if (member.name.IsString() == false || std::string(member.name.GetString()) == self.id)
+					continue;
+				Device* device = getDeviceById(member.name.GetString());
+				
+				// Handle unknown device TODO: Create new device instead of skipping?
+				if (device == nullptr)
+					continue;
 
-		for (auto& member : doc["connections"].GetObject()) {
-			// Exclude self and paused devices from list of connected devices
-			if (member.name.IsString() == false || std::string(member.name.GetString()) == self.id)
-				continue;
-			Device* device = getDeviceById(member.name.GetString());
-			
-			// Handle unknown device TODO: Create new device instead of skipping?
-			if (device == nullptr)
-				continue;
+				// Skip invalid entires
+				if (member.value.IsObject() == false)
+					continue;
 
-			// Skip invalid entires
-			if (member.value.IsObject() == false)
-				continue;
-
-			// Update device metadata
-			if (member.value.HasMember("paused") == true)
-				device->paused = member.value["paused"].GetBool();
-			if (member.value.HasMember("connected") == true)
-				device->connected = member.value["connected"].GetBool();
-			if (member.value.HasMember("inBytesTotal") == true && member.value["inBytesTotal"].IsInt())
-				device->bytesReceived = member.value["inBytesTotal"].GetInt();
-			if (member.value.HasMember("outBytesTotal") == true && member.value["outBytesTotal"].IsInt())
-				device->bytesSent = member.value["outBytesTotal"].GetInt();
-			if (!device->connected || device->paused)
-				continue;
-			deviceIds.push_back(member.name.GetString());
+				// Update device metadata
+				if (member.value.HasMember("paused") == true)
+					device->paused = member.value["paused"].GetBool();
+				if (member.value.HasMember("connected") == true)
+					device->connected = member.value["connected"].GetBool();
+				if (member.value.HasMember("inBytesTotal") == true && member.value["inBytesTotal"].IsInt())
+					device->bytesReceived = member.value["inBytesTotal"].GetInt();
+				if (member.value.HasMember("outBytesTotal") == true && member.value["outBytesTotal"].IsInt())
+					device->bytesSent = member.value["outBytesTotal"].GetInt();
+				if (!device->connected || device->paused)
+					continue;
+				deviceIds.push_back(member.name.GetString());
+			}
 		}
 	}
-
 	return deviceIds;
 }
 
