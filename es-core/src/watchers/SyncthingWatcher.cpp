@@ -53,7 +53,6 @@ bool SyncthingWatcher::check() {
 			int percentDone = (currentTransferTransferredFiles * 100) / mCurrentTransferNeededFiles;
 			wndNotification->updateText(_("Transferring file") + " " + idx);
 			wndNotification->updatePercent(percentDone);
-			mTotalBytesTransferred = state.totalBytesTransferred;
 		}
 		return true;
 	} else {
@@ -67,26 +66,26 @@ bool SyncthingWatcher::check() {
 				}
 				wndNotification->updatePercent(100);
 				mCurrentTransferNeededFiles = 0;
-				mTotalBytesTransferred = state.totalBytesTransferred;
 			} else {
 				// Otherwise close the window after some time
 				wndNotification->close();
 				wndNotification = nullptr;
 			}
 		} else if (mWindow != nullptr) {
-
 			// If we didn't catch the syncing but at least one device has finished, show finished message
 			if (syncedDevices.size() > 0) {
 				createSyncedNotification(syncedDevices);
 			// If no devices were syncing but bytes were transferred, show a brief notification
 			} else if (state.totalBytesTransferred > mTotalBytesTransferred) {
 				createSyncedNotification(cleanDevices);
-				mTotalBytesTransferred = state.totalBytesTransferred;
 			}
 		}
 	}
-	if (lastTotalBytesTransferred != mTotalBytesTransferred)
-	LOG(LogError) << "Syncthing: Total bytes transferred updated to " << mTotalBytesTransferred;
+	
+	mTotalBytesTransferred = state.totalBytesTransferred;
+	if (lastTotalBytesTransferred != mTotalBytesTransferred) {
+		LOG(LogError) << "Syncthing: Total bytes transferred updated to " << mTotalBytesTransferred;
+	}
 	return false;
 }
 
