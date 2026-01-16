@@ -88,14 +88,14 @@ bool SyncthingWatcher::check() {
 			}
 		}
 		// If we know how many files need to be transferred, show progress
-		if (mCurrentTransferNeededFiles > 0) {
+		if (mCurrentTransferNeededFiles > 0 && transferredBytesSinceLastCheck > 0) {
 			int currentTransferTransferredFiles = mCurrentTransferNeededFiles - (state.itemsTotal - state.itemsSynced);
 			std::string idx = std::to_string(currentTransferTransferredFiles) + "/" + std::to_string(mCurrentTransferNeededFiles);
 			int percentDone = (currentTransferTransferredFiles * 100) / mCurrentTransferNeededFiles;
 			wndNotification->updateText(_("Transferring file") + " " + idx);
 			wndNotification->updatePercent(percentDone);
 		// If we know which devices are dirty, but not how many files need to be transferred, list dirty devices
-		} else if (mDirtyDevices.size() > 0) {
+		} else if (mDirtyDevices.size() > 0 && transferredBytesSinceLastCheck > 0) {
 			wndNotification->updateText(_("Syncing with") + " " + toSyncedDevicesNameString(mDirtyDevices) + ".");
 			wndNotification->updatePercent(0);
 		// If we don't know which devices are dirty, but bytes have been transferred since last check, show generic syncing message
@@ -110,6 +110,10 @@ bool SyncthingWatcher::check() {
 		} else if (transferredBytesSinceLastCheck > 128) {
 			wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(cleanDevices) + ".");
 			wndNotification->updatePercent(100);
+		} else if (transferredBytesSinceLastCheck == 0 && (mCurrentTransferNeededFiles > 0 || mDirtyDevices.size() > 0)) {
+			// No bytes transferred since last check, but there are still files to transfer or dirty devices
+			wndNotification->updateText(_("All devices are disconnected."));
+			wndNotification->updatePercent(0);
 		}
 
 	}
