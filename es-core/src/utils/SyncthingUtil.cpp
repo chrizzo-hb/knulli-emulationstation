@@ -362,6 +362,8 @@ void SyncthingUtil::updateDeviceCompletion(Device* device) {
             // If needBytes decreased, we have transferred data
             if (currentNeedBytes < device->needBytes) {
                 distance = device->needBytes - currentNeedBytes;
+            } else {
+                distance = 0;
             }
             
             device->needBytes = currentNeedBytes;
