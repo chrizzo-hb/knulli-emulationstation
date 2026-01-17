@@ -607,7 +607,7 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 			{
 				auto finish = std::chrono::high_resolution_clock::now();
 				std::chrono::duration<double, std::milli> elapsed = finish - start;
-				std::cout << "Elapsed Animation Time: " << elapsed.count() << " seconds" << std::endl;
+				LOG(LogError) << "Elapsed Animation Time: " << elapsed.count() << " seconds" << std::endl;
 				GuiComponent::isLaunchTransitionRunning = false;
 
 				Window* w = mWindow;
@@ -630,7 +630,7 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 			{
 				auto finish = std::chrono::high_resolution_clock::now();
 				std::chrono::duration<double, std::milli> elapsed = finish - start;
-				std::cout << "Elapsed Animation Time: " << elapsed.count() << " seconds" << std::endl;
+				LOG(LogError) << "Elapsed Animation Time: " << elapsed.count() << " seconds" << std::endl;
 				GuiComponent::isLaunchTransitionRunning = false;
 
 				Window* w = mWindow;
@@ -652,7 +652,7 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 			{
 				auto finish = std::chrono::high_resolution_clock::now();
 				std::chrono::duration<double, std::milli> elapsed = finish - start;
-				std::cout << "Elapsed Animation Time: " << elapsed.count() << " seconds" << std::endl;
+				LOG(LogError) << "Elapsed Animation Time: " << elapsed.count() << " seconds" << std::endl;
 				GuiComponent::isLaunchTransitionRunning = false;
 
 				Window* w = mWindow;
