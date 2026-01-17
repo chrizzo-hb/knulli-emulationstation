@@ -23,6 +23,14 @@ bool SyncthingWatcher::check() {
 		return true;
 	}
 
+	// Check if we are scheduled to kill the notification from the last cycle
+    if (wndNotification != nullptr && mkillNotificationInNextCycle) {
+        wndNotification->close();
+        wndNotification = nullptr;
+        mSyncedDevices.clear();
+        mkillNotificationInNextCycle = false;
+    }
+
 	SyncthingState state = mSyncthingUtil.getState();
 	// Check if any devices have become dirty or are no longer dirty
 	for (const auto& dev : mDirtyDevices) {
@@ -54,28 +62,21 @@ bool SyncthingWatcher::check() {
 	if (!state.isSyncing() && transferredBytesSinceLastCheck <= 1024) {
 		if (wndNotification != nullptr)
 		{
-			// If previous cycle already showed finished message, close notification
-			if (mkillNotificationInNextCycle) {
-				wndNotification->close();
-				wndNotification = nullptr;
-				mSyncedDevices.clear();
-				mkillNotificationInNextCycle = false;
-			// Show finished message
+			// Display a final synced/complete message before closing
+			if (mDirtyDevices.size() > 0 && transferredBytesSinceLastCheck == 0) {
+				// If devices are dirty but none are connected, it's not "syncing"
+				wndNotification->updateText(_("All devices disconnected."));
+				wndNotification->updatePercent(0);
+				mCurrentTransferNeededFiles = 0;
+			} else if (mDirtyDevices.size() == 0) {
+				wndNotification->updateText(_("Synchronization complete."));
+				wndNotification->updatePercent(100);
 			} else {
-				if (mDirtyDevices.size() > 0 && transferredBytesSinceLastCheck == 0) {
-					// If devices are dirty but none are connected, it's not "syncing"
-					wndNotification->updateText(_("All devices disconnected."));
-					wndNotification->updatePercent(0);
-					mCurrentTransferNeededFiles = 0; // RESET THIS
-				} else if (mDirtyDevices.size() == 0) {
-					wndNotification->updateText(_("Synchronization complete."));
-					wndNotification->updatePercent(100);
-				} else {
-					wndNotification->updateText(toSyncedDevicesNameString(mSyncedDevices, true));
-					wndNotification->updatePercent(100);
-				}
-				mkillNotificationInNextCycle = true;
+				wndNotification->updateText(toSyncedDevicesNameString(mSyncedDevices, true));
+				wndNotification->updatePercent(100);
 			}
+			// Schedule notification to be executed in next cycle.
+			mkillNotificationInNextCycle = true;
 		}
 	} else {
 		// Let's make sure we aren't showing a notification for background noise.
