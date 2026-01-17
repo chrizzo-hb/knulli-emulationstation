@@ -194,9 +194,9 @@ std::string SyncthingWatcher::toSyncedDevicesNameString(const std::vector<std::s
 		return synced ?  _("Synchronization complete.") : _("Transfer in progress...");
 	} else {
 		if (synced) {
-			return Utils::String::format(_("Synced with %s").c_str(), names.c_str());
+			return Utils::String::format(_("Synced with %s.").c_str(), names.c_str());
 		} else {
-			return Utils::String::format(_("Syncing with %s").c_str(), names.c_str());
+			return Utils::String::format(_("Syncing with %s.").c_str(), names.c_str());
 		}
 	}
 }
