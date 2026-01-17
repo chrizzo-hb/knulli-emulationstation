@@ -61,17 +61,18 @@ bool SyncthingWatcher::check() {
 				mkillNotificationInNextCycle = false;
 			// Show finished message
 			} else {
-				if (mSyncedDevices.size() == 0 && mDirtyDevices.size() > 0) {
-					wndNotification->updateText(_("No device available for sync."));
+				if (mDirtyDevices.size() > 0 && transferredBytesSinceLastCheck == 0) {
+					// If devices are dirty but none are connected, it's not "syncing"
+					wndNotification->updateText(_("All devices disconnected."));
 					wndNotification->updatePercent(0);
-				} else if (mSyncedDevices.size() == 0 && mDirtyDevices.size() == 0) {
+					mCurrentTransferNeededFiles = 0; // RESET THIS
+				} else if (mDirtyDevices.size() == 0) {
 					wndNotification->updateText(_("Synchronization complete."));
 					wndNotification->updatePercent(100);
 				} else {
 					wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(mSyncedDevices) + ".");
 					wndNotification->updatePercent(100);
 				}
-				mCurrentTransferNeededFiles = 0;
 				mkillNotificationInNextCycle = true;
 			}
 		}
@@ -110,6 +111,7 @@ bool SyncthingWatcher::check() {
 		} else if (state.isSyncing()) {
 			wndNotification->updateText(_("Transfer in progress."));
 			wndNotification->updatePercent(0);
+			mCurrentTransferNeededFiles = 0;
 		// If no devices are dirty and no transfer is in progress, but at least one device has finished syncing
 		} else if (mSyncedDevices.size() > 0) {
 			wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(mSyncedDevices) + ".");
