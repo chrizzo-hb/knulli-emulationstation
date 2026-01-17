@@ -40,7 +40,7 @@ bool SyncthingWatcher::check() {
 	}
 
 	// Calculate number of bytes transferred since last check
-	int transferredBytesSinceLastCheck = state.totalBytesTransferred - mTotalBytesTransferred;
+	int64_t transferredBytesSinceLastCheck = state.totalBytesTransferred - mTotalBytesTransferred;
 
 	// Update total bytes transferred
 	mTotalBytesTransferred = state.totalBytesTransferred;
@@ -92,10 +92,14 @@ bool SyncthingWatcher::check() {
 			}
 		}
 		// If we know how many files need to be transferred, show progress
-		if (mCurrentTransferNeededFiles > 0) {
-			int currentTransferTransferredFiles = mCurrentTransferNeededFiles - (state.itemsTotal - state.itemsSynced);
-			std::string idx = std::to_string(currentTransferTransferredFiles) + "/" + std::to_string(mCurrentTransferNeededFiles);
-			int percentDone = (currentTransferTransferredFiles * 100) / mCurrentTransferNeededFiles;
+if (mCurrentTransferNeededFiles > 0) {
+            int64_t currentTransferTransferredFiles = mCurrentTransferNeededFiles - (state.itemsTotal - state.itemsSynced);
+            // Clamp to avoid negative numbers if Syncthing updates totals mid-sync
+            if (currentTransferTransferredFiles < 0) currentTransferTransferredFiles = 0;
+
+            std::string idx = std::to_string(currentTransferTransferredFiles) + "/" + std::to_string(mCurrentTransferNeededFiles);
+            int percentDone = (int)((currentTransferTransferredFiles * 100) / mCurrentTransferNeededFiles);
+
 			wndNotification->updateText(_("Transferring file") + " " + idx);
 			wndNotification->updatePercent(percentDone);
 		// If we know which devices are dirty, but not how many files need to be transferred, list dirty devices

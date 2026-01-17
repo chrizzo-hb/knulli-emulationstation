@@ -8,13 +8,13 @@ struct Device {
 	std::string name;
 	bool paused;
 	bool connected;
-	int completion;
-	int needItems;
-	int globalItems;
-	int needBytes;
-	int bytesReceived;
-	int bytesSent;
-	int transferSpeed;
+	int64_t completion;
+    int64_t needItems;
+    int64_t globalItems;
+    int64_t needBytes;
+    int64_t bytesReceived;
+    int64_t bytesSent;
+    int64_t transferSpeed;
 };
 
 struct Folder {
@@ -25,10 +25,10 @@ struct Folder {
 };
 
 struct SyncthingState {
-	int itemsSynced;
-	int itemsTotal;
-	int transferSpeed;
-	int totalBytesTransferred;
+	int64_t itemsSynced;
+    int64_t itemsTotal;
+    int64_t transferSpeed;
+    int64_t totalBytesTransferred;
 	std::vector<std::string> connectedDevices;
 	std::vector<std::string> dirtyDevices; // IDs of devices with unsynced changes
 
@@ -37,8 +37,10 @@ struct SyncthingState {
 	}
 
 	int getPercentDone() {
-		if (itemsTotal == 0) return 100;
-		return (itemsSynced * 100) / itemsTotal;
+		if (itemsTotal <= 0) return 100;
+        if (itemsSynced >= itemsTotal) return 100;
+        if (itemsSynced <= 0) return 0;
+        return (int)((itemsSynced * 100) / itemsTotal);
 	}
 };
 

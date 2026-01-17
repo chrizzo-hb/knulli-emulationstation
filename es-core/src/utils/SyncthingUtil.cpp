@@ -295,8 +295,8 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 		if (doc.IsObject() == false)
 			return deviceIds;
 		if (doc.HasMember("total")) {
-			self.bytesReceived = doc["total"].GetObject()["inBytesTotal"].GetInt();
-			self.bytesSent = doc["total"].GetObject()["outBytesTotal"].GetInt();
+			self.bytesReceived = doc["total"].GetObject()["inBytesTotal"].GetInt64();
+            self.bytesSent = doc["total"].GetObject()["outBytesTotal"].GetInt64();
 		}
 		if (doc.HasMember("connections")) {
 			for (auto& member : doc["connections"].GetObject()) {
@@ -319,9 +319,9 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 				if (member.value.HasMember("connected") == true)
 					device->connected = member.value["connected"].GetBool();
 				if (member.value.HasMember("inBytesTotal") == true && member.value["inBytesTotal"].IsInt())
-					device->bytesReceived = member.value["inBytesTotal"].GetInt();
+					device->bytesReceived = member.value["inBytesTotal"].GetInt64();
 				if (member.value.HasMember("outBytesTotal") == true && member.value["outBytesTotal"].IsInt())
-					device->bytesSent = member.value["outBytesTotal"].GetInt();
+					device->bytesSent = member.value["outBytesTotal"].GetInt64();
 				if (!device->connected || device->paused)
 					continue;
 				deviceIds.push_back(member.name.GetString());
@@ -355,16 +355,17 @@ void SyncthingUtil::updateDeviceCompletion(Device* device) {
 			device->globalItems = doc.GetObject()["globalItems"].GetInt();
 		if (doc.GetObject().HasMember("paused") && doc.GetObject()["paused"].IsBool())
 			device->paused = doc.GetObject()["paused"].GetBool();
-		if (doc.GetObject().HasMember("needBytes") && doc.GetObject()["needBytes"].IsInt()) {
-			int currentNeedBytes = doc.GetObject()["needBytes"].GetInt();
-			int distance = 0;
-			if (currentNeedBytes > device->needBytes) {
-				device->needBytes = currentNeedBytes;
-			} else {
-				distance = device->needBytes - currentNeedBytes;
-				device->needBytes = currentNeedBytes;
-			}
-			device->transferSpeed = distance;
+		if (doc.GetObject().HasMember("needBytes") && doc.GetObject()["needBytes"].GetInt64()) {
+			int64_t currentNeedBytes = doc.GetObject()["needBytes"].GetInt64();
+            int64_t distance = 0;
+            
+            // If needBytes decreased, we have transferred data
+            if (currentNeedBytes < device->needBytes) {
+                distance = device->needBytes - currentNeedBytes;
+            }
+            
+            device->needBytes = currentNeedBytes;
+            device->transferSpeed = distance;
 		}
 	}
 }
