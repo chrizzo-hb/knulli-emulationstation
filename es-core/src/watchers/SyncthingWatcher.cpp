@@ -2,7 +2,7 @@
 #include "LocaleES.h"
 #include "Log.h"
 #include <algorithm>
-#include <string>
+#include "utils/StringUtil.h"
 
 #define GUIICON _U("\uF07C ")
 
