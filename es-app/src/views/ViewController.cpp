@@ -589,10 +589,11 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 
 	// Workaround, the grid scale has problems when sliding giving bad effects
 	//if (transition_style == "slide" && mCurrentView->isKindOf<GridGameListView>())
-		//transition_style = "fade";
+	//transition_style = "fade";
 
+	LOG(LogError) << "Launching game " << game->getName() << " with transition style " << transition_style << ".";
 	auto start = std::chrono::system_clock::now();
-	LOG(LogError) << "Launching game " << game->getName() << " with transition style " << transition_style << " starting at " << start;
+	LOG(LogError) << "Launch animation start: " << start;
 
 	if (transition_style == "fade" || transition_style == "fast fade")
 	{
@@ -605,7 +606,7 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 			if (doLaunchGame(game, options))
 			{
 				auto stop = std::chrono::system_clock::now();
-				LOG(LogError) << "Launching game " << game->getName() << " with transition style " << transition_style << " ending at " << stop;
+				LOG(LogError) << "Launch animation stop: " << stop;
 				GuiComponent::isLaunchTransitionRunning = false;
 
 				Window* w = mWindow;
@@ -627,7 +628,7 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 			if (doLaunchGame(game, options))
 			{
 				auto stop = std::chrono::system_clock::now();
-				LOG(LogError) << "Launching game " << game->getName() << " with transition style " << transition_style << " ending at " << stop;
+				LOG(LogError) << "Launch animation stop: " << stop;
 				GuiComponent::isLaunchTransitionRunning = false;
 
 				Window* w = mWindow;
@@ -648,7 +649,7 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 			if (doLaunchGame(game, options))
 			{
 				auto stop = std::chrono::system_clock::now();
-				LOG(LogError) << "Launching game " << game->getName() << " with transition style " << transition_style << " ending at " << stop;
+				LOG(LogError) << "Launch animation stop: " << stop;
 				GuiComponent::isLaunchTransitionRunning = false;
 
 				Window* w = mWindow;
