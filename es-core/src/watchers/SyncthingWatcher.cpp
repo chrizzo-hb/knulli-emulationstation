@@ -125,8 +125,8 @@ bool SyncthingWatcher::check() {
 			wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(mSyncedDevices) + ".");
 			wndNotification->updatePercent(100);
 			mkillNotificationInNextCycle = true;
-		// If no devices are dirty and no transfer is in progress, but more than 128 bytes have been transferred since last check
-		} else if (transferredBytesSinceLastCheck > 128) {
+		// If no devices are dirty and no transfer is in progress, but more than 1024 bytes have been transferred since last check
+		} else if (transferredBytesSinceLastCheck > 1024) {
 			wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(cleanDevices) + ".");
 			wndNotification->updatePercent(100);
 			mkillNotificationInNextCycle = true;
