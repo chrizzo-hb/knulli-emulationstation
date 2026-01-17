@@ -33,17 +33,27 @@ bool SyncthingWatcher::check() {
 
 	SyncthingState state = mSyncthingUtil.getState();
 
-    // If this is the first time we're running since boot, 
-    // set the baseline to current total.
-    if (mTotalBytesTransferred == 0) {
-        mTotalBytesTransferred = state.totalBytesTransferred;
-        return true; // Skip this first cycle to establish a baseline
+	// Ignore invalid/empty states
+    if (state.totalBytesTransferred <= 0) {
+        return true;
     }
 
-    // Calculate number of bytes transferred since last check
-    int64_t transferredBytesSinceLastCheck = state.totalBytesTransferred - mTotalBytesTransferred;
+    // Secure the baseline
+    if (mTotalBytesTransferred == 0) {
+        mTotalBytesTransferred = state.totalBytesTransferred;
+        LOG(LogError) << "Syncthing: Initial baseline set to " << mTotalBytesTransferred;
+        return true; // EXIT HERE. Do not process deltas until the NEXT 5s tick.
+    }
 
-	// Update total bytes transferred
+    // Calculate the delta
+    int64_t transferredBytesSinceLastCheck = state.totalBytesTransferred - mTotalBytesTransferred;
+    
+    // Safety check: if Syncthing resets its session counter, reset our baseline
+    if (transferredBytesSinceLastCheck < 0) {
+        mTotalBytesTransferred = state.totalBytesTransferred;
+        return true;
+    }
+
     mTotalBytesTransferred = state.totalBytesTransferred;
 	
 
