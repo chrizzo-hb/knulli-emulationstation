@@ -592,21 +592,22 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 	//transition_style = "fade";
 
 	LOG(LogError) << "Launching game " << game->getName() << " with transition style " << transition_style << ".";
-	auto start = std::chrono::system_clock::now();
-	LOG(LogError) << "Launch animation start: " << start;
 
+	auto start = std::chrono::high_resolution_clock::now();
+	
 	if (transition_style == "fade" || transition_style == "fast fade")
 	{
 		int fadeDuration = (transition_style == "fast fade") ? 400 : 800; // Halve the duration for fast fade
 		// fade out, launch game, fade back in
 		auto fadeFunc = [this](float t) { mFadeOpacity = Math::lerp(0.0f, 1.0f, t); };
 
-		setAnimation(new LambdaAnimation(fadeFunc, fadeDuration), 0, [this, game, fadeFunc, options]
+		setAnimation(new LambdaAnimation(fadeFunc, fadeDuration), 0, [this, game, fadeFunc, options, start]
 		{
 			if (doLaunchGame(game, options))
 			{
-				auto stop = std::chrono::system_clock::now();
-				LOG(LogError) << "Launch animation stop: " << stop;
+				auto finish = std::chrono::high_resolution_clock::now();
+				std::chrono::duration<double, std::milli> elapsed = finish - start;
+				std::cout << "Elapsed Animation Time: " << elapsed.count() << " seconds" << std::endl;
 				GuiComponent::isLaunchTransitionRunning = false;
 
 				Window* w = mWindow;
@@ -623,12 +624,13 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 	{
 		int slideDuration = (transition_style == "fast slide") ? 750 : 1500; // Halve the duration for fast slide
 		// move camera to zoom in on center + fade out, launch game, come back in
-		setAnimation(new LaunchAnimation(mCamera, mFadeOpacity, center, slideDuration), 0, [this, origCamera, center, game, options]
+		setAnimation(new LaunchAnimation(mCamera, mFadeOpacity, center, slideDuration), 0, [this, origCamera, center, game, options, start]
 		{
 			if (doLaunchGame(game, options))
 			{
-				auto stop = std::chrono::system_clock::now();
-				LOG(LogError) << "Launch animation stop: " << stop;
+				auto finish = std::chrono::high_resolution_clock::now();
+				std::chrono::duration<double, std::milli> elapsed = finish - start;
+				std::cout << "Elapsed Animation Time: " << elapsed.count() << " seconds" << std::endl;
 				GuiComponent::isLaunchTransitionRunning = false;
 
 				Window* w = mWindow;
@@ -644,12 +646,13 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 	}
 	else // instant
 	{
-		setAnimation(new LaunchAnimation(mCamera, mFadeOpacity, center, 10), 0, [this, origCamera, center, game, options]
+		setAnimation(new LaunchAnimation(mCamera, mFadeOpacity, center, 10), 0, [this, origCamera, center, game, options, start]
 		{
 			if (doLaunchGame(game, options))
 			{
-				auto stop = std::chrono::system_clock::now();
-				LOG(LogError) << "Launch animation stop: " << stop;
+				auto finish = std::chrono::high_resolution_clock::now();
+				std::chrono::duration<double, std::milli> elapsed = finish - start;
+				std::cout << "Elapsed Animation Time: " << elapsed.count() << " seconds" << std::endl;
 				GuiComponent::isLaunchTransitionRunning = false;
 
 				Window* w = mWindow;
