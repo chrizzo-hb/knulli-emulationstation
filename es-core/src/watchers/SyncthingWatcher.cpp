@@ -32,6 +32,21 @@ bool SyncthingWatcher::check() {
     }
 
 	SyncthingState state = mSyncthingUtil.getState();
+
+    // If this is the first time we're running since boot, 
+    // set the baseline to current total.
+    if (mTotalBytesTransferred == 0) {
+        mTotalBytesTransferred = state.totalBytesTransferred;
+        return true; // Skip this first cycle to establish a baseline
+    }
+
+    // Calculate number of bytes transferred since last check
+    int64_t transferredBytesSinceLastCheck = state.totalBytesTransferred - mTotalBytesTransferred;
+
+	// Update total bytes transferred
+    mTotalBytesTransferred = state.totalBytesTransferred;
+	
+
 	// Check if any devices have become dirty or are no longer dirty
 	for (const auto& dev : mDirtyDevices) {
 		if (std::find(state.dirtyDevices.begin(), state.dirtyDevices.end(), dev) == state.dirtyDevices.end()) {
@@ -46,12 +61,6 @@ bool SyncthingWatcher::check() {
 			cleanDevices.push_back(dev);
 		}
 	}
-
-	// Calculate number of bytes transferred since last check
-	int64_t transferredBytesSinceLastCheck = state.totalBytesTransferred - mTotalBytesTransferred;
-
-	// Update total bytes transferred
-	mTotalBytesTransferred = state.totalBytesTransferred;
 
 	// Debug logging
 	if (transferredBytesSinceLastCheck > 0) {
