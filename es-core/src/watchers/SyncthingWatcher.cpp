@@ -49,8 +49,8 @@ bool SyncthingWatcher::check() {
 		LOG(LogInfo) << "Syncthing: Total bytes transferred updated to " << mTotalBytesTransferred;
 	}
 
-	// If nothing is syncing and no devices are dirty, and only 128 bytes or less have been transferred since last check, skip or close notification
-	if (!state.isSyncing() && transferredBytesSinceLastCheck <= 128) {
+	// If nothing is syncing and only 1024 bytes or less have been transferred since last check, skip or close notification
+	if (!state.isSyncing() && transferredBytesSinceLastCheck <= 1024) {
 		if (wndNotification != nullptr)
 		{
 			// If previous cycle already showed finished message, close notification
@@ -77,6 +77,14 @@ bool SyncthingWatcher::check() {
 			}
 		}
 	} else {
+		// Let's make sure we aren't showing a notification for background noise.
+		if (!state.isSyncing() && transferredBytesSinceLastCheck <= 1024) {
+            return true; 
+        }
+
+        // If we got here, it's a real sync.
+        mkillNotificationInNextCycle = false;
+
 		// Start new syncing notification
 		LOG(LogInfo) << "Syncthing: Starting new syncing notification at state itemsSynced=" << state.itemsSynced << " itemsTotal=" << state.itemsTotal << " transferSpeed=" << state.transferSpeed << " transferredBytesSinceLastCheck=" << transferredBytesSinceLastCheck << " dirtyDevices=" << mDirtyDevices.size();
 		
