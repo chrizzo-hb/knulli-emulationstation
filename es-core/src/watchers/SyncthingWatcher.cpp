@@ -2,6 +2,7 @@
 #include "LocaleES.h"
 #include "Log.h"
 #include <algorithm>
+#include <string>
 
 #define GUIICON _U("\uF07C ")
 
@@ -70,7 +71,7 @@ bool SyncthingWatcher::check() {
 					wndNotification->updateText(_("Synchronization complete."));
 					wndNotification->updatePercent(100);
 				} else {
-					wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(mSyncedDevices) + ".");
+					wndNotification->updateText(toSyncedDevicesNameString(mSyncedDevices, true));
 					wndNotification->updatePercent(100);
 				}
 				mkillNotificationInNextCycle = true;
@@ -113,21 +114,29 @@ bool SyncthingWatcher::check() {
 			wndNotification->updatePercent(percentDone);
 		// If we know which devices are dirty, but not how many files need to be transferred, list dirty devices
 		} else if (mDirtyDevices.size() > 0) {
-			wndNotification->updateText(_("Syncing with") + " " + toSyncedDevicesNameString(mDirtyDevices) + ".");
+			wndNotification->updateText(toSyncedDevicesNameString(mDirtyDevices, false));
 			wndNotification->updatePercent(0);
 		// If we don't know which devices are dirty, but bytes have been transferred since last check, show generic syncing message
 		} else if (state.isSyncing()) {
-			wndNotification->updateText(_("Transfer in progress."));
-			wndNotification->updatePercent(0);
-			mCurrentTransferNeededFiles = 0;
+			// If the API says we are syncing but the file counts are zero/equal,
+			// it's likely just a database scan. Don't let it hang forever.
+			if (state.itemsTotal > 0 && state.itemsTotal > state.itemsSynced) {
+				wndNotification->updateText(_("Transfer in progress..."));
+				wndNotification->updatePercent(state.getPercentDone());
+			} else {
+				// If it's just a scan with no actual file backlog, treat it as finished
+				wndNotification->updateText(_("Synchronization complete."));
+				wndNotification->updatePercent(100);
+				mkillNotificationInNextCycle = true;
+			}
 		// If no devices are dirty and no transfer is in progress, but at least one device has finished syncing
 		} else if (mSyncedDevices.size() > 0) {
-			wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(mSyncedDevices) + ".");
+			wndNotification->updateText(toSyncedDevicesNameString(mSyncedDevices, true));
 			wndNotification->updatePercent(100);
 			mkillNotificationInNextCycle = true;
 		// If no devices are dirty and no transfer is in progress, but more than 1024 bytes have been transferred since last check
 		} else if (transferredBytesSinceLastCheck > 1024) {
-			wndNotification->updateText(_("Synced with") + " " + toSyncedDevicesNameString(cleanDevices) + ".");
+			wndNotification->updateText(toSyncedDevicesNameString(cleanDevices, true));
 			wndNotification->updatePercent(100);
 			mkillNotificationInNextCycle = true;
 		} else if (transferredBytesSinceLastCheck == 0 && (mCurrentTransferNeededFiles > 0 || mDirtyDevices.size() > 0)) {
@@ -142,13 +151,31 @@ bool SyncthingWatcher::check() {
 	return true;
 }
 
-std::string SyncthingWatcher::toSyncedDevicesNameString(const std::vector<std::string>& deviceNames) {
-	std::string result;
-	for (size_t i = 0; i < deviceNames.size(); i++) {
-		result += deviceNames[i];
-		if (i < deviceNames.size() - 1) {
-			result += ", ";
+std::string SyncthingWatcher::toSyncedDevicesNameString(const std::vector<std::string>& deviceNames, bool synced) {
+
+	std::string names;
+    bool first = true;
+
+    for (const auto& deviceName : deviceNames) {
+        // Skip IDs that haven't been resolved to names yet
+        if (deviceName.length() > 20 || deviceName.find("-") != std::string::npos) {
+            continue; 
+        }
+
+        if (!first) {
+            names += ", ";
+        }
+        
+        names += deviceName;
+        first = false;
+    }
+	if (names.empty()) {
+		return synced ?  _("Synchronization complete.") : _("Transfer in progress...");
+	} else {
+		if (synced) {
+			return Utils::String::format(_("Synced with %s"), names.c_str());
+		} else {
+			return Utils::String::format(_("Syncing with %s"), names.c_str());
 		}
 	}
-	return result;
 }

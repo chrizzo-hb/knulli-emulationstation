@@ -31,5 +31,5 @@ private:
 	int64_t mCurrentTransferNeededFiles = 0;
     int64_t mTotalBytesTransferred = 0;
 
-	std::string toSyncedDevicesNameString(const std::vector<std::string>& deviceNames);
+	std::string toSyncedDevicesNameString(const std::vector<std::string>& deviceNames, bool synced = true);
 };
