@@ -35,7 +35,7 @@ bool SyncthingWatcher::check() {
 	// Check if any devices have become dirty or are no longer dirty
 	for (const auto& dev : mDirtyDevices) {
 		if (std::find(state.dirtyDevices.begin(), state.dirtyDevices.end(), dev) == state.dirtyDevices.end()) {
-			LOG(LogInfo) << "Syncthing: Device " << dev << " is no longer dirty.";
+			LOG(LogError) << "Syncthing: Device " << dev << " is no longer dirty.";
 			mSyncedDevices.push_back(dev);
 		}
 	}
@@ -55,7 +55,7 @@ bool SyncthingWatcher::check() {
 
 	// Debug logging
 	if (transferredBytesSinceLastCheck > 0) {
-		LOG(LogInfo) << "Syncthing: Total bytes transferred updated to " << mTotalBytesTransferred;
+		LOG(LogError) << "Syncthing: Total bytes transferred updated to " << mTotalBytesTransferred;
 	}
 
 	// If nothing is syncing and only 1024 bytes or less have been transferred since last check, skip or close notification
@@ -88,7 +88,7 @@ bool SyncthingWatcher::check() {
         mkillNotificationInNextCycle = false;
 
 		// Start new syncing notification
-		LOG(LogInfo) << "Syncthing: Starting new syncing notification at state itemsSynced=" << state.itemsSynced << " itemsTotal=" << state.itemsTotal << " transferSpeed=" << state.transferSpeed << " transferredBytesSinceLastCheck=" << transferredBytesSinceLastCheck << " dirtyDevices=" << mDirtyDevices.size();
+		LOG(LogError) << "Syncthing: Starting new syncing notification at state itemsSynced=" << state.itemsSynced << " itemsTotal=" << state.itemsTotal << " transferSpeed=" << state.transferSpeed << " transferredBytesSinceLastCheck=" << transferredBytesSinceLastCheck << " dirtyDevices=" << mDirtyDevices.size();
 		
 		// Create notification window if not existing yet
 		if (wndNotification == nullptr) {
