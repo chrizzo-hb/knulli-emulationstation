@@ -204,15 +204,15 @@ bool SyncthingWatcher::isInitialized(const SyncthingState& state) {
     if (mTotalBytesTransferred == 0) {
         mTotalBytesTransferred = state.totalBytesTransferred;
         LOG(LogError) << "Syncthing: Initial baseline set to " << mTotalBytesTransferred;
-        return false; // EXIT HERE. Do not process deltas until the NEXT 5s tick.
+        return false;
     }
 
-	// Syncthing has reset its baseline, initialization seems done
-	if (state.totalBytesTransferred < mTotalBytesTransferred) {
+	// Syncthing has determined a steady baseline, initialization seems to be complete.
+	if (state.totalBytesTransferred <= mTotalBytesTransferred) {
 		mTotalBytesTransferred = state.totalBytesTransferred;
 		mInitialized = true;
 		LOG(LogError) << "Syncthing: Initialization complete. Baseline reset to " << mTotalBytesTransferred;
-		return false;
+		return false; // Return false this cycle to avoid showing a notification immediately.
 	}
 
 	return false;
