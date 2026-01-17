@@ -52,7 +52,7 @@ bool SyncthingWatcher::check() {
 	// Check if any devices have become dirty or are no longer dirty
 	for (const auto& dev : mDirtyDevices) {
 		if (std::find(state.dirtyDevices.begin(), state.dirtyDevices.end(), dev) == state.dirtyDevices.end()) {
-			LOG(LogError) << "Syncthing: Device " << dev << " is no longer dirty.";
+			LOG(LogInfo) << "Syncthing: Device " << dev << " is no longer dirty.";
 			mSyncedDevices.push_back(dev);
 		}
 	}
@@ -66,7 +66,7 @@ bool SyncthingWatcher::check() {
 
 	// Debug logging
 	if (transferredBytesSinceLastCheck > 0) {
-		LOG(LogError) << "Syncthing: Total bytes transferred updated to " << mTotalBytesTransferred;
+		LOG(LogDebug) << "Syncthing: Total bytes transferred updated to " << mTotalBytesTransferred;
 	}
 
 	// If nothing is syncing and only 1024 bytes or less have been transferred since last check, skip or close notification
@@ -100,7 +100,7 @@ bool SyncthingWatcher::check() {
         mkillNotificationInNextCycle = false;
 
 		// Start new syncing notification
-		LOG(LogError) << "Syncthing: Starting new syncing notification at state itemsSynced=" << state.itemsSynced << " itemsTotal=" << state.itemsTotal << " transferSpeed=" << state.transferSpeed << " transferredBytesSinceLastCheck=" << transferredBytesSinceLastCheck << " dirtyDevices=" << mDirtyDevices.size();
+		LOG(LogDebug) << "Syncthing: Starting new syncing notification at state itemsSynced=" << state.itemsSynced << " itemsTotal=" << state.itemsTotal << " transferSpeed=" << state.transferSpeed << " transferredBytesSinceLastCheck=" << transferredBytesSinceLastCheck << " dirtyDevices=" << mDirtyDevices.size();
 		
 		// Create notification window if not existing yet
 		if (wndNotification == nullptr) {
@@ -203,7 +203,7 @@ bool SyncthingWatcher::isInitialized(const SyncthingState& state) {
     // Secure the baseline
     if (mTotalBytesTransferred == 0) {
         mTotalBytesTransferred = state.totalBytesTransferred;
-        LOG(LogError) << "Syncthing: Initial baseline set to " << mTotalBytesTransferred;
+        LOG(LogInfo) << "Syncthing: Initial baseline set to " << mTotalBytesTransferred;
         return false;
     }
 
@@ -211,7 +211,7 @@ bool SyncthingWatcher::isInitialized(const SyncthingState& state) {
 	if (state.totalBytesTransferred <= mTotalBytesTransferred) {
 		mTotalBytesTransferred = state.totalBytesTransferred;
 		mInitialized = true;
-		LOG(LogError) << "Syncthing: Initialization complete. Baseline reset to " << mTotalBytesTransferred;
+		LOG(LogInfo) << "Syncthing: Initialization complete. Baseline reset to " << mTotalBytesTransferred;
 		return false; // Return false this cycle to avoid showing a notification immediately.
 	}
 
