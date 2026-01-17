@@ -38,21 +38,13 @@ bool SyncthingWatcher::check() {
         return true;
     }
 
-    // Secure the baseline
-    if (mTotalBytesTransferred == 0) {
-        mTotalBytesTransferred = state.totalBytesTransferred;
-        LOG(LogError) << "Syncthing: Initial baseline set to " << mTotalBytesTransferred;
-        return true; // EXIT HERE. Do not process deltas until the NEXT 5s tick.
-    }
+	// Check if initialization is complete
+    if (!isInitialized(state)) {
+		return true;
+	}
 
     // Calculate the delta
     int64_t transferredBytesSinceLastCheck = state.totalBytesTransferred - mTotalBytesTransferred;
-    
-    // Safety check: if Syncthing resets its session counter, reset our baseline
-    if (transferredBytesSinceLastCheck < 0) {
-        mTotalBytesTransferred = state.totalBytesTransferred;
-        return true;
-    }
 
     mTotalBytesTransferred = state.totalBytesTransferred;
 	
@@ -186,7 +178,6 @@ std::string SyncthingWatcher::toSyncedDevicesNameString(const std::vector<std::s
         if (!first) {
             names += ", ";
         }
-        
         names += deviceName;
         first = false;
     }
@@ -199,4 +190,31 @@ std::string SyncthingWatcher::toSyncedDevicesNameString(const std::vector<std::s
 			return Utils::String::format(_("Syncing with %s.").c_str(), names.c_str());
 		}
 	}
+}
+
+// During launch, syncthing creates a lot of background noise as it scans the database and checks file states.
+// We need to ignore this noise until the initial sync is complete.
+bool SyncthingWatcher::isInitialized(const SyncthingState& state) {
+
+	if (mInitialized) {
+		return true;
+	}
+
+    // Secure the baseline
+    if (mTotalBytesTransferred == 0) {
+        mTotalBytesTransferred = state.totalBytesTransferred;
+        LOG(LogError) << "Syncthing: Initial baseline set to " << mTotalBytesTransferred;
+        return false; // EXIT HERE. Do not process deltas until the NEXT 5s tick.
+    }
+
+	// Syncthing has reset its baseline, initialization seems done
+	if (state.totalBytesTransferred < mTotalBytesTransferred) {
+		mTotalBytesTransferred = state.totalBytesTransferred;
+		mInitialized = true;
+		LOG(LogError) << "Syncthing: Initialization complete. Baseline reset to " << mTotalBytesTransferred;
+		return false;
+	}
+
+	return false;
+
 }
