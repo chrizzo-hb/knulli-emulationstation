@@ -86,6 +86,7 @@ bool SyncthingWatcher::check() {
 			}
 			// Schedule notification to be executed in next cycle.
 			mkillNotificationInNextCycle = true;
+			return true;
 		}
 	} else {
 		// Let's make sure we aren't showing a notification for background noise.
