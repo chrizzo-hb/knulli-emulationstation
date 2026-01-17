@@ -590,6 +590,8 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 	//if (transition_style == "slide" && mCurrentView->isKindOf<GridGameListView>())
 		//transition_style = "fade";
 
+	LOG(LogError) << "Launching game " << game->getName() << " with transition style: " << transition_style;
+
 	if (transition_style == "fade" || transition_style == "fast fade")
 	{
 		int fadeDuration = (transition_style == "fast fade") ? 400 : 800; // Halve the duration for fast fade
