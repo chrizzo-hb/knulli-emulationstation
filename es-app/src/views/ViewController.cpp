@@ -30,6 +30,7 @@
 #include <SDL_timer.h>
 #include "TextToSpeech.h"
 #include "VolumeControl.h"
+#include <chrono>
 
 ViewController* ViewController::sInstance = nullptr;
 
@@ -590,7 +591,8 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 	//if (transition_style == "slide" && mCurrentView->isKindOf<GridGameListView>())
 		//transition_style = "fade";
 
-	LOG(LogError) << "Launching game " << game->getName() << " with transition style: " << transition_style;
+	auto start = chrono::system_clock::now();
+	LOG(LogError) << "Launching game " << game->getName() << " with transition style " << transition_style << " starting at " << start;
 
 	if (transition_style == "fade" || transition_style == "fast fade")
 	{
@@ -602,6 +604,8 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 		{
 			if (doLaunchGame(game, options))
 			{
+				auto stop = chrono::system_clock::now();
+				LOG(LogError) << "Launching game " << game->getName() << " with transition style " << transition_style << " ending at " << stop;
 				GuiComponent::isLaunchTransitionRunning = false;
 
 				Window* w = mWindow;
@@ -622,6 +626,7 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 		{
 			if (doLaunchGame(game, options))
 			{
+				LOG(LogError) << "Launching game " << game->getName() << " with transition style " << transition_style << " ending at " << stop;
 				GuiComponent::isLaunchTransitionRunning = false;
 
 				Window* w = mWindow;
@@ -641,6 +646,7 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 		{
 			if (doLaunchGame(game, options))
 			{
+				LOG(LogError) << "Launching game " << game->getName() << " with transition style " << transition_style << " ending at " << stop;
 				GuiComponent::isLaunchTransitionRunning = false;
 
 				Window* w = mWindow;
