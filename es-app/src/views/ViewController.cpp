@@ -591,7 +591,7 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 	//if (transition_style == "slide" && mCurrentView->isKindOf<GridGameListView>())
 		//transition_style = "fade";
 
-	auto start = chrono::system_clock::now();
+	auto start = std::chrono::system_clock::now();
 	LOG(LogError) << "Launching game " << game->getName() << " with transition style " << transition_style << " starting at " << start;
 
 	if (transition_style == "fade" || transition_style == "fast fade")
@@ -604,7 +604,7 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 		{
 			if (doLaunchGame(game, options))
 			{
-				auto stop = chrono::system_clock::now();
+				auto stop = std::chrono::system_clock::now();
 				LOG(LogError) << "Launching game " << game->getName() << " with transition style " << transition_style << " ending at " << stop;
 				GuiComponent::isLaunchTransitionRunning = false;
 
@@ -626,6 +626,7 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 		{
 			if (doLaunchGame(game, options))
 			{
+				auto stop = std::chrono::system_clock::now();
 				LOG(LogError) << "Launching game " << game->getName() << " with transition style " << transition_style << " ending at " << stop;
 				GuiComponent::isLaunchTransitionRunning = false;
 
@@ -646,6 +647,7 @@ void ViewController::launch(FileData* game, LaunchGameOptions options, Vector3f 
 		{
 			if (doLaunchGame(game, options))
 			{
+				auto stop = std::chrono::system_clock::now();
 				LOG(LogError) << "Launching game " << game->getName() << " with transition style " << transition_style << " ending at " << stop;
 				GuiComponent::isLaunchTransitionRunning = false;
 
