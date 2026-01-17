@@ -25,6 +25,7 @@ private:
 	AsyncNotificationComponent* wndNotification = nullptr;
 
 	std::vector<std::string> mDirtyDevices;
+	std::vector<std::string> mSyncedDevices;
 
 	bool mkillNotificationInNextCycle = false;
 	int64_t mCurrentTransferNeededFiles = 0;
