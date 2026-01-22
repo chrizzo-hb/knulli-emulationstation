@@ -19,13 +19,29 @@
 #include "FileSystemUtil.h"
 #include "LocaleES.h"
 #include "components/AsyncNotificationComponent.h"
+#include "watchers/NetworkStateWatcher.h"
 
 #define GUIICON _U("\uF07C ")
 
 const std::string SYNCTHING_CONFIG_XML = "/userdata/system/configs/syncthing/config.xml";
+std::once_flag SyncthingUtil::mOnceFlag;
+
+// Initial check if network connection is present
+void SyncthingUtil::init() {
+	if (mInitialized) {
+		return;
+	}
+	NetworkStateWatcher* watcher = WatchersManager::GetComponent<NetworkStateWatcher>();
+	if (watcher != nullptr) {
+		mWifiConnected = watcher->isConnected();
+	}
+	WatchersManager::getInstance()->RegisterNotify(this);
+	mInitialized = true;
+}
 
 // Returns true if syncthing is enabled and reachable and the respective config file exists.
 bool SyncthingUtil::isEnabled() {
+
 	// Check if syncthing API is up
 	std::unique_ptr<HttpReq> req(new HttpReq("http://127.0.0.1:8384"));
 	if (!req->wait()) {
@@ -42,6 +58,10 @@ bool SyncthingUtil::isEnabled() {
 // Establishes a connection to the syncthing API by verifying the syncthing API
 // is reachable and loading all relevant devices and folders from the config XML.
 bool SyncthingUtil::connect() {
+
+	// Lock guard ensures the logic below is thread-safe
+    std::lock_guard<std::mutex> lock(mConnectMutex);
+
 	if (mConnected)
 		return true;
 
@@ -76,12 +96,12 @@ bool SyncthingUtil::connect() {
 			LOG(LogInfo) << "Syncthing: Determined own device name " << self.name;
 			continue; // Don't add self to device list
 		}
-		Device device;
-		device.id = deviceNode.attribute("id").as_string();
-		device.name = deviceNode.attribute("name").as_string();
-		device.paused = deviceNode.child("paused").text().as_bool();
+		auto device = std::make_shared<Device>();
+		device->id = deviceNode.attribute("id").as_string();
+		device->name = deviceNode.attribute("name").as_string();
+		device->paused = deviceNode.child("paused").text().as_bool();
 		LOG(LogInfo) << "Syncthing: Added device with name " << device.name;
-		mDevices.push_back(device);
+		mDevicesMap[device->id] = device;
 	}
 	// Load folders
 	for (pugi::xml_node folderNode = configurationNode.child("folder"); folderNode; folderNode = folderNode.next_sibling("folder")) {
@@ -117,7 +137,7 @@ void SyncthingUtil::disconnect() {
 	};
 
 	// Clear existing devices and folders
-	mDevices.clear();
+	mDevicesMap.clear();
 	mFolders.clear();
 }
 
@@ -187,6 +207,11 @@ SyncthingState SyncthingUtil::getState() {
 	state.itemsTotal = 0;
 	state.transferSpeed = 0;
 
+	if (!mWifiConnected) {
+		LOG(LogInfo) << "Syncthing: Not connected to WiFi, cannot get state";
+		return state;
+	}
+
 	if (!mConnected && !connect()) {
 		LOG(LogError) << "Syncthing: Not connected, cannot get state";
 		return state;
@@ -209,9 +234,9 @@ SyncthingState SyncthingUtil::getState() {
 	state.connectedDevices.clear();
 
 	for (auto& deviceId : getConnectedDeviceIds()) {
-		Device* device = getDeviceById(deviceId);
+		std::shared_ptr<Device> device = getDeviceById(deviceId);
 		if (device == nullptr) continue;
-		updateDeviceCompletion(device);
+		updateDeviceCompletion(device.get());
 		if (!device->connected || device->paused) continue;
 		state.connectedDevices.push_back(device->name);
 		globalItems += device->globalItems;
@@ -239,13 +264,12 @@ SyncthingState SyncthingUtil::getState() {
 }
 
 // Retrieves a device by its ID, or nullptr if not found.
-Device* SyncthingUtil::getDeviceById(const std::string& deviceId) {
-	for (auto& device : mDevices) {
-		if (device.id == deviceId) {
-			return &device;
-		}
-	}
-	return nullptr;
+std::shared_ptr<Device> SyncthingUtil::getDeviceById(const std::string& deviceId) {
+    auto it = mDevicesMap.find(deviceId);
+    if (it != mDevicesMap.end()) {
+        return it->second;
+    }
+    return nullptr;
 }
 
 // Retrieves a folder by its ID, or nullptr if not found.
@@ -303,7 +327,7 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 				// Exclude self and paused devices from list of connected devices
 				if (member.name.IsString() == false || std::string(member.name.GetString()) == self.id)
 					continue;
-				Device* device = getDeviceById(member.name.GetString());
+				std::shared_ptr<Device> device = getDeviceById(member.name.GetString());
 				
 				// Handle unknown device TODO: Create new device instead of skipping?
 				if (device == nullptr)
@@ -318,9 +342,9 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 					device->paused = member.value["paused"].GetBool();
 				if (member.value.HasMember("connected") == true)
 					device->connected = member.value["connected"].GetBool();
-				if (member.value.HasMember("inBytesTotal") == true && member.value["inBytesTotal"].IsInt())
+				if (member.value.HasMember("inBytesTotal") == true && member.value["inBytesTotal"].IsInt64())
 					device->bytesReceived = member.value["inBytesTotal"].GetInt64();
-				if (member.value.HasMember("outBytesTotal") == true && member.value["outBytesTotal"].IsInt())
+				if (member.value.HasMember("outBytesTotal") == true && member.value["outBytesTotal"].IsInt64())
 					device->bytesSent = member.value["outBytesTotal"].GetInt64();
 				if (!device->connected || device->paused)
 					continue;
@@ -347,12 +371,12 @@ void SyncthingUtil::updateDeviceCompletion(Device* device) {
 			return;
 		if (doc.IsObject() == false)
 			return;
-		if (doc.GetObject().HasMember("completion") && doc.GetObject()["completion"].IsInt())
-			device->completion = doc.GetObject()["completion"].GetInt();
-		if (doc.GetObject().HasMember("needItems") && doc.GetObject()["needItems"].IsInt())
-			device->needItems = doc.GetObject()["needItems"].GetInt();
-		if (doc.GetObject().HasMember("globalItems") && doc.GetObject()["globalItems"].IsInt())
-			device->globalItems = doc.GetObject()["globalItems"].GetInt();
+		if (doc.GetObject().HasMember("completion") && doc.GetObject()["completion"].IsInt64())
+			device->completion = doc.GetObject()["completion"].GetInt64();
+		if (doc.GetObject().HasMember("needItems") && doc.GetObject()["needItems"].IsInt64())
+			device->needItems = doc.GetObject()["needItems"].GetInt64();
+		if (doc.GetObject().HasMember("globalItems") && doc.GetObject()["globalItems"].IsInt64())
+			device->globalItems = doc.GetObject()["globalItems"].GetInt64();
 		if (doc.GetObject().HasMember("paused") && doc.GetObject()["paused"].IsBool())
 			device->paused = doc.GetObject()["paused"].GetBool();
 		if (doc.GetObject().HasMember("needBytes") && doc.GetObject()["needBytes"].GetInt64()) {
@@ -367,5 +391,15 @@ void SyncthingUtil::updateDeviceCompletion(Device* device) {
 			}
             device->needBytes = currentNeedBytes;
 		}
+	}
+}
+
+// Handles WiFi connection status changes.
+void SyncthingUtil::OnWatcherChanged(IWatcher* component)
+{
+	NetworkStateWatcher* watcher = dynamic_cast<NetworkStateWatcher*>(component);
+	if (watcher != nullptr)
+	{
+		mWifiConnected = watcher->isConnected();
 	}
 }
