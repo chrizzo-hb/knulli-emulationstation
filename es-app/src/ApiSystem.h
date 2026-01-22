@@ -171,6 +171,8 @@ public:
 
 #ifdef KNULLI
 	bool runDiskCheck(const std::function<void(const std::string)>& func = nullptr);
+	std::string getSyncthingDeviceId();
+	
 #endif
 
 	bool enableBluetooth();

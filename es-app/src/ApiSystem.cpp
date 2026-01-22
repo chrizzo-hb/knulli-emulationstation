@@ -504,6 +504,22 @@ bool ApiSystem::runDiskCheck(const std::function<void(const std::string)>& func)
 {
 	return executeScript("knulli-disk-check", func).second == 0;
 }
+
+std::string ApiSystem::getSyncthingDeviceId() {
+    std::vector<std::string> ids = executeEnumerationScript("syncthing --device-id --home /userdata/system/configs/syncthing/");
+
+	// If the list is empty, there's no ID.
+    if (ids.empty()) {
+        return ""; 
+    }
+
+    // If there's more than 1 ID, log an error message.
+    if (ids.size() > 1) {
+        LOG(LogError) << "Unexpectedly detected more than 1 Syncthing device IDs! Only the first one will be considered!";
+    }
+    
+	return ids[0];
+}
 #endif
 
 bool ApiSystem::enableBluetooth()

@@ -20,11 +20,24 @@
 #include "LocaleES.h"
 #include "components/AsyncNotificationComponent.h"
 #include "watchers/NetworkStateWatcher.h"
+#include "ApiSystem.h"
 
 #define GUIICON _U("\uF07C ")
 
 const std::string SYNCTHING_CONFIG_XML = "/userdata/system/configs/syncthing/config.xml";
 std::once_flag SyncthingUtil::mOnceFlag;
+
+const std::string SYNCTHING_DEVICE_ID_COMMAND = "/usr/bin/syncthing --device-id --home /userdata/system/configs/syncthing/";
+
+bool CapabilityCheck::hasCapability(const std::string capability)
+{
+	int result = system((CAPABILITY_CHECK_COMMAND_NAME
+		+ SEPARATOR + capability
+		).c_str());
+	return WEXITSTATUS(result) == 0;
+}
+
+
 
 // Initial check if network connection is present
 void SyncthingUtil::init() {
@@ -66,7 +79,6 @@ bool SyncthingUtil::connect() {
 		return true;
 
 	if (!SyncthingUtil::isEnabled()) {
-		mConnected = false;
 		return false;
 	}
 
@@ -75,7 +87,6 @@ bool SyncthingUtil::connect() {
 	pugi::xml_parse_result result = document.load_file(SYNCTHING_CONFIG_XML.c_str());
 	if (!result) {
 		LOG(LogError) << "Unable to parse packages";
-		mConnected = false;
 		return false;
 	}
 
@@ -85,12 +96,20 @@ bool SyncthingUtil::connect() {
 	LOG(LogDebug) << "Syncthing: API key is " << mApiKey;
 
 	// Determine own device ID
-	self.id = getMyId();
+	const std::string myId = getMyId();
+	if (myId.empty() || myId == "OWN_ID_UNKNOWN") {
+		return false;
+	}
+	self.id = myId;
 	LOG(LogInfo) << "Syncthing: Own device ID is " << self.id;
+
+	// Clear map before determining devices.
+	mDevicesMap.clear();
+	mFolders.clear();
 
 	// Load devices
 	for (pugi::xml_node deviceNode = configurationNode.child("device"); deviceNode; deviceNode = deviceNode.next_sibling("device")) {
-		if (std::string(deviceNode.attribute("id").as_string()) == self.id) {
+		if (self.id == deviceNode.attribute("id").as_string()) {
 			self.name = deviceNode.attribute("name").as_string();
 			self.paused = deviceNode.child("paused").text().as_bool();
 			LOG(LogInfo) << "Syncthing: Determined own device name " << self.name;
@@ -284,21 +303,11 @@ Folder* SyncthingUtil::getFolderById(const std::string& folderId) {
 
 // Retrieves own device ID from the syncthing API.
 std::string SyncthingUtil::getMyId() {
-	HttpReqOptions options;
-	options.customHeaders.push_back("X-Api-Key: " + mApiKey);
-
-	std::unique_ptr<HttpReq> req(new HttpReq("http://127.0.0.1:8384/rest/system/status", &options));
-	
-	if (req->wait()) {
-		rapidjson::Document doc;
-		doc.Parse(req->getContent().c_str());
-		if (doc.HasParseError() || doc.IsObject() == false)
-			return "OWN_ID_UNKNOWN";
-
-		if (doc.GetObject().HasMember("myID") && doc.GetObject()["myID"].IsString())
-			return doc.GetObject()["myID"].GetString();
+	std::string id = ApiSystem::getSyncthingDeviceId();
+	if (id.empty()) {
+		return "OWN_ID_UNKNOWN";
 	}
-	return "OWN_ID_UNKNOWN";
+	return id;
 }
 
 // Retrieves a list of IDs of currently connected devices from the syncthing API.
