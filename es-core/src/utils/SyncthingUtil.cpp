@@ -108,7 +108,7 @@ bool SyncthingUtil::connect() {
 		device->id = deviceNode.attribute("id").as_string();
 		device->name = deviceNode.attribute("name").as_string();
 		device->paused = deviceNode.child("paused").text().as_bool();
-		LOG(LogInfo) << "Syncthing: Added device with name " << device.name;
+		LOG(LogInfo) << "Syncthing: Added device with name " << device->name;
 		mDevicesMap[device->id] = device;
 	}
 	// Load folders
