@@ -28,16 +28,6 @@ std::once_flag SyncthingUtil::mOnceFlag;
 
 const std::string SYNCTHING_DEVICE_ID_COMMAND = "/usr/bin/syncthing --device-id --home /userdata/system/configs/syncthing/ 2>/dev/null";
 
-bool CapabilityCheck::hasCapability(const std::string capability)
-{
-	int result = system((CAPABILITY_CHECK_COMMAND_NAME
-		+ SEPARATOR + capability
-		).c_str());
-	return WEXITSTATUS(result) == 0;
-}
-
-
-
 // Initial check if network connection is present
 void SyncthingUtil::init() {
 	if (mInitialized) {
