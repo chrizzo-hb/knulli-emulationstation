@@ -20,14 +20,13 @@
 #include "LocaleES.h"
 #include "components/AsyncNotificationComponent.h"
 #include "watchers/NetworkStateWatcher.h"
-#include "ApiSystem.h"
 
 #define GUIICON _U("\uF07C ")
 
 const std::string SYNCTHING_CONFIG_XML = "/userdata/system/configs/syncthing/config.xml";
 std::once_flag SyncthingUtil::mOnceFlag;
 
-const std::string SYNCTHING_DEVICE_ID_COMMAND = "/usr/bin/syncthing --device-id --home /userdata/system/configs/syncthing/";
+const std::string SYNCTHING_DEVICE_ID_COMMAND = "/usr/bin/syncthing --device-id --home /userdata/system/configs/syncthing/ 2>/dev/null";
 
 bool CapabilityCheck::hasCapability(const std::string capability)
 {
@@ -303,11 +302,37 @@ Folder* SyncthingUtil::getFolderById(const std::string& folderId) {
 
 // Retrieves own device ID from the syncthing API.
 std::string SyncthingUtil::getMyId() {
-	std::string id = ApiSystem::getSyncthingDeviceId();
-	if (id.empty()) {
-		return "OWN_ID_UNKNOWN";
-	}
-	return id;
+    std::string cmd = SYNCTHING_DEVICE_ID_COMMAND;
+    
+    std::vector<std::string> myIds;
+    char buffer[128];
+
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
+
+    if (!pipe) {
+        LOG(LogError) << "Syncthing: Failed to open pipe for device ID command.";
+        return "";
+    }
+
+    while (fgets(buffer, sizeof(buffer), pipe.get()) != nullptr) {
+        std::string line = buffer;
+        // Trim trailing newlines or spaces
+        line.erase(line.find_last_not_of(" \n\r\t") + 1);
+        if (!line.empty()) {
+            myIds.push_back(line);
+        }
+    }
+
+    if (myIds.empty()) {
+        LOG(LogWarning) << "Syncthing: No device ID returned from command.";
+        return ""; 
+    }
+
+    if (myIds.size() > 1) {
+        LOG(LogError) << "Syncthing: Unexpectedly detected " << myIds.size() << " IDs! Using: " << myIds[0];
+    }
+
+    return myIds[0];
 }
 
 // Retrieves a list of IDs of currently connected devices from the syncthing API.
