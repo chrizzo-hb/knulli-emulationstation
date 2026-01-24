@@ -15,8 +15,8 @@
 #include <algorithm>
 #include <memory>
 #include <string>
-#include "RgbService.h"
-#include "BoardCheck.h"
+#include "LegacyRgbService.h"
+#include "guis/knulli/BoardCheck.h"
 
 #include "Log.h"
 
@@ -38,8 +38,8 @@ constexpr float DEFAULT_LOW_BATTERY_THRESHOLD = 20;
 LegacyGuiRgbSettings::LegacyGuiRgbSettings(Window* window) : ExtendedGuiSettings(window, _("RGB LED SETTINGS").c_str())
 {
 
-    // Temporary disable RgbService to be able to interact with the RGB LEDs directly
-    RgbService::stop();
+    // Temporary disable LegacyRgbService to be able to interact with the RGB LEDs directly
+    LegacyRgbService::stop();
 
     // TODO: This should not be hard-coded, it should be read from a file or a service.
     isH700 = BoardCheck::isBoard(RGB_BOARDS_H700);
@@ -98,7 +98,7 @@ LegacyGuiRgbSettings::LegacyGuiRgbSettings(Window* window) : ExtendedGuiSettings
 		Scripting::fireEvent(MENU_EVENT_NAME);
 
         // Reactivate the RGB Service
-        RgbService::start();
+        LegacyRgbService::start();
     });
 
 }
@@ -197,7 +197,7 @@ void LegacyGuiRgbSettings::applyValues()
     int selectedRed = (int) sliderLedRed->getValue();
     int selectedGreen = (int) sliderLedGreen->getValue();
     int selectedBlue = (int) sliderLedBlue->getValue();
-    RgbService::setRgb(std::stoi(selectedMode), selectedBrightness, selectedSpeed, selectedRed, selectedGreen, selectedBlue);
+    LegacyRgbService::setRgb(std::stoi(selectedMode), selectedBrightness, selectedSpeed, selectedRed, selectedGreen, selectedBlue);
 }
 
 void LegacyGuiRgbSettings::restoreDefaultColors()
