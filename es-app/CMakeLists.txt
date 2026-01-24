@@ -212,7 +212,7 @@ set(ES_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/ThreadedDiskCheck.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/ThreadedSyncthing.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/KnulliThemeCheck.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/LegacyGuiRgbSettings.cp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/LegacyGuiRgbSettings.cpp
 
     # Scrapers
     ${CMAKE_CURRENT_SOURCE_DIR}/src/scrapers/Scraper.cpp
