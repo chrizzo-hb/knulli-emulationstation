@@ -143,10 +143,10 @@ void GuiDeviceSettings::openDisplaySettings()
 void GuiDeviceSettings::openRgbLedSettings()
 {
 	if (SilkyRgbService::isInstalled()) {
-		LOG(LogError) << "Silky RGB detected."
+		LOG(LogError) << "Silky RGB detected.";
 		mWindow->pushGui(new SilkyGuiRgbSettings(mWindow));
 	} else {
-		LOG(LogError) << "Silky RGB not detected - using legacy RGB GUI."
+		LOG(LogError) << "Silky RGB not detected - using legacy RGB GUI.";
 		mWindow->pushGui(new LegacyGuiRgbSettings(mWindow));
 	}
 }

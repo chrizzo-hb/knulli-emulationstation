@@ -40,7 +40,7 @@ constexpr float DEFAULT_LOW_BATTERY_THRESHOLD = 20;
 // Constructor creates a new GuiRgbSettings menu.
 LegacyGuiRgbSettings::LegacyGuiRgbSettings(Window* window) : ExtendedGuiSettings(window, _("RGB LED SETTINGS").c_str())
 {
-    LOG(LogError) << "Constructor called"
+    LOG(LogError) << "Constructor called";
     // Temporary disable LegacyRgbService to be able to interact with the RGB LEDs directly
     LegacyRgbService::stop();
 
@@ -48,20 +48,20 @@ LegacyGuiRgbSettings::LegacyGuiRgbSettings(Window* window) : ExtendedGuiSettings
     isH700 = BoardCheck::isBoard(RGB_BOARDS_H700);
     isA133 = BoardCheck::isBoard(RGB_BOARDS_A133);
 
-    LOG(LogError) << "Checks done"
+    LOG(LogError) << "Checks done";
 
     addGroup(_("REGULAR LED MODE AND COLOR"));
 
     // LED Mode Options
     optionListMode = createModeOptionList();
 
-    LOG(LogError) << "Mode option list created"
+    LOG(LogError) << "Mode option list created";
 
     // LED Brightness Slider
     sliderLedBrightness = createSlider(_("BRIGHTNESS"), 0.f, 100.f, 5.f, "", "", (isH700 || isA133));    
     setConfigValueForSlider(sliderLedBrightness, DEFAULT_BRIGHTNESS, "led.brightness");
 
-    LOG(LogError) << "Brightness slider created"
+    LOG(LogError) << "Brightness slider created";
 
     // Adaptive Brightness switch
     switchAdaptiveBrightness = createSwitch(_("ADAPTIVE BRIGHTNESS"), "led.brightness.adaptive", _("Automatically adapts LED brightness to screen brightness (based on the brightness setting above)."), true, false, (isH700 || isA133));
