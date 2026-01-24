@@ -15,5 +15,6 @@ public:
     std::shared_ptr<SwitchComponent> createSwitch(std::string label, std::string variable, std::string description, bool defaultValue, bool hasAuto, bool show);
 
 private:
-    bool ExtendedGuiSettings::isNumeric(const std::string& setting);
+    bool isNumeric(const std::string& setting);
+    bool isBool(const std::string& setting);
 };
