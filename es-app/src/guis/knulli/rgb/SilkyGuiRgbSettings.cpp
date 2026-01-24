@@ -1,4 +1,4 @@
-#include "guis/knulli/rgb/SilkySilkyGuiRgbSettings.h"
+#include "guis/knulli/rgb/SilkyGuiRgbSettings.h"
 #include "guis/GuiMsgBox.h"
 #include "guis/knulli/ExtendedGuiSettings.h"
 #include "components/OptionListComponent.h"
