@@ -33,7 +33,7 @@ void ExtendedGuiSettings::setConfigValueForSlider(std::shared_ptr<SliderComponen
 {
     float selectedValue = defaultValue;
     std::string configuredValue = SystemConf::getInstance()->get(variable);
-    if (!configuredValue.empty())
+    if (isNumeric(selected))
         selectedValue = Utils::String::toFloat(configuredValue);
     if (slider->getMin() > selectedValue)
         selectedValue = slider->getMin();
@@ -53,7 +53,7 @@ std::shared_ptr<SwitchComponent> ExtendedGuiSettings::createSwitch(std::string l
         switchComponent->setAutoState(defaultState);
     }
     std::string selected = SystemConf::getInstance()->get(variable);
-    if (selected.empty())
+    if (selected.empty() || !isNumeric(selected))
         selected = defaultState;
 
     switchComponent->setState(selected == SWITCH_ON);
@@ -62,4 +62,8 @@ std::shared_ptr<SwitchComponent> ExtendedGuiSettings::createSwitch(std::string l
     }
     addWithDescription(label, description, switchComponent);
     return switchComponent;
+}
+
+bool ExtendedGuiSettings::isNumeric(const std::string& setting) {
+    return !setting.empty() && setting.find_first_not_of("0123456789.") == std::string::npos;
 }
