@@ -118,7 +118,7 @@ std::shared_ptr<OptionListComponent<std::string>> LegacyGuiRgbSettings::createMo
     auto optionsLedMode = std::make_shared<OptionListComponent<std::string>>(mWindow, _("MODE"), false);
 
     std::string selectedLedMode = SystemConf::getInstance()->get("led.mode");
-    if (selectedLedMode.empty() || isSupportedMode(selectedLedMode))
+    if (selectedLedMode.empty() || !isSupportedMode(selectedLedMode))
         selectedLedMode = DEFAULT_LED_MODE;
 
     optionsLedMode->add(_("NONE"), "0", selectedLedMode == "0");
