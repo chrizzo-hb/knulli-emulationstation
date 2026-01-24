@@ -119,25 +119,24 @@ std::shared_ptr<OptionListComponent<std::string>> SilkyGuiRgbSettings::createMod
     std::vector<ModeInfo> availableModes = SilkyRgbService::getAvailableModes();
 
     if (availableModes.empty()) {
-        LOG(LogWarning) << "No RGB modes available from SilkyRgbService, adding default options.";
+        LOG(LogError) << "No RGB modes available from SilkyRgbService, adding default options.";
         optionsLedMode->add(_("None"), "null", selectedLedMode == "null");
     }
     else
     {   
+        selectedLedMode = DEFAULT_LED_MODE;
         std::string configuredLedMode = SystemConf::getInstance()->get("led.mode");
-        if (configuredLedMode.empty()) {
-            configuredLedMode = DEFAULT_LED_MODE;
+        if (!configuredLedMode.empty()) {
+            for (const auto& mode : availableModes) {
+                if (configuredLedMode == mode.id) {
+                    selectedLedMode = configuredLedMode;
+                    break;
+                }
+            }
         }
 
-        selectedLedMode = DEFAULT_LED_MODE;
         for (const auto& mode : availableModes) {
-            if (configuredLedMode == mode.id) {
-                selectedLedMode = configuredLedMode;
-                optionsLedMode->add(_(mode.name.c_str()), mode.id, true);
-            } else {
-                optionsLedMode->add(_(mode.name.c_str()), mode.id, false);
-            }
-            
+            optionsLedMode->add(_(mode.name.c_str()), mode.id, mode.id == selectedLedMode);
         }
     }
 
@@ -207,7 +206,6 @@ std::shared_ptr<OptionListComponent<std::string>> SilkyGuiRgbSettings::createPal
 
 void SilkyGuiRgbSettings::applyValue(const std::string& key, const std::string& value)
 {
-    LOG(LogError) << "SilkyGuiRgbSettings::applyValue called with key: " << key << " value: " << value;
     SilkyRgbService::applyValue(key, value);
 }
 
