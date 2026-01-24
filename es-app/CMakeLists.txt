@@ -93,6 +93,9 @@ set(ES_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/KnulliThemeCheck.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/rgb/LegacyGuiRgbSettings.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/rgb/LegacyRgbService.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/rgb/SilkyGuiRgbSettings.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/rgb/SilkyRgbService.h
+
     # Scrapers
     ${CMAKE_CURRENT_SOURCE_DIR}/src/scrapers/Scraper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/scrapers/GamesDBJSONScraper.h
@@ -212,6 +215,8 @@ set(ES_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/KnulliThemeCheck.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/rgb/LegacyGuiRgbSettings.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/rgb/LegacyRgbService.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/rgb/SilkyGuiRgbSettings.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/guis/knulli/rgb/SilkyRgbService.cpp
 
     # Scrapers
     ${CMAKE_CURRENT_SOURCE_DIR}/src/scrapers/Scraper.cpp
