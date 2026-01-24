@@ -19,7 +19,7 @@ private:
     void initializeOnChangeListeners();
     void applyValues();
     void restoreDefaultColors();
-    void cleanUpSilkyRgbSettings();
+    bool isSupportedMode(const std::string& mode);
 
     bool isH700;
     bool isA133;

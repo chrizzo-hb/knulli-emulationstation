@@ -211,9 +211,9 @@ void LegacyGuiRgbSettings::restoreDefaultColors()
     applyValues();
 }
 
-bool isSupportedMode(const std::string& mode) {
+bool LegacyGuiRgbSettings::isSupportedMode(const std::string& mode) {
     std::vector<std::string> modes = {"0", "1", "2", "3", "4", "5", "6"};
-    if (std::ranges::any_of(modes, [&](const std::string& s) { return s == mode; })) {
+    if (std::any_of(modes.begin(), modes.end(), [&](const std::string& s) { return s == mode; })) {
         return true;
     }
     return false;
