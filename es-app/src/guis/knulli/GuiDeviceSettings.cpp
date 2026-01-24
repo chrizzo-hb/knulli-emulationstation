@@ -42,7 +42,7 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : ExtendedGuiSettings(windo
 			addEntry(_("DISPLAY SETTINGS"), true, [this] { openDisplaySettings(); });
 		}
 		if(CapabilityCheck::hasCapability(CapabilityCheck::RGB_CAPABILITY)) {
-			addEntry(_("RGB LED SETTINGS"), true, [this] { (); });
+			addEntry(_("RGB LED SETTINGS"), true, [this] { openRgbLedSettings(); });
 		}
 		if(BoardCheck::isBoard(BOARDS_WITH_TOGGLE_SWITCH)) {
 			optionsToggleSwitchMode = createToggleSwitchModeOptionList();
