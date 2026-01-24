@@ -25,6 +25,7 @@
 
 const std::vector<std::string> RGB_BOARDS_H700 = {"rg40xx-h", "rg40xx-v", "rg-cubexx"};
 const std::vector<std::string> RGB_BOARDS_A133 = {"trimui-smart-pro", "trimui-brick"};
+const std::vector<std::string> RGB_BOARDS_A523 = {"trimui-smart-pro-s"};
 
 constexpr const char* MENU_EVENT_NAME = "rgb-changed";
 
@@ -47,6 +48,7 @@ LegacyGuiRgbSettings::LegacyGuiRgbSettings(Window* window) : ExtendedGuiSettings
     // TODO: This should not be hard-coded, it should be read from a file or a service.
     isH700 = BoardCheck::isBoard(RGB_BOARDS_H700);
     isA133 = BoardCheck::isBoard(RGB_BOARDS_A133);
+    isA523 = BoardCheck::isBoard(RGB_BOARDS_A523);
 
     LOG(LogError) << "Checks done";
 
@@ -58,13 +60,13 @@ LegacyGuiRgbSettings::LegacyGuiRgbSettings(Window* window) : ExtendedGuiSettings
     LOG(LogError) << "Mode option list created";
 
     // LED Brightness Slider
-    sliderLedBrightness = createSlider(_("BRIGHTNESS"), 0.f, 100.f, 5.f, "", "", (isH700 || isA133));    
+    sliderLedBrightness = createSlider(_("BRIGHTNESS"), 0.f, 100.f, 5.f, "", "", (isH700 || isA133 || isA523));    
     setConfigValueForSlider(sliderLedBrightness, DEFAULT_BRIGHTNESS, "led.brightness");
 
     LOG(LogError) << "Brightness slider created";
 
     // Adaptive Brightness switch
-    switchAdaptiveBrightness = createSwitch(_("ADAPTIVE BRIGHTNESS"), "led.brightness.adaptive", _("Automatically adapts LED brightness to screen brightness (based on the brightness setting above)."), true, false, (isH700 || isA133));
+    switchAdaptiveBrightness = createSwitch(_("ADAPTIVE BRIGHTNESS"), "led.brightness.adaptive", _("Automatically adapts LED brightness to screen brightness (based on the brightness setting above)."), true, false, (isH700 || isA133 || isA523));
 
     // LED Speed Slider
     sliderLedSpeed = createSlider(_("SPEED"), 1.f, 100.f, 5.f, "", _("Not applicable for all devices/modes. Warning: High speed may cause seizures for people with photosensitive epilepsy."), isH700);
@@ -72,24 +74,24 @@ LegacyGuiRgbSettings::LegacyGuiRgbSettings(Window* window) : ExtendedGuiSettings
 
     // LED Colour Sliders
     std::array<float, 3> rgbValues = getRgbValues();
-    sliderLedRed = createSlider(_("RED"), 0.f, 255.f, 10.f, "", "", (isH700 || isA133));
+    sliderLedRed = createSlider(_("RED"), 0.f, 255.f, 10.f, "", "", (isH700 || isA133 || isA523));
     sliderLedRed->setValue(rgbValues[0]);
-    sliderLedGreen = createSlider(_("GREEN"), 0.f, 255.f, 10.f, "", "", (isH700 || isA133));
+    sliderLedGreen = createSlider(_("GREEN"), 0.f, 255.f, 10.f, "", "", (isH700 || isA133 || isA523));
     sliderLedGreen->setValue(rgbValues[1]);
-    sliderLedBlue = createSlider(_("BLUE"), 0.f, 255.f, 10.f, "", "", (isH700 || isA133));
+    sliderLedBlue = createSlider(_("BLUE"), 0.f, 255.f, 10.f, "", "", (isH700 || isA133 || isA523));
     sliderLedBlue->setValue(rgbValues[2]);
     addEntry(_("RESTORE DEFAULT COLORS"), true, [this] { restoreDefaultColors(); });
 
     addGroup(_("BATTERY CHARGE INDICATION"));
 
     // Low battery threshold slider
-    sliderLowBatteryThreshold = createSlider(_("LOW BATTERY THRESHOLD"), 0.f, 100.f, 5.f, "%", _("Show yellow/red breathing when battery is below this threshold. Set to 0 to disable."), (isH700 || isA133));
+    sliderLowBatteryThreshold = createSlider(_("LOW BATTERY THRESHOLD"), 0.f, 100.f, 5.f, "%", _("Show yellow/red breathing when battery is below this threshold. Set to 0 to disable."), (isH700 || isA133 || isA523));
     setConfigValueForSlider(sliderLowBatteryThreshold, DEFAULT_LOW_BATTERY_THRESHOLD, "led.battery.low");
-    switchBatteryCharging = createSwitch(_("BATTERY CHARGING"), "led.battery.charging", _("Show green breathing while device is charging."), true, false, (isH700 || isA133));
+    switchBatteryCharging = createSwitch(_("BATTERY CHARGING"), "led.battery.charging", _("Show green breathing while device is charging."), true, false, (isH700 || isA133 || isA523));
 
 
     addGroup(_("RETRO ACHIEVEMENT INDICATION"));
-    switchRetroAchievements = createSwitch(_("ACHIEVEMENT EFFECT"), "led.retroachievements", _("Honor your retro achievements with a LED effect."), true, false, (isH700 || isA133));
+    switchRetroAchievements = createSwitch(_("ACHIEVEMENT EFFECT"), "led.retroachievements", _("Honor your retro achievements with a LED effect."), true, false, (isH700 || isA133 || isA523));
 
     initializeOnChangeListeners();
     applyValues();
@@ -122,7 +124,7 @@ std::shared_ptr<OptionListComponent<std::string>> LegacyGuiRgbSettings::createMo
         selectedLedMode = DEFAULT_LED_MODE;
 
     optionsLedMode->add(_("NONE"), "0", selectedLedMode == "0");
-    if (isH700 || isA133) {
+    if (isH700 || isA133 || isA523) {
         optionsLedMode->add(_("STATIC"), "1", selectedLedMode == "1");
     } else if (selectedLedMode == "1") {
         selectedLedMode = DEFAULT_LED_MODE;
@@ -132,7 +134,7 @@ std::shared_ptr<OptionListComponent<std::string>> LegacyGuiRgbSettings::createMo
     } else if (selectedLedMode == "2") {
         selectedLedMode = DEFAULT_LED_MODE;
     }
-    if (isH700 || isA133) {
+    if (isH700 || isA133 || isA523) {
         optionsLedMode->add(_("BREATHING (MEDIUM)"), "3", selectedLedMode == "3");
     } else if (selectedLedMode == "3") {
         selectedLedMode = DEFAULT_LED_MODE;
@@ -142,7 +144,7 @@ std::shared_ptr<OptionListComponent<std::string>> LegacyGuiRgbSettings::createMo
     } else if (selectedLedMode == "4") {
         selectedLedMode = DEFAULT_LED_MODE;
     }
-    if (isH700 || isA133) {
+    if (isH700 || isA133 || isA523) {
         optionsLedMode->add(_("SINGLE RAINBOW"), "5", selectedLedMode == "5");
     } else if (selectedLedMode == "5") {
         selectedLedMode = DEFAULT_LED_MODE;

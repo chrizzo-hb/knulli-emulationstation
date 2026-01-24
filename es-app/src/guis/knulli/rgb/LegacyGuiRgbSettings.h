@@ -23,6 +23,7 @@ private:
 
     bool isH700;
     bool isA133;
+    bool isA523;
     std::shared_ptr<OptionListComponent<std::string>> optionListMode;
     std::shared_ptr<SliderComponent> sliderLedBrightness;
     std::shared_ptr<SliderComponent> sliderLedSpeed;
