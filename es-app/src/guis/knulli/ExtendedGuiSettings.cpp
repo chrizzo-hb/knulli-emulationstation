@@ -33,9 +33,12 @@ void ExtendedGuiSettings::setConfigValueForSlider(std::shared_ptr<SliderComponen
 {
     float selectedValue = defaultValue;
     std::string configuredValue = SystemConf::getInstance()->get(variable);
-    if (!configuredValue.empty()) {
+    if (!configuredValue.empty())
         selectedValue = Utils::String::toFloat(configuredValue);
-    }
+    if (slider->getMin() > selectedValue)
+        selectedValue = slider->getMin();
+    if (slider->getMax() < selectedValue)
+        selectedValue = slider->getMax();
     slider->setValue(selectedValue);
 }
 
