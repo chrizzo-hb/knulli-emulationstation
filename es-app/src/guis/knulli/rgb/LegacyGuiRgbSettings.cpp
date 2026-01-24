@@ -1,4 +1,4 @@
-#include "guis/knulli/GuiRgbSettings.h"
+#include "guis/knulli/rgb/LegacyGuiRgbSettings.h"
 #include "guis/GuiMsgBox.h"
 #include "guis/knulli/ExtendedGuiSettings.h"
 #include "components/OptionListComponent.h"
@@ -35,7 +35,7 @@ constexpr float DEFAULT_SPEED = 15;
 constexpr float DEFAULT_LOW_BATTERY_THRESHOLD = 20;
 
 // Constructor creates a new GuiRgbSettings menu.
-GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RGB LED SETTINGS")
+LegacyGuiRgbSettings::LegacyGuiRgbSettings(Window* window) : ExtendedGuiSettings(window, _("RGB LED SETTINGS").c_str())
 {
 
     // Temporary disable RgbService to be able to interact with the RGB LEDs directly
@@ -104,7 +104,7 @@ GuiRgbSettings::GuiRgbSettings(Window* window) : ExtendedGuiSettings(window, "RG
 }
 
 // Creates a new mode option list
-std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createModeOptionList()
+std::shared_ptr<OptionListComponent<std::string>> LegacyGuiRgbSettings::createModeOptionList()
 {
     auto optionsLedMode = std::make_shared<OptionListComponent<std::string>>(mWindow, _("MODE"), false);
 
@@ -150,7 +150,7 @@ std::shared_ptr<OptionListComponent<std::string>> GuiRgbSettings::createModeOpti
 
 
 // Retrieves RGB value settings from batocera.conf as an array of floats
-std::array<float, 3> GuiRgbSettings::getRgbValues()
+std::array<float, 3> LegacyGuiRgbSettings::getRgbValues()
 {
     std::string colour = SystemConf::getInstance()->get("led.colour");
     if (colour.empty()) {
@@ -173,13 +173,13 @@ std::array<float, 3> GuiRgbSettings::getRgbValues()
 }
 
 // Concatenates the RGB values and stores them in batocera.conf.
-void GuiRgbSettings::setRgbValues(float red, float green, float blue)
+void LegacyGuiRgbSettings::setRgbValues(float red, float green, float blue)
 {
     std::string colour = std::to_string((int) red) + RGB_DELIMITER + std::to_string((int) green) + RGB_DELIMITER + std::to_string((int) blue);
     SystemConf::getInstance()->set("led.colour", colour);
 }
 
-void GuiRgbSettings::initializeOnChangeListeners()
+void LegacyGuiRgbSettings::initializeOnChangeListeners()
 {
         optionListMode->setSelectedChangedCallback([this](std::string value) { applyValues(); });
         sliderLedBrightness->setOnValueChanged([this](float value) { applyValues(); });
@@ -189,7 +189,7 @@ void GuiRgbSettings::initializeOnChangeListeners()
         sliderLedBlue->setOnValueChanged([this](float value) { applyValues(); });
 }
 
-void GuiRgbSettings::applyValues()
+void LegacyGuiRgbSettings::applyValues()
 {
     std::string selectedMode = optionListMode->getSelected();
     int selectedBrightness = (int) sliderLedBrightness->getValue();
@@ -200,7 +200,7 @@ void GuiRgbSettings::applyValues()
     RgbService::setRgb(std::stoi(selectedMode), selectedBrightness, selectedSpeed, selectedRed, selectedGreen, selectedBlue);
 }
 
-void GuiRgbSettings::restoreDefaultColors()
+void LegacyGuiRgbSettings::restoreDefaultColors()
 {
     sliderLedRed->setValue(DEFAULT_COLOR_RED);
     sliderLedGreen->setValue(DEFAULT_COLOR_GREEN);

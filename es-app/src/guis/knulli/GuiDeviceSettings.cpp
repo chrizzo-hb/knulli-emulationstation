@@ -4,7 +4,7 @@
 #include "guis/knulli/FactorySettings.h"
 #include "guis/knulli/GuiDisplaySettings.h"
 #include "guis/knulli/GuiPowerManagementSettings.h"
-#include "guis/knulli/GuiRgbSettings.h"
+#include "guis/knulli/rgb/LegacyGuiRgbSettings.h"
 #include "guis/knulli/Pico8Installer.h"
 #include "guis/knulli/ThreadedSyncthing.h"
 #include "guis/knulli/syscalls/DisplaySettings.h"
@@ -42,7 +42,7 @@ GuiDeviceSettings::GuiDeviceSettings(Window* window) : ExtendedGuiSettings(windo
 			addEntry(_("DISPLAY SETTINGS"), true, [this] { openDisplaySettings(); });
 		}
 		if(CapabilityCheck::hasCapability(CapabilityCheck::RGB_CAPABILITY)) {
-			addEntry(_("RGB LED SETTINGS"), true, [this] { openRgbLedSettings(); });
+			addEntry(_("RGB LED SETTINGS"), true, [this] { (); });
 		}
 		if(BoardCheck::isBoard(BOARDS_WITH_TOGGLE_SWITCH)) {
 			optionsToggleSwitchMode = createToggleSwitchModeOptionList();
@@ -140,7 +140,7 @@ void GuiDeviceSettings::openDisplaySettings()
 
 void GuiDeviceSettings::openRgbLedSettings()
 {
-	mWindow->pushGui(new GuiRgbSettings(mWindow));
+	mWindow->pushGui(new LegacyGuiRgbSettings(mWindow));
 }
 
 void GuiDeviceSettings::installPico8()
