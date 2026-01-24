@@ -14,7 +14,10 @@
 #include <SDL_events.h>
 #include <algorithm>
 #include <memory>
+#include <iostream>
 #include <string>
+#include <vector>
+#include <algorithm>
 #include "LegacyRgbService.h"
 #include "guis/knulli/BoardCheck.h"
 
@@ -109,7 +112,7 @@ std::shared_ptr<OptionListComponent<std::string>> LegacyGuiRgbSettings::createMo
     auto optionsLedMode = std::make_shared<OptionListComponent<std::string>>(mWindow, _("MODE"), false);
 
     std::string selectedLedMode = SystemConf::getInstance()->get("led.mode");
-    if (selectedLedMode.empty())
+    if (selectedLedMode.empty() && isSupportedMode(selectedLedMode))
         selectedLedMode = DEFAULT_LED_MODE;
 
     optionsLedMode->add(_("NONE"), "0", selectedLedMode == "0");
@@ -206,4 +209,12 @@ void LegacyGuiRgbSettings::restoreDefaultColors()
     sliderLedGreen->setValue(DEFAULT_COLOR_GREEN);
     sliderLedBlue->setValue(DEFAULT_COLOR_BLUE);
     applyValues();
+}
+
+bool isSupportedMode(const std::string& mode) {
+    std::vector<std::string> modes = {"0", "1", "2", "3", "4", "5", "6"};
+    if (std::ranges::any_of(modes, [&](const std::string& s) { return s == mode; })) {
+        return true;
+    }
+    return false;
 }

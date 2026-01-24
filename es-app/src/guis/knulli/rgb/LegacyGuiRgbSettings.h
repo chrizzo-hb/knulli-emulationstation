@@ -19,6 +19,7 @@ private:
     void initializeOnChangeListeners();
     void applyValues();
     void restoreDefaultColors();
+    void cleanUpSilkyRgbSettings();
 
     bool isH700;
     bool isA133;
