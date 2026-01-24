@@ -1,4 +1,4 @@
-#include "guis/knulli/LegacyRgbService.h"
+#include "guis/knulli/rgb/LegacyRgbService.h"
 #include "utils/Platform.h"
 #include "Paths.h"
 #include "utils/FileSystemUtil.h"
