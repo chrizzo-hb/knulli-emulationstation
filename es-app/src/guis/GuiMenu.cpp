@@ -59,7 +59,6 @@
 #include "GuiLoading.h"
 #include "guis/GuiBios.h"
 #include "guis/GuiKeyMappingEditor.h"
-#include "guis/GuiGameSwitcher.h"
 #include "Gamelist.h"
 #include "TextToSpeech.h"
 #include "Paths.h"
@@ -2665,9 +2664,9 @@ void GuiMenu::openGamesSettings()
 #ifdef KNULLI
 	// SET SRM FILE DUMP WHILE IN-GAME
 	auto srmDumpInGame = std::make_shared<SwitchComponent>(mWindow);
-	srmDumpInGame->setState(SystemConf::getInstance()->get("global.srm_dump_ingame") == "1");
-	s->addWithDescription(_("WRITE IN-GAME SAVES TO DISK WHILE IN GAME"), _("For libretro cores, if your game allows in-game saving, the corresponding SRM file is updated either within 10 seconds after saved or only on game exit."), srmDumpInGame);
-	s->addSaveFunc([srmDumpInGame] { SystemConf::getInstance()->set("global.srm_dump_ingame", srmDumpInGame->getState() ? "1" : ""); });
+	srmDumpInGame->setState(SystemConf::getInstance()->get("global.srm_dump_ingame_disabled") == "1");
+	s->addWithDescription(_("DISABLE SRM DUMPS WHILE IN GAME"), _("For libretro cores, if your game allows in-game saving, the corresponding SRM file is updated within 10 seconds after you saved. Disabling might increase performance, however, your SRM will only be dumped when you exit the game."), srmDumpInGame);
+	s->addSaveFunc([srmDumpInGame] { SystemConf::getInstance()->set("global.srm_dump_ingame_disabled", srmDumpInGame->getState() ? "1" : "0"); });
 #endif
 
 	// INCREMENTAL SAVESTATES
@@ -3949,14 +3948,6 @@ void GuiMenu::openUISettings()
 		});
 	s->addSwitch(_("IGNORE LEADING ARTICLES WHEN SORTING"), _("Ignore 'The' and 'A' if at the start."), "IgnoreLeadingArticles", true, [s] { s->setVariable("reloadAll", true); });
 
-	// Game Switcher count setting
-	auto gameSwitcherCount = std::make_shared<SliderComponent>(mWindow, 5.f, 20.f, 1.f, "");
-	gameSwitcherCount->setValue((float)Settings::getInstance()->getInt("GameSwitcherCount"));
-	s->addWithLabel(_("GAME SWITCHER: MAX GAMES"), gameSwitcherCount);
-	s->addSaveFunc([gameSwitcherCount] {
-		Settings::getInstance()->setInt("GameSwitcherCount", (int)Math::round(gameSwitcherCount->getValue()));
-	});
-
 	s->onFinalize([s, pthis, window]
 	{
 		if (s->getVariable("reloadCollections"))
@@ -4194,15 +4185,6 @@ void GuiMenu::openQuitMenu_static(Window *window, bool quickAccessMenu, bool ani
 				delete s;
 
 			}, "iconScraper", true);
-
-		if (GuiGameSwitcher::hasRecentGames())
-		{
-			s->addEntry(_("GAME SWITCHER"), false, [s, window]
-				{
-					delete s;
-					window->pushGui(new GuiGameSwitcher(window));
-				}, "iconRecent", true);
-		}
 
 		if (ApiSystem::getInstance()->isScriptingSupported(ApiSystem::ScriptId::PDFEXTRACTION) && Utils::FileSystem::exists(Paths::getUserManualPath()))
 		{

@@ -20,7 +20,6 @@
 #include "guis/GuiTextEditPopupKeyboard.h"
 #include "SaveStateRepository.h"
 #include "guis/GuiSaveState.h"
-#include "guis/GuiGameSwitcher.h"
 #include "guis/GuiGamelistOptions.h"
 #include "BasicGameListView.h"
 #include "utils/Randomizer.h"
@@ -293,17 +292,7 @@ bool ISimpleGameListView::input(InputConfig* config, Input input)
 		showSelectedGameSaveSnapshots();
 		return true;
 	}
-
-	if (config->isMappedTo("r3", input))
-	{
-		if (GuiGameSwitcher::hasRecentGames())
-		{
-			Sound::getFromTheme(mTheme, getName(), "menuOpen")->play();
-			mWindow->pushGui(new GuiGameSwitcher(mWindow));
-		}
-		return true;
-	}
-
+		
 	if (config->isMappedTo(BUTTON_BACK, input))
 	{
 		goBack();

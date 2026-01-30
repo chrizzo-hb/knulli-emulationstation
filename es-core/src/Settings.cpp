@@ -191,8 +191,7 @@ void Settings::setDefaults()
 	mBoolMap["LoadEmptySystems"] = false;
 	
 	mIntMap["RecentlyScrappedFilter"] = 3;
-	mIntMap["GameSwitcherCount"] = 10;
-
+	
 	mIntMap["ScreenSaverTime"] = Settings::_ScreenSaverTime;
 	mIntMap["ScraperResizeWidth"] = 640;
 	mIntMap["ScraperResizeHeight"] = 0;
