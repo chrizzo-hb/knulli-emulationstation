@@ -49,7 +49,8 @@ private:
         void openScraperSettings();
         void openScreensaverOptions();  
         void openSoundSettings();
-        void openUISettings();
+        void openUISettings(bool selectGameSwitcherEnable = false);
+        void openGameSwitcherSettings(bool selectMarqueeEnable = false, bool selectPlayInfoEnable = false);
         void openUpdatesSettings();
         
         void openSystemSettings();

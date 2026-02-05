@@ -396,6 +396,10 @@ void Window::layoutNotificationPopups()
 
 void Window::processSongTitleNotifications()
 {
+	// Don't initialize AudioManager if it's not already running (e.g., cached Game Switcher mode)
+	if (!AudioManager::isInitialized())
+		return;
+
 	if (AudioManager::getInstance()->songNameChanged())
 	{
 		if (Settings::getInstance()->getBool("audio.display_titles"))

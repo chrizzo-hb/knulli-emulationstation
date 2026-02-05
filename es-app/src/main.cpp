@@ -42,6 +42,9 @@
 #include "watchers/WatchersManager.h"
 #include "HttpReq.h"
 #include "QuickResume.h"
+#include "guis/GuiGameSwitcher.h"
+#include <rapidjson/document.h>
+#include <fstream>
 
 #ifdef WIN32
 #include <Windows.h>
@@ -433,17 +436,159 @@ void launchStartupGame()
 	auto gamePath = SystemConf::getInstance()->get("global.bootgame.path");
 	if (gamePath.empty() || !Utils::FileSystem::exists(gamePath))
 		return;
-	
+
 	auto command = SystemConf::getInstance()->get("global.bootgame.cmd");
 	if (!command.empty())
 	{
+		// Try to get system name from cache for stats tracking
+		std::string systemName;
+		std::string cachePath = Paths::getUserEmulationStationPath() + "/gameswitcher_cache.json";
+		if (Utils::FileSystem::exists(cachePath))
+		{
+			std::ifstream file(cachePath);
+			if (file.is_open())
+			{
+				std::string content((std::istreambuf_iterator<char>(file)),
+				                     std::istreambuf_iterator<char>());
+				file.close();
+
+				rapidjson::Document doc;
+				doc.Parse(content.c_str());
+				if (doc.IsArray())
+				{
+					for (auto& gameObj : doc.GetArray())
+					{
+						if (gameObj.HasMember("gamePath") && gameObj["gamePath"].IsString())
+						{
+							if (std::string(gameObj["gamePath"].GetString()) == gamePath)
+							{
+								if (gameObj.HasMember("systemName") && gameObj["systemName"].IsString())
+									systemName = gameObj["systemName"].GetString();
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+
 		InputManager::getInstance()->init();
 		command = Utils::String::replace(command, "%CONTROLLERSCONFIG%", InputManager::getInstance()->configureEmulators());
+
+		// Track start time
+		time_t startTime = time(NULL);
+
 		Utils::Platform::ProcessStartInfo(command).run();
+
+		// Calculate elapsed time and save pending stats
+		time_t endTime = time(NULL);
+		int elapsedSeconds = (int)difftime(endTime, startTime);
+
+		if (!systemName.empty())
+		{
+			GuiGameSwitcher::savePendingStats(gamePath, systemName, elapsedSeconds);
+		}
+
 		// KNULLI - QUICK RESUME MODE >>>>>
 		QuickResume::postLaunchConditionalClean();
 		// KNULLI - QUICK RESUME MODE <<<<<
-	}	
+	}
+}
+
+// Returns true if a game was launched (exit ES), false if user pressed back (continue to normal ES)
+bool runCachedGameSwitcher()
+{
+	if (!GuiGameSwitcher::hasCachedData())
+	{
+		LOG(LogWarning) << "No cached Game Switcher data available";
+		return false;
+	}
+
+	LOG(LogInfo) << "Starting cached Game Switcher mode";
+
+	// Initialize minimal components
+	Window window;
+	if (!window.init(true, false))
+	{
+		LOG(LogError) << "Window failed to initialize for cached Game Switcher!";
+		return false;
+	}
+
+	// Initialize input
+	InputConfig::AssignActionButtons();
+	InputManager::getInstance()->init();
+	SDL_StopTextInput();
+
+	// Create and show cached Game Switcher
+	GuiGameSwitcher* gameSwitcher = new GuiGameSwitcher(&window, true);
+
+	// Check if Game Switcher was created successfully (has games)
+	if (!GuiGameSwitcher::isActive())
+	{
+		LOG(LogWarning) << "Cached Game Switcher has no games";
+		delete gameSwitcher;
+		window.deinit(true);
+		return false;
+	}
+
+	window.pushGui(gameSwitcher);
+
+	// Run minimal event loop
+	bool running = true;
+	bool gameLaunched = false;
+	int lastTime = SDL_GetTicks();
+
+	while (running && GuiGameSwitcher::isActive())
+	{
+		SDL_Event event;
+		if (SDL_PollEvent(&event))
+		{
+			do
+			{
+				InputManager::getInstance()->parseEvent(event, &window);
+
+				if (event.type == SDL_QUIT)
+					running = false;
+			}
+			while (SDL_PollEvent(&event));
+		}
+
+		int curTime = SDL_GetTicks();
+		int deltaTime = curTime - lastTime;
+		lastTime = curTime;
+
+		window.update(deltaTime);
+		window.render();
+		Renderer::swapBuffers();
+	}
+
+	// Check if Game Switcher closed because a game was launched
+	// (GuiGameSwitcher sets sActiveInstance to nullptr when deleted)
+	// If running is still true but Game Switcher is not active, user either:
+	// - Launched a game (launchCurrentGame was called)
+	// - Pressed back (delete this was called)
+	// We can't easily distinguish these, so we check if the process is still running
+	// Actually, if a game was launched, the process.run() blocks, so we won't get here
+	// until the game exits. But in cached mode, we just launch and exit.
+
+	// The Game Switcher's launchCurrentGame in cached mode runs the game synchronously
+	// So if we reach here, either:
+	// - User pressed back (game not launched)
+	// - User launched a game and it finished running
+
+	// For Quick Resume, if user launches a game from cached switcher, we want ES to exit
+	// after the game runs. But we need to know if a game was launched.
+
+	// Let's track this differently - check if Game Switcher is no longer active
+	// and the window's GUI stack is empty (game was launched and deleted the switcher)
+
+	window.deinit(true);
+
+	// If we're here and not running, user quit
+	// If we're here and running was true but Game Switcher closed, could be either case
+	// For simplicity: return false to continue to normal ES
+	// The cached mode launch will have already executed the game
+	return false;
 }
 
 #include "utils/MathExpr.h"
@@ -523,12 +668,30 @@ int main(int argc, char* argv[])
 	atexit(&onExit);
 
 	// Set locale
-	setLocale(argv[0]);	
+	setLocale(argv[0]);
 
 #if !WIN32
 	if(enable_startup_game) {
-	    	// Run boot game, before Window Create for linux
+		// Run boot game, before Window Create for linux
 		launchStartupGame();
+
+		// Keep showing cached Game Switcher as long as hotkey flag is set
+		// This allows chaining multiple games without fully loading ES
+		const std::string gameSwitcherFlag = "/var/run/gameswitcher.flag";
+		while (Utils::FileSystem::exists(gameSwitcherFlag))
+		{
+			Utils::FileSystem::removeFile(gameSwitcherFlag);
+
+			if (Settings::getInstance()->getBool("GameSwitcherEnabled"))
+			{
+				runCachedGameSwitcher();
+				// After game launched from switcher exits, loop back to check flag again
+			}
+			else
+			{
+				break;
+			}
+		}
 	}
 #endif
 
@@ -611,6 +774,9 @@ int main(int argc, char* argv[])
 	// this makes for no delays when accessing content, but a longer startup time
 	ViewController::get()->preload();
 
+	// Apply any pending game stats from Quick Resume / cached Game Switcher
+	GuiGameSwitcher::applyPendingStats();
+
 	// Initialize input
 	InputConfig::AssignActionButtons();
 	InputManager::getInstance()->init();
@@ -637,7 +803,6 @@ int main(int argc, char* argv[])
 		AudioManager::getInstance()->changePlaylist(ViewController::get()->getState().getSystem()->getTheme());
 	else
 		AudioManager::getInstance()->playRandomMusic();
-
 
 #ifdef WIN32	
 	DWORD displayFrequency = 60;

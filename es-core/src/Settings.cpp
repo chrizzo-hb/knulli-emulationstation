@@ -237,6 +237,13 @@ void Settings::setDefaults()
 
 	mBoolMap["RetroachievementsMenuitem"] = true;
 	mIntMap["ScreenSaverSwapImageTimeout"] = 10000;
+	mBoolMap["GameSwitcherEnabled"] = true;
+	mIntMap["GameSwitcherCount"] = 25;
+	mIntMap["GameSwitcherAnimationSpeed"] = 600;
+	mBoolMap["GameSwitcherMarqueeEnabled"] = true;
+	mIntMap["GameSwitcherMarqueeSize"] = 75;
+	mBoolMap["GameSwitcherPlayInfoEnabled"] = true;
+	mIntMap["GameSwitcherInfoBackgroundOpacity"] = 75;
 	mBoolMap["SlideshowScreenSaverStretch"] = false;
 	mBoolMap["SlideshowScreenSaverCustomImageSource"] = false;
 	mStringMap["SlideshowScreenSaverImageFilter"] = ".png,.jpg";
