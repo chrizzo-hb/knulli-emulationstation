@@ -1,24 +1,36 @@
 #include "QuickResume.h"
 #include <SystemConf.h>
 #include "utils/FileSystemUtil.h"
+#include "Log.h"
 
 namespace QuickResume
-{    
+{
     const std::string shutdownFlag = "/var/run/shutdown.flag";
 
     bool setQuickResume(std::string quickResumeCommand, std::string quickResumePath)
     {
         bool configSaved = false;
 
-        if (quickResumeEnabled())
+        LOG(LogInfo) << "QuickResume::setQuickResume called - path: " << quickResumePath;
+        LOG(LogDebug) << "QuickResume::setQuickResume - command: " << quickResumeCommand;
+
+        if (!quickResumeEnabled())
         {
-            if (!quickResumeCommand.empty() && !quickResumePath.empty())
-            {
-                SystemConf::getInstance()->set("global.bootgame.path", quickResumePath);
-                SystemConf::getInstance()->set("global.bootgame.cmd", quickResumeCommand);
-                configSaved = SystemConf::getInstance()->saveSystemConf();
-            }
+            LOG(LogWarning) << "QuickResume::setQuickResume - Quick Resume is not enabled";
+            return false;
         }
+
+        if (quickResumeCommand.empty() || quickResumePath.empty())
+        {
+            LOG(LogWarning) << "QuickResume::setQuickResume - command or path is empty";
+            return false;
+        }
+
+        SystemConf::getInstance()->set("global.bootgame.path", quickResumePath);
+        SystemConf::getInstance()->set("global.bootgame.cmd", quickResumeCommand);
+        configSaved = SystemConf::getInstance()->saveSystemConf();
+
+        LOG(LogInfo) << "QuickResume::setQuickResume - config saved: " << (configSaved ? "true" : "false");
 
         return configSaved;
     }

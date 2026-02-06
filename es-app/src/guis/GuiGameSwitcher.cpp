@@ -25,6 +25,7 @@
 #include <rapidjson/stringbuffer.h>
 #include <algorithm>
 #include <fstream>
+#include <SDL.h>
 
 // Static members
 bool GuiGameSwitcher::sPendingGameSwitcher = false;
@@ -914,6 +915,75 @@ void GuiGameSwitcher::launchCurrentGame()
 		return;
 
 	const GameItem& item = mGames[mCurrentIndex];
+
+	// Fade out marquee and play info before launching (half the animation duration)
+	bool hasMarquee = mMarquee && mMarquee->isVisible() && mMarquee->hasImage();
+	bool hasPlayInfo = mPlayInfo && mPlayInfo->isVisible();
+	if (hasMarquee || hasPlayInfo)
+	{
+		int fadeDuration = mAnimationDuration / 2;
+		int fadeStart = SDL_GetTicks();
+		float screenWidth = (float)Renderer::getScreenWidth();
+		float screenHeight = (float)Renderer::getScreenHeight();
+
+		int bgOpacityPct = Settings::getInstance()->getInt("GameSwitcherInfoBackgroundOpacity");
+		unsigned char bgAlpha = (unsigned char)((bgOpacityPct / 100.0f) * 255.0f);
+
+		while (true)
+		{
+			int elapsed = SDL_GetTicks() - fadeStart;
+			float t = std::min((float)elapsed / (float)fadeDuration, 1.0f);
+			float eased = t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
+			unsigned char opacity = (unsigned char)((1.0f - eased) * 255.0f);
+			float opacityFactor = 1.0f - eased;
+
+			// Drain SDL events to prevent input queue buildup
+			SDL_Event event;
+			while (SDL_PollEvent(&event)) {}
+
+			// Draw black background
+			Renderer::setMatrix(Transform4x4f::Identity());
+			Renderer::drawRect(0.0f, 0.0f, screenWidth, screenHeight, 0x000000FF);
+
+			// Draw screenshot at full opacity
+			if (mScreenshot && mScreenshot->hasImage())
+				mScreenshot->render(Transform4x4f::Identity());
+
+			// Draw marquee fading out
+			if (hasMarquee)
+			{
+				mMarquee->setOpacity(opacity);
+				mMarquee->render(Transform4x4f::Identity());
+			}
+
+			// Draw play info fading out
+			if (hasPlayInfo)
+			{
+				float padding = screenHeight * 0.015f;
+				auto font = mPlayInfo->getFont();
+				float textWidth = font->sizeText(mPlayInfo->getText()).x();
+				float textHeight = font->getHeight();
+				float bgWidth = textWidth + (padding * 2);
+				float bgHeight = textHeight + (padding * 2);
+				float bgX = (screenWidth - bgWidth) / 2.0f;
+				float bgY = mPlayInfo->getPosition().y() + (mPlayInfo->getSize().y() - bgHeight) / 2.0f;
+
+				unsigned char fadedBgAlpha = (unsigned char)(bgAlpha * opacityFactor);
+				unsigned int fadedBgColor = 0x00000000 | fadedBgAlpha;
+
+				Renderer::setMatrix(Transform4x4f::Identity());
+				Renderer::drawRect(bgX, bgY, bgWidth, bgHeight, fadedBgColor, fadedBgColor);
+
+				mPlayInfo->setOpacity(opacity);
+				mPlayInfo->render(Transform4x4f::Identity());
+			}
+
+			Renderer::swapBuffers();
+
+			if (t >= 1.0f)
+				break;
+		}
+	}
 
 	// Store window pointer before deleting this
 	Window* window = mWindow;
