@@ -4072,6 +4072,14 @@ void GuiMenu::openGameSwitcherSettings(bool selectMarqueeEnable, bool selectPlay
 		});
 	}
 
+	// Enable Launch Animation toggle
+	auto launchAnimEnable = std::make_shared<SwitchComponent>(mWindow);
+	launchAnimEnable->setState(Settings::getInstance()->getBool("GameSwitcherLaunchAnimationEnabled"));
+	s->addWithLabel(_("ENABLE LAUNCH ANIMATION"), launchAnimEnable);
+	s->addSaveFunc([launchAnimEnable] {
+		Settings::getInstance()->setBool("GameSwitcherLaunchAnimationEnabled", launchAnimEnable->getState());
+	});
+
 	// Dynamic menu recreation when play info toggle changes
 	playInfoEnable->setOnChangedCallback([this, s, basePlayInfoEnabled, playInfoEnable]()
 	{

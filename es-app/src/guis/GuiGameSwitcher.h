@@ -67,6 +67,7 @@ private:
 
 	// Animation state
 	bool  mAnimating;
+	bool  mLaunching;            // Fade-out before launch
 	float mAnimationProgress;    // 0.0 to 1.0
 	int   mAnimationDirection;   // -1 = left, +1 = right
 	int   mAnimationDuration;    // milliseconds

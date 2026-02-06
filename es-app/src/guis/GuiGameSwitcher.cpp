@@ -25,7 +25,6 @@
 #include <rapidjson/stringbuffer.h>
 #include <algorithm>
 #include <fstream>
-#include <SDL.h>
 
 // Static members
 bool GuiGameSwitcher::sPendingGameSwitcher = false;
@@ -563,6 +562,7 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	mPrevGameName = nullptr;
 	mPrevPlayInfo = nullptr;
 	mAnimating = false;
+	mLaunching = false;
 	mAnimationProgress = 0.0f;
 	mAnimationDirection = 0;
 	mAnimationDuration = Settings::getInstance()->getInt("GameSwitcherAnimationSpeed");
@@ -916,75 +916,6 @@ void GuiGameSwitcher::launchCurrentGame()
 
 	const GameItem& item = mGames[mCurrentIndex];
 
-	// Fade out marquee and play info before launching (half the animation duration)
-	bool hasMarquee = mMarquee && mMarquee->isVisible() && mMarquee->hasImage();
-	bool hasPlayInfo = mPlayInfo && mPlayInfo->isVisible();
-	if (hasMarquee || hasPlayInfo)
-	{
-		int fadeDuration = mAnimationDuration / 2;
-		int fadeStart = SDL_GetTicks();
-		float screenWidth = (float)Renderer::getScreenWidth();
-		float screenHeight = (float)Renderer::getScreenHeight();
-
-		int bgOpacityPct = Settings::getInstance()->getInt("GameSwitcherInfoBackgroundOpacity");
-		unsigned char bgAlpha = (unsigned char)((bgOpacityPct / 100.0f) * 255.0f);
-
-		while (true)
-		{
-			int elapsed = SDL_GetTicks() - fadeStart;
-			float t = std::min((float)elapsed / (float)fadeDuration, 1.0f);
-			float eased = t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
-			unsigned char opacity = (unsigned char)((1.0f - eased) * 255.0f);
-			float opacityFactor = 1.0f - eased;
-
-			// Drain SDL events to prevent input queue buildup
-			SDL_Event event;
-			while (SDL_PollEvent(&event)) {}
-
-			// Draw black background
-			Renderer::setMatrix(Transform4x4f::Identity());
-			Renderer::drawRect(0.0f, 0.0f, screenWidth, screenHeight, 0x000000FF);
-
-			// Draw screenshot at full opacity
-			if (mScreenshot && mScreenshot->hasImage())
-				mScreenshot->render(Transform4x4f::Identity());
-
-			// Draw marquee fading out
-			if (hasMarquee)
-			{
-				mMarquee->setOpacity(opacity);
-				mMarquee->render(Transform4x4f::Identity());
-			}
-
-			// Draw play info fading out
-			if (hasPlayInfo)
-			{
-				float padding = screenHeight * 0.015f;
-				auto font = mPlayInfo->getFont();
-				float textWidth = font->sizeText(mPlayInfo->getText()).x();
-				float textHeight = font->getHeight();
-				float bgWidth = textWidth + (padding * 2);
-				float bgHeight = textHeight + (padding * 2);
-				float bgX = (screenWidth - bgWidth) / 2.0f;
-				float bgY = mPlayInfo->getPosition().y() + (mPlayInfo->getSize().y() - bgHeight) / 2.0f;
-
-				unsigned char fadedBgAlpha = (unsigned char)(bgAlpha * opacityFactor);
-				unsigned int fadedBgColor = 0x00000000 | fadedBgAlpha;
-
-				Renderer::setMatrix(Transform4x4f::Identity());
-				Renderer::drawRect(bgX, bgY, bgWidth, bgHeight, fadedBgColor, fadedBgColor);
-
-				mPlayInfo->setOpacity(opacity);
-				mPlayInfo->render(Transform4x4f::Identity());
-			}
-
-			Renderer::swapBuffers();
-
-			if (t >= 1.0f)
-				break;
-		}
-	}
-
 	// Store window pointer before deleting this
 	Window* window = mWindow;
 
@@ -1058,10 +989,27 @@ bool GuiGameSwitcher::input(InputConfig* config, Input input)
 		return true;
 	}
 
-	// A button - launch game (only if not animating)
+	// Block all input during launch fade-out
+	if (mLaunching)
+		return true;
+
+	// A button - start fade-out then launch game (only if not animating)
 	if (config->isMappedTo(BUTTON_OK, input) && !mAnimating)
 	{
-		launchCurrentGame();
+		bool launchAnimEnabled = Settings::getInstance()->getBool("GameSwitcherLaunchAnimationEnabled");
+		bool hasMarquee = mMarquee && mMarquee->isVisible() && mMarquee->hasImage();
+		bool hasPlayInfo = mPlayInfo && mPlayInfo->isVisible();
+		if (launchAnimEnabled && (hasMarquee || hasPlayInfo))
+		{
+			// Start fade-out animation (uses first half of navigation animation timing)
+			mLaunching = true;
+			mAnimating = true;
+			mAnimationProgress = 0.0f;
+		}
+		else
+		{
+			launchCurrentGame();
+		}
 		return true;
 	}
 
@@ -1095,13 +1043,20 @@ void GuiGameSwitcher::update(int deltaTime)
 
 	if (mAnimating)
 	{
-		// Progress animation
-		mAnimationProgress += (float)deltaTime / (float)mAnimationDuration;
+		// Launch fade-out runs at double speed (same as the fade portion of navigation)
+		float speed = mLaunching ? 2.0f : 1.0f;
+		mAnimationProgress += speed * (float)deltaTime / (float)mAnimationDuration;
 
 		if (mAnimationProgress >= 1.0f)
 		{
 			mAnimationProgress = 1.0f;
 			mAnimating = false;
+
+			if (mLaunching)
+			{
+				launchCurrentGame();
+				return;  // this is deleted, stop processing
+			}
 		}
 	}
 
@@ -1138,33 +1093,45 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 
 	if (mAnimating)
 	{
-		// Smootherstep: 6t^5 - 15t^4 + 10t^3 (starts slow, speeds up, ends slow)
 		float t = mAnimationProgress;
-		float eased = t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
-		animOffset = eased * screenWidth * mAnimationDirection;
 
-		// Calculate opacity for fade effect on marquee and play info
-		// Fade takes half the time of the slide animation:
-		// - Outgoing: fades out during first half (0.0 - 0.5 progress)
-		// - Incoming: fades in during second half (0.5 - 1.0 progress)
+		if (mLaunching)
+		{
+			// Launch fade-out: fade current marquee/play info from 255 → 0
+			// Progress already runs at 2x speed so this takes half the animation duration
+			float eased = t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
+			currOpacity = (unsigned char)((1.0f - eased) * 255.0f);
+			currOpacityFactor = 1.0f - eased;
+		}
+		else
+		{
+			// Smootherstep: 6t^5 - 15t^4 + 10t^3 (starts slow, speeds up, ends slow)
+			float eased = t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
+			animOffset = eased * screenWidth * mAnimationDirection;
 
-		// Previous (outgoing) fades out in first half: 255 → 0 during 0.0-0.5
-		float prevFadeProgress = std::min(t * 2.0f, 1.0f);  // 0→1 over first half
-		float prevEased = prevFadeProgress * prevFadeProgress * prevFadeProgress *
-		                  (prevFadeProgress * (prevFadeProgress * 6.0f - 15.0f) + 10.0f);
-		prevOpacity = (unsigned char)((1.0f - prevEased) * 255.0f);
-		prevOpacityFactor = 1.0f - prevEased;
+			// Calculate opacity for fade effect on marquee and play info
+			// Fade takes half the time of the slide animation:
+			// - Outgoing: fades out during first half (0.0 - 0.5 progress)
+			// - Incoming: fades in during second half (0.5 - 1.0 progress)
 
-		// Current (incoming) fades in during second half: 0 → 255 during 0.5-1.0
-		float currFadeProgress = std::max((t - 0.5f) * 2.0f, 0.0f);  // 0→1 over second half
-		float currEased = currFadeProgress * currFadeProgress * currFadeProgress *
-		                  (currFadeProgress * (currFadeProgress * 6.0f - 15.0f) + 10.0f);
-		currOpacity = (unsigned char)(currEased * 255.0f);
-		currOpacityFactor = currEased;
+			// Previous (outgoing) fades out in first half: 255 → 0 during 0.0-0.5
+			float prevFadeProgress = std::min(t * 2.0f, 1.0f);  // 0→1 over first half
+			float prevEased = prevFadeProgress * prevFadeProgress * prevFadeProgress *
+			                  (prevFadeProgress * (prevFadeProgress * 6.0f - 15.0f) + 10.0f);
+			prevOpacity = (unsigned char)((1.0f - prevEased) * 255.0f);
+			prevOpacityFactor = 1.0f - prevEased;
+
+			// Current (incoming) fades in during second half: 0 → 255 during 0.5-1.0
+			float currFadeProgress = std::max((t - 0.5f) * 2.0f, 0.0f);  // 0→1 over second half
+			float currEased = currFadeProgress * currFadeProgress * currFadeProgress *
+			                  (currFadeProgress * (currFadeProgress * 6.0f - 15.0f) + 10.0f);
+			currOpacity = (unsigned char)(currEased * 255.0f);
+			currOpacityFactor = currEased;
+		}
 	}
 
-	// Render previous components (sliding out) if animating
-	if (mAnimating)
+	// Render previous components (sliding out) if animating (not during launch fade-out)
+	if (mAnimating && !mLaunching)
 	{
 		float prevOffset = -animOffset;  // Previous slides opposite direction
 
@@ -1212,7 +1179,8 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 	}
 
 	// Render current components (sliding in or static)
-	float currOffset = mAnimating ? (screenWidth * mAnimationDirection - animOffset) : 0.0f;
+	// During launch fade-out, current components stay in place (no horizontal offset)
+	float currOffset = (mAnimating && !mLaunching) ? (screenWidth * mAnimationDirection - animOffset) : 0.0f;
 
 	Transform4x4f currTransform = transform;
 	currTransform.translate(Vector3f(currOffset, 0, 0));
