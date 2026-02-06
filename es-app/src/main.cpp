@@ -562,32 +562,8 @@ bool runCachedGameSwitcher()
 		Renderer::swapBuffers();
 	}
 
-	// Check if Game Switcher closed because a game was launched
-	// (GuiGameSwitcher sets sActiveInstance to nullptr when deleted)
-	// If running is still true but Game Switcher is not active, user either:
-	// - Launched a game (launchCurrentGame was called)
-	// - Pressed back (delete this was called)
-	// We can't easily distinguish these, so we check if the process is still running
-	// Actually, if a game was launched, the process.run() blocks, so we won't get here
-	// until the game exits. But in cached mode, we just launch and exit.
-
-	// The Game Switcher's launchCurrentGame in cached mode runs the game synchronously
-	// So if we reach here, either:
-	// - User pressed back (game not launched)
-	// - User launched a game and it finished running
-
-	// For Quick Resume, if user launches a game from cached switcher, we want ES to exit
-	// after the game runs. But we need to know if a game was launched.
-
-	// Let's track this differently - check if Game Switcher is no longer active
-	// and the window's GUI stack is empty (game was launched and deleted the switcher)
-
 	window.deinit(true);
 
-	// If we're here and not running, user quit
-	// If we're here and running was true but Game Switcher closed, could be either case
-	// For simplicity: return false to continue to normal ES
-	// The cached mode launch will have already executed the game
 	return false;
 }
 
