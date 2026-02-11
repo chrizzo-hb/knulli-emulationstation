@@ -3,8 +3,6 @@
 #include "utils/FileSystemUtil.h"
 #include "utils/StringUtil.h"
 #include "utils/Platform.h"
-#include "Log.h"
-#include "Paths.h"
 #include "InputManager.h"
 #include "guis/GuiGameSwitcher.h"
 
@@ -17,30 +15,15 @@ namespace QuickResume
 
     bool setQuickResume(std::string quickResumeCommand, std::string quickResumePath)
     {
-        bool configSaved = false;
-
-        LOG(LogInfo) << "QuickResume::setQuickResume called - path: " << quickResumePath;
-        LOG(LogDebug) << "QuickResume::setQuickResume - command: " << quickResumeCommand;
-
         if (!quickResumeEnabled())
-        {
-            LOG(LogWarning) << "QuickResume::setQuickResume - Quick Resume is not enabled";
             return false;
-        }
 
         if (quickResumeCommand.empty() || quickResumePath.empty())
-        {
-            LOG(LogWarning) << "QuickResume::setQuickResume - command or path is empty";
             return false;
-        }
 
         SystemConf::getInstance()->set("global.bootgame.path", quickResumePath);
         SystemConf::getInstance()->set("global.bootgame.cmd", quickResumeCommand);
-        configSaved = SystemConf::getInstance()->saveSystemConf();
-
-        LOG(LogInfo) << "QuickResume::setQuickResume - config saved: " << (configSaved ? "true" : "false");
-
-        return configSaved;
+        return SystemConf::getInstance()->saveSystemConf();
     }
 
     bool clearQuickResume()
@@ -90,7 +73,7 @@ namespace QuickResume
         {
             // Try to get system name from cache for stats tracking
             std::string systemName;
-            std::string cachePath = Paths::getUserEmulationStationPath() + "/gameswitcher_cache.json";
+            std::string cachePath = GuiGameSwitcher::getCachePath();
             if (Utils::FileSystem::exists(cachePath))
             {
                 std::ifstream file(cachePath);

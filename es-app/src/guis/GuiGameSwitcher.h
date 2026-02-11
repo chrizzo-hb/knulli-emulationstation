@@ -17,6 +17,7 @@ public:
 	void update(int deltaTime) override;
 	void render(const Transform4x4f& transform) override;
 	std::vector<HelpPrompt> getHelpPrompts() override;
+	HelpStyle getHelpStyle() override;
 
 	// Static methods for pending Game Switcher (triggered while game is running)
 	static void setPendingGameSwitcher(bool pending);
@@ -28,6 +29,7 @@ public:
 	static bool runCachedMode();
 
 	// Cache management
+	static std::string getCachePath();
 	static void saveCache(FileData* gameBeingLaunched = nullptr);
 	static bool hasCachedData();
 
@@ -88,7 +90,6 @@ private:
 	void navigateTo(int index);
 	void launchCurrentGame();
 
-	static std::string getCachePath();
 	static bool sPendingGameSwitcher;
 	static GuiGameSwitcher* sActiveInstance;
 };

@@ -241,11 +241,13 @@ void Settings::setDefaults()
 	mIntMap["GameSwitcherCount"] = 25;
 	mIntMap["GameSwitcherAnimationSpeed"] = 600;
 	mBoolMap["GameSwitcherMarqueeEnabled"] = true;
+	mBoolMap["GameSwitcherMarqueeFallback"] = false;
 	mIntMap["GameSwitcherMarqueeSize"] = 75;
 	mBoolMap["GameSwitcherPlayInfoEnabled"] = true;
 	mIntMap["GameSwitcherInfoBackgroundOpacity"] = 75;
 	mBoolMap["GameSwitcherLaunchAnimationEnabled"] = true;
 	mBoolMap["GameSwitcherBootEnabled"] = false;
+	mBoolMap["GameSwitcherHelpEnabled"] = true;
 	mBoolMap["SlideshowScreenSaverStretch"] = false;
 	mBoolMap["SlideshowScreenSaverCustomImageSource"] = false;
 	mStringMap["SlideshowScreenSaverImageFilter"] = ".png,.jpg";
