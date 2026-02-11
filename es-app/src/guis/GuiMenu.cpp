@@ -2703,18 +2703,16 @@ void GuiMenu::openGamesSettings(bool selectGameSwitcherEnable)
 	s->addWithDescription(_("SHOW SAVESTATE MANAGER"), _("Display savestate manager before launching a game."), showSaveStates);
 	s->addSaveFunc([showSaveStates] { SystemConf::getInstance()->set("global.savestates", showSaveStates->getSelected()); });
 
-	// KNULLI - QUICK RESUME MODE >>>
-	// QUICK RESUME MODE
+	// Quick Resume mode
 	auto quickresume_enabled = std::make_shared<SwitchComponent>(mWindow);
 	quickresume_enabled->setState(SystemConf::getInstance()->get("global.quickresume") == "1");
 	s->addWithDescription(_("QUICK RESUME MODE"), _("If shutdown during gameplay, boots directly into game on next startup. Works with Auto Save/Load on supported emulators."), quickresume_enabled);
 	s->addSaveFunc([quickresume_enabled] { SystemConf::getInstance()->set("global.quickresume", quickresume_enabled->getState() ? "1" : ""); });
-	// KNULLI - QUICK RESUME MODE <<<
 
 	// Game Switcher enable toggle
 	auto gameSwitcherEnable = std::make_shared<SwitchComponent>(mWindow);
 	gameSwitcherEnable->setState(baseGameSwitcherEnabled);
-	s->addWithDescription(_("ENABLE GAME SWITCHER"), _("Quickly switch between recently played games using a hotkey. Works best with Auto Save/Load and Quick Resume Mode."), gameSwitcherEnable, selectGameSwitcherEnable);
+	s->addWithDescription(_("ENABLE GAME SWITCHER"), _("Quickly switch between recently played games using a hotkey (fn + select). Works best with Auto Save/Load and Quick Resume enabled."), gameSwitcherEnable, selectGameSwitcherEnable);
 	s->addSaveFunc([gameSwitcherEnable] {
 		Settings::getInstance()->setBool("GameSwitcherEnabled", gameSwitcherEnable->getState());
 	});

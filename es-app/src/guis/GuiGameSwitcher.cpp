@@ -1483,7 +1483,7 @@ void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, boo
 	// Boot to Game Switcher toggle
 	auto bootEnable = std::make_shared<SwitchComponent>(window);
 	bootEnable->setState(Settings::getInstance()->getBool("GameSwitcherBootEnabled"));
-	s->addWithDescription(_("BOOT TO GAME SWITCHER"), _("Show Game Switcher on startup when no Quick Resume game is in progress."), bootEnable);
+	s->addWithDescription(_("BOOT TO GAME SWITCHER"), _("Show Game Switcher on startup when no Quick Resume game (if enabled) is in progress."), bootEnable);
 	s->addSaveFunc([bootEnable] {
 		Settings::getInstance()->setBool("GameSwitcherBootEnabled", bootEnable->getState());
 	});
