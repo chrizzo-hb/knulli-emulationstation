@@ -1,5 +1,6 @@
 #include "GuiGameSwitcher.h"
 #include "GuiSettings.h"
+#include "guis/GuiMsgBox.h"
 
 #include "SystemData.h"
 #include "FileData.h"
@@ -102,6 +103,100 @@ std::string GuiGameSwitcher::getPendingStatsPath()
 bool GuiGameSwitcher::hasCachedData()
 {
 	return Utils::FileSystem::exists(getCachePath());
+}
+
+std::string GuiGameSwitcher::getExclusionPath()
+{
+	return Paths::getUserEmulationStationPath() + "/gameswitcher_excluded.json";
+}
+
+std::vector<std::string> GuiGameSwitcher::loadExclusions()
+{
+	std::vector<std::string> exclusions;
+	std::string path = getExclusionPath();
+
+	if (!Utils::FileSystem::exists(path))
+		return exclusions;
+
+	std::ifstream file(path);
+	if (!file.is_open())
+		return exclusions;
+
+	std::string content((std::istreambuf_iterator<char>(file)),
+	                     std::istreambuf_iterator<char>());
+	file.close();
+
+	rapidjson::Document doc;
+	doc.Parse(content.c_str());
+
+	if (doc.HasParseError() || !doc.IsArray())
+		return exclusions;
+
+	for (auto& val : doc.GetArray())
+	{
+		if (val.IsString())
+			exclusions.push_back(val.GetString());
+	}
+
+	return exclusions;
+}
+
+void GuiGameSwitcher::saveExclusions(const std::vector<std::string>& exclusions)
+{
+	rapidjson::Document doc;
+	doc.SetArray();
+	auto& allocator = doc.GetAllocator();
+
+	for (const auto& path : exclusions)
+		doc.PushBack(rapidjson::Value(path.c_str(), allocator), allocator);
+
+	rapidjson::StringBuffer buffer;
+	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+	doc.Accept(writer);
+
+	std::ofstream file(getExclusionPath());
+	if (file.is_open())
+	{
+		file << buffer.GetString();
+		file.close();
+	}
+}
+
+void GuiGameSwitcher::addExclusion(const std::string& gamePath)
+{
+	auto exclusions = loadExclusions();
+
+	// Don't add duplicates
+	for (const auto& p : exclusions)
+	{
+		if (p == gamePath)
+			return;
+	}
+
+	exclusions.push_back(gamePath);
+	saveExclusions(exclusions);
+	LOG(LogDebug) << "GuiGameSwitcher: Excluded game: " << gamePath;
+}
+
+void GuiGameSwitcher::clearExclusions()
+{
+	std::string path = getExclusionPath();
+	if (Utils::FileSystem::exists(path))
+	{
+		Utils::FileSystem::removeFile(path);
+		LOG(LogDebug) << "GuiGameSwitcher: Cleared all exclusions";
+	}
+}
+
+bool GuiGameSwitcher::isExcluded(const std::string& gamePath)
+{
+	auto exclusions = loadExclusions();
+	for (const auto& p : exclusions)
+	{
+		if (p == gamePath)
+			return true;
+	}
+	return false;
 }
 
 void GuiGameSwitcher::savePendingStats(const std::string& gamePath, const std::string& systemName, int elapsedSeconds)
@@ -361,7 +456,7 @@ void GuiGameSwitcher::saveCache(FileData* gameBeingLaunched)
 		for (auto game : games)
 		{
 			int playCount = game->getMetadata().getInt(MetaDataId::PlayCount);
-			if (playCount > 0)
+			if (playCount > 0 && !isExcluded(game->getFullPath()))
 				allPlayedGames.push_back(game);
 		}
 	}
@@ -547,13 +642,15 @@ void GuiGameSwitcher::loadFromCache()
 		if (gameObj.HasMember("gameTime") && gameObj["gameTime"].IsInt())
 			item.gameTime = gameObj["gameTime"].GetInt();
 
-		mGames.push_back(item);
+		if (!isExcluded(item.gamePath))
+			mGames.push_back(item);
 	}
 
 	LOG(LogDebug) << "GuiGameSwitcher: Loaded " << mGames.size() << " games from cache";
 }
 
-GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(window)
+GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(window),
+	mXButton("x"), mYButton("y")
 {
 	sActiveInstance = this;
 	mCachedMode = fromCache;
@@ -569,6 +666,7 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	mPrevPlayInfo = nullptr;
 	mAnimating = false;
 	mLaunching = false;
+	mLaunchAfterNavigation = false;
 	mAnimationProgress = 0.0f;
 	mAnimationDirection = 0;
 	mAnimationDuration = Settings::getInstance()->getInt("GameSwitcherAnimationSpeed");
@@ -592,7 +690,7 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 
 	auto theme = ThemeData::getMenuTheme();
 	auto fontPath = theme->Text.font->getPath();
-	float fontSize = Renderer::getScreenHeight() / 20.0f;
+	float fontSize = Renderer::getScreenHeight() / 16.0f;
 	float infoFontSize = Renderer::getScreenHeight() / 28.0f;
 	auto font = Font::get((int)fontSize, fontPath);
 	auto infoFont = Font::get((int)infoFontSize, fontPath);
@@ -621,7 +719,7 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 
 	// Create current game name text (fallback when no marquee)
 	mGameName = new TextComponent(mWindow);
-	mGameName->setPosition(0, Renderer::getScreenHeight() * 0.05f);
+	mGameName->setPosition(0, Renderer::getScreenHeight() * 0.10f);
 	mGameName->setSize((float)Renderer::getScreenWidth(), Renderer::getScreenHeight() * 0.10f);
 	mGameName->setHorizontalAlignment(ALIGN_CENTER);
 	mGameName->setVerticalAlignment(ALIGN_CENTER);
@@ -677,7 +775,7 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 
 	// Create previous game name text (for animation)
 	mPrevGameName = new TextComponent(mWindow);
-	mPrevGameName->setPosition(0, Renderer::getScreenHeight() * 0.05f);
+	mPrevGameName->setPosition(0, Renderer::getScreenHeight() * 0.10f);
 	mPrevGameName->setSize((float)Renderer::getScreenWidth(), Renderer::getScreenHeight() * 0.10f);
 	mPrevGameName->setHorizontalAlignment(ALIGN_CENTER);
 	mPrevGameName->setVerticalAlignment(ALIGN_CENTER);
@@ -743,9 +841,9 @@ void GuiGameSwitcher::loadRecentlyPlayedGames()
 		auto games = system->getRootFolder()->getFilesRecursive(GAME, true);
 		for (auto game : games)
 		{
-			// Only include games that have been played
+			// Only include games that have been played and are not excluded
 			int playCount = game->getMetadata().getInt(MetaDataId::PlayCount);
-			if (playCount > 0)
+			if (playCount > 0 && !isExcluded(game->getFullPath()))
 				allPlayedGames.push_back(game);
 		}
 	}
@@ -1014,6 +1112,34 @@ void GuiGameSwitcher::launchCurrentGame()
 
 bool GuiGameSwitcher::input(InputConfig* config, Input input)
 {
+	// X button - track press/release for long-press removal (must see both events)
+	if (mXButton.isShortPressed(config, input))
+	{
+		if (!mCachedMode)
+			mWindow->displayNotificationMessage(_("Hold to remove"), 1500);
+		return true;
+	}
+
+	if (config->isMappedTo("x", input))
+		return true;  // Consume X press/release events
+
+	// Y button - short press navigates to random game (long press launches, handled in update())
+	if (mYButton.isShortPressed(config, input))
+	{
+		if (mGames.size() > 1 && !mAnimating)
+		{
+			int randomIndex;
+			do {
+				randomIndex = rand() % (int)mGames.size();
+			} while (randomIndex == mCurrentIndex);
+			navigateTo(randomIndex);
+		}
+		return true;
+	}
+
+	if (config->isMappedTo("y", input))
+		return true;  // Consume Y press/release events
+
 	if (input.value == 0)
 		return false;
 
@@ -1072,9 +1198,67 @@ bool GuiGameSwitcher::input(InputConfig* config, Input input)
 	return GuiComponent::input(config, input);
 }
 
+void GuiGameSwitcher::removeCurrentGame()
+{
+	if (mGames.empty() || mAnimating)
+		return;
+
+	// Get the game path for exclusion
+	std::string gamePath;
+	if (mGames[mCurrentIndex].game != nullptr)
+		gamePath = mGames[mCurrentIndex].game->getFullPath();
+	else
+		gamePath = mGames[mCurrentIndex].gamePath;
+
+	// Add to exclusion list
+	addExclusion(gamePath);
+
+	// Remove from in-memory list
+	mGames.erase(mGames.begin() + mCurrentIndex);
+
+	// If no games left, close the switcher
+	if (mGames.empty())
+	{
+		delete this;
+		return;
+	}
+
+	// Adjust index if we removed the last item
+	if (mCurrentIndex >= (int)mGames.size())
+		mCurrentIndex = (int)mGames.size() - 1;
+
+	// Refresh display without animation
+	updateDisplay();
+	updateHelpPrompts();
+}
+
 void GuiGameSwitcher::update(int deltaTime)
 {
 	GuiComponent::update(deltaTime);
+
+	if (mXButton.isLongPressed(deltaTime))
+	{
+		removeCurrentGame();
+		return;  // this may be deleted if no games left
+	}
+
+	if (mYButton.isLongPressed(deltaTime))
+	{
+		if (mGames.size() > 1)
+		{
+			int randomIndex;
+			do {
+				randomIndex = rand() % (int)mGames.size();
+			} while (randomIndex == mCurrentIndex);
+			mLaunchAfterNavigation = true;
+			navigateTo(randomIndex);
+		}
+		else
+		{
+			launchCurrentGame();
+		}
+		return;
+	}
 
 	if (mAnimating)
 	{
@@ -1091,6 +1275,15 @@ void GuiGameSwitcher::update(int deltaTime)
 			{
 				launchCurrentGame();
 				return;  // this is deleted, stop processing
+			}
+
+			if (mLaunchAfterNavigation)
+			{
+				mLaunchAfterNavigation = false;
+				// Start the launch fade-out animation
+				mLaunching = true;
+				mAnimating = true;
+				mAnimationProgress = 0.0f;
 			}
 		}
 	}
@@ -1290,6 +1483,8 @@ std::vector<HelpPrompt> GuiGameSwitcher::getHelpPrompts()
 	prompts.push_back(HelpPrompt("left/right", _("NAVIGATE")));
 	prompts.push_back(HelpPrompt(BUTTON_OK, _("LAUNCH")));
 	prompts.push_back(HelpPrompt(BUTTON_BACK, _("BACK")));
+	prompts.push_back(HelpPrompt("y", _("RANDOM")));
+	prompts.push_back(HelpPrompt("x", _("REMOVE (HOLD)")));
 	return prompts;
 }
 
@@ -1391,6 +1586,8 @@ void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, boo
 
 	auto s = new GuiSettings(window, _("GAME SWITCHER SETTINGS").c_str());
 
+	s->addGroup(_("DISPLAY"));
+
 	// Game Switcher count setting
 	auto gameSwitcherCount = std::make_shared<SliderComponent>(window, 5.f, 25.f, 1.f, "");
 	gameSwitcherCount->setValue((float)Settings::getInstance()->getInt("GameSwitcherCount"));
@@ -1480,6 +1677,8 @@ void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, boo
 		Settings::getInstance()->setBool("GameSwitcherHelpEnabled", helpEnable->getState());
 	});
 
+	s->addGroup(_("STARTUP"));
+
 	// Boot to Game Switcher toggle
 	auto bootEnable = std::make_shared<SwitchComponent>(window);
 	bootEnable->setState(Settings::getInstance()->getBool("GameSwitcherBootEnabled"));
@@ -1498,6 +1697,15 @@ void GuiGameSwitcher::openSettings(Window* window, bool selectMarqueeEnable, boo
 			delete s;
 			openSettings(window, false, true);
 		}
+	});
+
+	s->addGroup(_("TOOLS"));
+	s->addEntry(_("CLEAR EXCLUDED GAMES"), false, [window]()
+	{
+		window->pushGui(new GuiMsgBox(window,
+			_("RESTORE ALL REMOVED GAMES TO GAME SWITCHER?"),
+			_("YES"), [window]() { GuiGameSwitcher::clearExclusions(); },
+			_("NO"), nullptr));
 	});
 
 	window->pushGui(s);

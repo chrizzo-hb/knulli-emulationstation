@@ -242,7 +242,7 @@ void Settings::setDefaults()
 	mIntMap["GameSwitcherCount"] = 10;
 	mIntMap["GameSwitcherAnimationSpeed"] = 500;
 	mBoolMap["GameSwitcherMarqueeEnabled"] = true;
-	mBoolMap["GameSwitcherMarqueeFallback"] = false;
+	mBoolMap["GameSwitcherMarqueeFallback"] = true;
 	mIntMap["GameSwitcherMarqueeSize"] = 75;
 	mBoolMap["GameSwitcherPlayInfoEnabled"] = true;
 	mIntMap["GameSwitcherInfoBackgroundOpacity"] = 75;

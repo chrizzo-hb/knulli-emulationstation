@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GuiComponent.h"
+#include "MultiStateInput.h"
 #include "Window.h"
 #include "components/ImageComponent.h"
 #include "components/TextComponent.h"
@@ -32,6 +33,14 @@ public:
 	static std::string getCachePath();
 	static void saveCache(FileData* gameBeingLaunched = nullptr);
 	static bool hasCachedData();
+
+	// Exclusion list management
+	static std::string getExclusionPath();
+	static std::vector<std::string> loadExclusions();
+	static void saveExclusions(const std::vector<std::string>& exclusions);
+	static void addExclusion(const std::string& gamePath);
+	static void clearExclusions();
+	static bool isExcluded(const std::string& gamePath);
 
 	// Pending stats for games launched without full ES (Quick Resume / cached mode)
 	static void savePendingStats(const std::string& gamePath, const std::string& systemName, int elapsedSeconds);
@@ -76,6 +85,7 @@ private:
 	// Animation state
 	bool  mAnimating;
 	bool  mLaunching;            // Fade-out before launch
+	bool  mLaunchAfterNavigation; // Launch game after navigation animation completes
 	float mAnimationProgress;    // 0.0 to 1.0
 	int   mAnimationDirection;   // -1 = left, +1 = right
 	int   mAnimationDuration;    // milliseconds
@@ -89,6 +99,10 @@ private:
 	                                 int gameIndex);
 	void navigateTo(int index);
 	void launchCurrentGame();
+	void removeCurrentGame();
+
+	MultiStateInput mXButton;
+	MultiStateInput mYButton;
 
 	static bool sPendingGameSwitcher;
 	static GuiGameSwitcher* sActiveInstance;
