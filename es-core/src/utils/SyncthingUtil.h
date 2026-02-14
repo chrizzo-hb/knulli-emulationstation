@@ -90,13 +90,14 @@ private:
 	static const int HTTP_TIMEOUT_MS = 2000;
 	static const int EXTENDED_HTTP_TIMEOUT_MS = 10000;
 
+	static bool mEnabled;
+
 	// Access control
 	static std::once_flag mOnceFlag;
 	std::atomic<bool> mApiBusy{false};
 	std::mutex mConnectMutex;
 	std::mutex mDataMutex;
 
-	bool mEnabled = false;
 	bool mInitialized = false;
 	bool mConnected = false;
 	bool mWifiConnected = false;

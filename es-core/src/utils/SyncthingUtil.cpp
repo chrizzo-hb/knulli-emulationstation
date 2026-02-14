@@ -19,6 +19,7 @@
 #include "LocaleES.h"
 #include "components/AsyncNotificationComponent.h"
 #include "watchers/NetworkStateWatcher.h"
+#include "SystemConf.h"
 
 #define GUIICON _U("\uF07C ")
 
@@ -43,30 +44,24 @@ void SyncthingUtil::init() {
 // Returns true if syncthing is enabled and reachable and the respective config file exists.
 bool SyncthingUtil::isEnabled() {
 
-    // Try to set busy. If already busy, skip the check.
-	auto& instance = getInstance();
-    if (instance.mApiBusy.exchange(true)) {
-        LOG(LogDebug) << "Syncthing: API is busy with another request, skipping check if alive.";
-        return instance.mEnabled;
+	// If API is already enabled, just check if config file exists.
+	if (mEnabled) {
+        return Utils::FileSystem::exists(SYNCTHING_CONFIG_XML);
     }
-
-    struct Guard { 
-        std::atomic<bool>& flag; 
-        ~Guard() { flag.store(false); } 
-    } apiGuard{instance.mApiBusy};
 
 	// Check if syncthing API is up
 	std::unique_ptr<HttpReq> req(new HttpReq("http://127.0.0.1:8384"));
-	if (!waitWithTimeout(req.get(), EXTENDED_HTTP_TIMEOUT_MS)) {
+	if (!req->wait()) {
 		return false;
 	}
+	mEnabled = true;
 
 	// Check if config file exists
-	if (!Utils::FileSystem::exists(SYNCTHING_CONFIG_XML)) {
-		return false;
-	}
-	instance.mEnabled = true;
-	return instance.mEnabled;
+	if (!mEnabled || !Utils::FileSystem::exists(SYNCTHING_CONFIG_XML)) {
+        return false;
+    }
+
+    return true;
 }
 
 // Establishes a connection to the syncthing API by verifying the syncthing API
