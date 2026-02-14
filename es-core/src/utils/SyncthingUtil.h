@@ -27,6 +27,7 @@ struct Folder {
 	std::string path;
 	bool fsWatcherEnabled;
 	bool paused;
+	bool shared;
 };
 
 struct SyncthingState {
@@ -64,6 +65,7 @@ public:
 
 	void init();
 	void scan(Window* window, std::string const* folderId = nullptr);
+	void reloadConfig(Window* window = nullptr);
 	SyncthingState getState();
 	static bool isEnabled();
 	bool isConnected() { return mConnected && mWifiConnected; }
@@ -111,6 +113,7 @@ private:
 
 	std::string getMyId();
 	std::vector<std::string> getConnectedDeviceIds();
+	bool parseConfig();
 	void updateDeviceCompletion(Device* device);
 	std::shared_ptr<Device> getDeviceById(const std::string& deviceId);
 	Folder *getFolderById(const std::string& folderId);

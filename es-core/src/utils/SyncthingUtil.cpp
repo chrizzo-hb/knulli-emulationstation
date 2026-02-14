@@ -71,60 +71,9 @@ bool SyncthingUtil::connect() {
 		return false;
 	}
 
-	// Load syncthing config XML
-	pugi::xml_document document;
-	pugi::xml_parse_result result = document.load_file(SYNCTHING_CONFIG_XML.c_str());
-	if (!result) {
-		LOG(LogError) << "Unable to parse packages";
+	if (!parseConfig()) {
+		LOG(LogError) << "Syncthing: Failed to parse config XML, cannot connect.";
 		return false;
-	}
-
-	pugi::xml_node configurationNode = document.child("configuration");
-
-	mApiKey = configurationNode.child("gui").child("apikey").text().get();
-	LOG(LogDebug) << "Syncthing: API key is " << mApiKey;
-
-	// Determine own device ID
-	const std::string myId = getMyId();
-	if (myId.empty() || myId == "OWN_ID_UNKNOWN") {
-		return false;
-	}
-	self.id = myId;
-	LOG(LogInfo) << "Syncthing: Own device ID is " << self.id;
-
-	// Clear map before determining devices.
-	mDevicesMap.clear();
-	mFolders.clear();
-
-	// Load devices
-	for (pugi::xml_node deviceNode = configurationNode.child("device"); deviceNode; deviceNode = deviceNode.next_sibling("device")) {
-		if (self.id == deviceNode.attribute("id").as_string()) {
-			self.name = deviceNode.attribute("name").as_string();
-			self.paused = deviceNode.child("paused").text().as_bool();
-			LOG(LogInfo) << "Syncthing: Determined own device name " << self.name;
-			continue; // Don't add self to device list
-		}
-		auto device = std::make_shared<Device>();
-		device->id = deviceNode.attribute("id").as_string();
-		device->name = deviceNode.attribute("name").as_string();
-		device->paused = deviceNode.child("paused").text().as_bool();
-		LOG(LogInfo) << "Syncthing: Added device with name " << device->name;
-		mDevicesMap[device->id] = device;
-	}
-	// Load folders
-	for (pugi::xml_node folderNode = configurationNode.child("folder"); folderNode; folderNode = folderNode.next_sibling("folder")) {
-		Folder folder;
-		folder.id = folderNode.attribute("id").as_string();
-		folder.label = folderNode.attribute("label").as_string();
-		folder.path = folderNode.attribute("path").as_string();
-		folder.fsWatcherEnabled = folderNode.attribute("fsWatcherEnabled").as_bool();
-		if (folderNode.child("paused")) {
-			folder.paused = folderNode.child("paused").text().as_bool();
-		} else {
-			folder.paused = false;
-		}
-		LOG(LogInfo) << "Syncthing: Added folder with label " << folder.label;
-		mFolders.push_back(folder);
 	}
 
 	mConnected = true;
@@ -158,6 +107,16 @@ void SyncthingUtil::disconnect() {
 bool SyncthingUtil::reconnect() {
 	disconnect();
 	return connect();
+}
+
+bool SyncthingUtil::reloadConfig() {
+	if (parseConfig()) {
+		LOG(LogInfo) << "Syncthing: Successfully reloaded config.";
+		return true;
+	} else {
+		LOG(LogError) << "Syncthing: Failed to reload config.";
+		return false;
+	}
 }
 
 // Starts a rescan of all folders or of a specific folder if folderId is provided.
@@ -446,6 +405,75 @@ void SyncthingUtil::updateDeviceCompletion(Device* device) {
 			}
             device->needBytes = currentNeedBytes;
 		}
+	}
+}
+
+bool SyncthingUtil::parseConfig() {
+	// Load syncthing config XML
+	pugi::xml_document document;
+	pugi::xml_parse_result result = document.load_file(SYNCTHING_CONFIG_XML.c_str());
+	if (!result) {
+		LOG(LogError) << "Unable to parse packages";
+		return false;
+	}
+
+	pugi::xml_node configurationNode = document.child("configuration");
+
+	mApiKey = configurationNode.child("gui").child("apikey").text().get();
+	LOG(LogDebug) << "Syncthing: API key is " << mApiKey;
+
+	// Determine own device ID
+	const std::string myId = getMyId();
+	if (myId.empty() || myId == "OWN_ID_UNKNOWN") {
+		return false;
+	}
+	self.id = myId;
+	LOG(LogInfo) << "Syncthing: Own device ID is " << self.id;
+
+	// Clear map before determining devices.
+	mDevicesMap.clear();
+	mFolders.clear();
+
+	// Load devices
+	for (pugi::xml_node deviceNode = configurationNode.child("device"); deviceNode; deviceNode = deviceNode.next_sibling("device")) {
+		if (self.id == deviceNode.attribute("id").as_string()) {
+			self.name = deviceNode.attribute("name").as_string();
+			self.paused = deviceNode.child("paused").text().as_bool();
+			LOG(LogInfo) << "Syncthing: Determined own device name " << self.name;
+			continue; // Don't add self to device list
+		}
+		auto device = std::make_shared<Device>();
+		device->id = deviceNode.attribute("id").as_string();
+		device->name = deviceNode.attribute("name").as_string();
+		device->paused = deviceNode.child("paused").text().as_bool();
+		LOG(LogInfo) << "Syncthing: Added device with name " << device->name;
+		mDevicesMap[device->id] = device;
+	}
+	// Load folders
+	for (pugi::xml_node folderNode = configurationNode.child("folder"); folderNode; folderNode = folderNode.next_sibling("folder")) {
+		Folder folder;
+		folder.id = folderNode.attribute("id").as_string();
+		folder.label = folderNode.attribute("label").as_string();
+		folder.path = folderNode.attribute("path").as_string();
+		folder.fsWatcherEnabled = folderNode.attribute("fsWatcherEnabled").as_bool();
+		if (folderNode.child("paused")) {
+			folder.paused = folderNode.child("paused").text().as_bool();
+		} else {
+			folder.paused = false;
+		}
+		folder.shared = false;
+		// Look at every <device> tag inside this specific <folder>
+    	for (pugi::xml_node deviceNode = folderNode.child("device"); deviceNode; deviceNode = deviceNode.next_sibling("device")) {
+        	std::string deviceId = deviceNode.attribute("id").as_string();
+        
+			// If we find a device ID that isn't ours, it's shared with someone else
+			if (deviceId != self.id) {
+				folder.shared = true;
+				break; // No need to keep looking once we find one partner
+			}
+		}
+		LOG(LogInfo) << "Syncthing: Added folder with label " << folder.label;
+		mFolders.push_back(folder);
 	}
 }
 
