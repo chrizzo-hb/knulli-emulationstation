@@ -26,6 +26,7 @@ struct Folder {
 	std::string label;
 	std::string path;
 	bool fsWatcherEnabled;
+	bool paused;
 };
 
 struct SyncthingState {
@@ -113,4 +114,5 @@ private:
 	void updateDeviceCompletion(Device* device);
 	std::shared_ptr<Device> getDeviceById(const std::string& deviceId);
 	Folder *getFolderById(const std::string& folderId);
+	long getCurrentTimeMillis();
 };

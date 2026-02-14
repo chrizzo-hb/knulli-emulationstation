@@ -118,6 +118,11 @@ bool SyncthingUtil::connect() {
 		folder.label = folderNode.attribute("label").as_string();
 		folder.path = folderNode.attribute("path").as_string();
 		folder.fsWatcherEnabled = folderNode.attribute("fsWatcherEnabled").as_bool();
+		if (folderNode.child("paused")) {
+			folder.paused = folderNode.child("paused").text().as_bool();
+		} else {
+			folder.paused = false;
+		}
 		LOG(LogInfo) << "Syncthing: Added folder with label " << folder.label;
 		mFolders.push_back(folder);
 	}
@@ -167,6 +172,22 @@ void SyncthingUtil::scan(Window* window, std::string const* folderId) {
 	LOG(LogDebug) << "Syncthing: Created notification window";
 	wndNotification->updateTitle(GUIICON + _("SYNCTHING"));
 
+	bool allFoldersPaused = true;
+	for (const auto& folder : mFolders) {
+		if (!folder.paused) {
+			allFoldersPaused = false;
+			break;
+		}
+	}
+
+	if (self.paused || allFoldersPaused) {
+		LOG(LogError) << "Syncthing: Cannot start scan because synchronization is paused on this device or all folders are paused.";
+		wndNotification->updateText(_("Unable to sync: Synchronization is paused."));
+		std::this_thread::sleep_for(std::chrono::seconds(5));
+		wndNotification->close();
+		return;
+	}
+
 	Folder* folder = nullptr;
 	if (folderId) {
 		folder = getFolderById(*folderId);
@@ -186,6 +207,7 @@ void SyncthingUtil::scan(Window* window, std::string const* folderId) {
 
 	std::unique_ptr<HttpReq> req;
 
+	long startTime = getCurrentTimeMillis();
 	if(folder == nullptr) {
 		// Sync all folders
 		req.reset(new HttpReq("http://127.0.0.1:8384/rest/db/scan", &options));
@@ -196,11 +218,20 @@ void SyncthingUtil::scan(Window* window, std::string const* folderId) {
 
 	LOG(LogDebug) << "Syncthing: Scan request sent";
 	if (req->wait()) {
+		long endTime = getCurrentTimeMillis();
+		long duration = endTime - startTime;
+		LOG(LogDebug) << "Syncthing: Scan completed in " << duration << " milliseconds";
+		if (duration < 1000) {
+			wndNotification->updateText(_("Scan completed in ") + Utils::String::format("%d ms.", duration));
+		} else {
+			wndNotification->updateText(_("Scan completed in ") + Utils::String::format("%d seconds.", duration / 1000));
+		}
+		std::this_thread::sleep_for(std::chrono::seconds(5));
 		wndNotification->close();
 		wndNotification = nullptr;
 	} else {
 		wndNotification->updateText("Error starting scan: " + req->getErrorMsg());
-		std::this_thread::sleep_for(std::chrono::seconds(3));
+		std::this_thread::sleep_for(std::chrono::seconds(5));
 		wndNotification->close();
 		wndNotification = nullptr;
 		disconnect();
@@ -426,4 +457,10 @@ void SyncthingUtil::OnWatcherChanged(IWatcher* component)
 	{
 		mWifiConnected = watcher->isConnected();
 	}
+}
+
+long SyncthingUtil::getCurrentTimeMillis() {
+	return std::chrono::duration_cast<std::chrono::milliseconds>(
+			   std::chrono::system_clock::now().time_since_epoch())
+		.count();
 }
