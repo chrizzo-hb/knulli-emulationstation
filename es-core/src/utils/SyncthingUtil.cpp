@@ -548,7 +548,7 @@ long SyncthingUtil::getCurrentTimeMillis() {
 		.count();
 }
 
-bool SyncthingUtil::(HttpReq* req, int timeoutMs) {
+bool SyncthingUtil::waitWithTimeout(HttpReq* req, int timeoutMs) {
     auto startTime = std::chrono::steady_clock::now();
     
     while (req->status() == HttpReq::REQ_IN_PROGRESS) {
