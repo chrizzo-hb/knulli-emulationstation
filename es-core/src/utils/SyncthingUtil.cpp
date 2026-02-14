@@ -23,6 +23,7 @@
 
 #define GUIICON _U("\uF07C ")
 
+bool SyncthingUtil::mEnabled = false;
 const std::string SYNCTHING_CONFIG_XML = "/userdata/system/configs/syncthing/config.xml";
 std::once_flag SyncthingUtil::mOnceFlag;
 
