@@ -76,7 +76,7 @@ bool SyncthingUtil::connect() {
 	}
 
 	{
-		std::lock_guard<std::mutex> lock(mConnectMutex);
+		std::lock_guard<std::recursive_mutex> lock(mConnectMutex);
 		
         if (mConnected) 
             return true;
@@ -94,7 +94,7 @@ bool SyncthingUtil::connect() {
 
 // Disconnects from the syncthing API by clearing all configuration data.
 void SyncthingUtil::disconnect() {
-	std::lock_guard<std::mutex> lock(mDataMutex);
+	std::lock_guard<std::recursive_mutex> lock(mDataMutex);
 	mConnected = false;
 
 	// Reset status of own device
@@ -159,7 +159,7 @@ void SyncthingUtil::executeScan(Window* window, std::string const* folderId, int
     std::string targetFolderLabel = "";
 	bool allSharedFoldersPaused = true;
 	{
-		std::lock_guard<std::mutex> lock(mDataMutex);
+		std::lock_guard<std::recursive_mutex> lock(mDataMutex);
 		for (const auto& folder : mFolders) {
 			if (folder.shared && !folder.paused) {
 				allSharedFoldersPaused = false;
@@ -277,7 +277,7 @@ SyncthingState SyncthingUtil::getStateFromApi(int timeoutMs) {
 	state.connectedDevices.clear();
 	
 	{
-		std::lock_guard<std::mutex> lock(mDataMutex);
+		std::lock_guard<std::recursive_mutex> lock(mDataMutex);
 
 		updateDeviceCompletion(&self, timeoutMs);
 		globalItems += self.globalItems;
@@ -373,7 +373,7 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds(int timeoutMs) {
 		if (doc.IsObject() == false)
 			return deviceIds;
 
-		std::lock_guard<std::mutex> lock(mDataMutex);
+		std::lock_guard<std::recursive_mutex> lock(mDataMutex);
 
 		if (doc.HasMember("total")) {
 			self.bytesReceived = doc["total"].GetObject()["inBytesTotal"].GetInt64();
@@ -480,7 +480,7 @@ bool SyncthingUtil::parseConfig() {
 	LOG(LogInfo) << "Syncthing: Own device ID is " << self.id;
 
 	// Clear map before determining devices.
-	std::lock_guard<std::mutex> lock(mDataMutex);
+	std::lock_guard<std::recursive_mutex> lock(mDataMutex);
 	mDevicesMap.clear();
 	mFolders.clear();
 
