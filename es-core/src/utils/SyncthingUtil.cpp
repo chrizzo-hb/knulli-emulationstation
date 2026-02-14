@@ -44,7 +44,8 @@ void SyncthingUtil::init() {
 bool SyncthingUtil::isEnabled() {
 
     // Try to set busy. If already busy, skip the check.
-    if (mApiBusy.exchange(true)) {
+	auto& instance = getInstance();
+    if (instance.mApiBusy.exchange(true)) {
         LOG(LogDebug) << "Syncthing: API is busy with another request, skipping check if alive.";
         return mEnabled;
     }
@@ -52,7 +53,7 @@ bool SyncthingUtil::isEnabled() {
     struct Guard { 
         std::atomic<bool>& flag; 
         ~Guard() { flag.store(false); } 
-    } apiGuard{mApiBusy};
+    } apiGuard{instance.mApiBusy};
 
 	// Check if syncthing API is up
 	std::unique_ptr<HttpReq> req(new HttpReq("http://127.0.0.1:8384"));
@@ -64,8 +65,8 @@ bool SyncthingUtil::isEnabled() {
 	if (!Utils::FileSystem::exists(SYNCTHING_CONFIG_XML)) {
 		return false;
 	}
-	mEnabled = true;
-	return mEnabled;
+	instance.mEnabled = true;
+	return instance.mEnabled;
 }
 
 // Establishes a connection to the syncthing API by verifying the syncthing API

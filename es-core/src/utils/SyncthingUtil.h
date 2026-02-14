@@ -127,7 +127,7 @@ private:
 	std::string getMyId();
 	std::vector<std::string> getConnectedDeviceIds(int timeoutMs = HTTP_TIMEOUT_MS);
 	bool parseConfig();
-	void updateDeviceCompletion(Device* device);
+	void updateDeviceCompletion(Device* device, int timeoutMs = HTTP_TIMEOUT_MS);
 	long getCurrentTimeMillis();
 
 	static bool waitWithTimeout(HttpReq* req, int timeoutMs);
