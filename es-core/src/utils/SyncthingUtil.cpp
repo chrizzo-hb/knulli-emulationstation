@@ -2,7 +2,6 @@
 #include "utils/Platform.h"
 #include "Paths.h"
 #include "Log.h"
-#include "HttpReq.h"
 #include "utils/FileSystemUtil.h"
 #include "utils/StringUtil.h"
 #include <stdio.h>
@@ -46,7 +45,7 @@ bool SyncthingUtil::isEnabled() {
 
 	// Check if syncthing API is up
 	std::unique_ptr<HttpReq> req(new HttpReq("http://127.0.0.1:8384"));
-	if (!req->wait()) {
+	if (!waitWithTimeout(req.get(), 2000)) {
 		return false;
 	}
 
@@ -116,8 +115,23 @@ bool SyncthingUtil::reloadConfig() {
 	return false;
 }
 
-// Starts a rescan of all folders or of a specific folder if folderId is provided.
 void SyncthingUtil::scan(Window* window, std::string const* folderId) {
+    // Try to set busy. If already busy, skip the scan.
+    if (mApiBusy.exchange(true)) {
+        LOG(LogDebug) << "Syncthing: API is busy with another request, skipping scan.";
+        return;
+    }
+
+    struct Guard { 
+        std::atomic<bool>& flag; 
+        ~Guard() { flag.store(false); } 
+    } apiGuard{mApiBusy};
+
+	executeScan(window, folderId);
+}
+
+// Starts a rescan of all folders or of a specific folder if folderId is provided.
+void SyncthingUtil::executeScan(Window* window, std::string const* folderId) {
 	if (!reconnect()) {
 		LOG(LogError) << "Syncthing: Unable to (re-)connect, cannot start scan";
 		return;
@@ -172,7 +186,7 @@ void SyncthingUtil::scan(Window* window, std::string const* folderId) {
 	}
 
 	LOG(LogDebug) << "Syncthing: Scan request sent";
-	if (req->wait()) {
+	if (!waitWithTimeout(req.get(), 2000)) {
 		long endTime = getCurrentTimeMillis();
 		long duration = endTime - startTime;
 		LOG(LogDebug) << "Syncthing: Scan completed in " << duration << " milliseconds";
@@ -194,8 +208,24 @@ void SyncthingUtil::scan(Window* window, std::string const* folderId) {
 	}
 }
 
+SyncthingState SyncthingUtil::getState() {    
+    // Try to set busy. If already busy, return empty/last state immediately.
+    if (mApiBusy.exchange(true)) {
+        LOG(LogDebug) << "Syncthing: API is busy with another request, skipping getState.";
+        return mLastState;
+    }
+
+    struct Guard { 
+        std::atomic<bool>& flag; 
+        ~Guard() { flag.store(false); } 
+    } apiGuard{mApiBusy};
+
+    mLastState = getStateFromApi();
+    return mLastState;
+}
+
 // Retrieves the current synchronization state from the syncthing API.
-SyncthingState SyncthingUtil::getState() {
+SyncthingState SyncthingUtil::getStateFromApi() {
 	SyncthingState state;
 	state.itemsSynced = 0;
 	state.itemsTotal = 0;
@@ -310,7 +340,7 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 
 	std::unique_ptr<HttpReq> req(new HttpReq("http://127.0.0.1:8384/rest/system/connections", &options));
 
-	if (req->wait()) {
+	if (!waitWithTimeout(req.get(), 2000)) {
 		rapidjson::Document doc;
 		doc.Parse(req->getContent().c_str());
 		if (doc.HasParseError())
@@ -372,33 +402,34 @@ void SyncthingUtil::updateDeviceCompletion(Device* device) {
 
 	std::unique_ptr<HttpReq> req(new HttpReq("http://127.0.0.1:8384/rest/db/completion?device=" + device->id, &options));
 
-	if (req->wait()) {
-		rapidjson::Document doc;
-		doc.Parse(req->getContent().c_str());
-		if (doc.HasParseError())
-			return;
-		if (doc.IsObject() == false)
-			return;
-		if (doc.GetObject().HasMember("completion") && doc.GetObject()["completion"].IsInt64())
-			device->completion = doc.GetObject()["completion"].GetInt64();
-		if (doc.GetObject().HasMember("needItems") && doc.GetObject()["needItems"].IsInt64())
-			device->needItems = doc.GetObject()["needItems"].GetInt64();
-		if (doc.GetObject().HasMember("globalItems") && doc.GetObject()["globalItems"].IsInt64())
-			device->globalItems = doc.GetObject()["globalItems"].GetInt64();
-		if (doc.GetObject().HasMember("paused") && doc.GetObject()["paused"].IsBool())
-			device->paused = doc.GetObject()["paused"].GetBool();
-		if (doc.GetObject().HasMember("needBytes") && doc.GetObject()["needBytes"].GetInt64()) {
-			int64_t currentNeedBytes = doc.GetObject()["needBytes"].GetInt64();
+	if (!waitWithTimeout(req.get(), 2000)) {
+		return;
+	}
+	rapidjson::Document doc;
+	doc.Parse(req->getContent().c_str());
+	if (doc.HasParseError())
+		return;
+	if (doc.IsObject() == false)
+		return;
+	if (doc.GetObject().HasMember("completion") && doc.GetObject()["completion"].IsInt64())
+		device->completion = doc.GetObject()["completion"].GetInt64();
+	if (doc.GetObject().HasMember("needItems") && doc.GetObject()["needItems"].IsInt64())
+		device->needItems = doc.GetObject()["needItems"].GetInt64();
+	if (doc.GetObject().HasMember("globalItems") && doc.GetObject()["globalItems"].IsInt64())
+		device->globalItems = doc.GetObject()["globalItems"].GetInt64();
+	if (doc.GetObject().HasMember("paused") && doc.GetObject()["paused"].IsBool())
+		device->paused = doc.GetObject()["paused"].GetBool();
+	if (doc.GetObject().HasMember("needBytes") && doc.GetObject()["needBytes"].GetInt64()) {
+		int64_t currentNeedBytes = doc.GetObject()["needBytes"].GetInt64();
 
-			// Only record speed if the change is significant (e.g., > 1KB)
-			// and if we actually have items left to sync
-			if (currentNeedBytes < device->needBytes && (device->needItems > 0)) {
-				device->transferSpeed = device->needBytes - currentNeedBytes;
-			} else {
-				device->transferSpeed = 0; // Explicitly reset to zero
-			}
-            device->needBytes = currentNeedBytes;
+		// Only record speed if the change is significant (e.g., > 1KB)
+		// and if we actually have items left to sync
+		if (currentNeedBytes < device->needBytes && (device->needItems > 0)) {
+			device->transferSpeed = device->needBytes - currentNeedBytes;
+		} else {
+			device->transferSpeed = 0; // Explicitly reset to zero
 		}
+		device->needBytes = currentNeedBytes;
 	}
 }
 
@@ -488,4 +519,23 @@ long SyncthingUtil::getCurrentTimeMillis() {
 	return std::chrono::duration_cast<std::chrono::milliseconds>(
 			   std::chrono::system_clock::now().time_since_epoch())
 		.count();
+}
+
+bool waitWithTimeout(HttpReq* req, int timeoutMs) {
+    auto startTime = std::chrono::steady_clock::now();
+    
+    while (req->status() == HttpReq::REQ_IN_PROGRESS) {
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count();
+
+        if (elapsed > timeoutMs) {
+            LOG(LogWarning) << "Syncthing: Request timed out after " << timeoutMs << "ms";
+            return false; // Abort
+        }
+        
+        // Give the CPU a tiny break, but keep the multi_handle processing
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    
+    return req->status() == HttpReq::REQ_SUCCESS;
 }

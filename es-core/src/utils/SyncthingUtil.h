@@ -1,11 +1,13 @@
 #pragma once
 #include <string>
 #include <vector>
+#include "HttpReq.h"
 #include "Window.h"
 #include "watchers/WatchersManager.h"
 #include <map>
 #include <memory>
 #include <mutex>
+#include <atomic>
 
 struct Device {
 	std::string id;
@@ -64,8 +66,8 @@ public:
 	}
 
 	void init();
-	void scan(Window* window, std::string const* folderId = nullptr);
 	bool reloadConfig();
+	void scan(Window* window, std::string const* folderId = nullptr);
 	SyncthingState getState();
 	static bool isEnabled();
 	bool isConnected() { return mConnected && mWifiConnected; }
@@ -85,9 +87,12 @@ private:
 	SyncthingUtil(SyncthingUtil&&) = delete;
 	SyncthingUtil& operator=(SyncthingUtil&&) = delete;
 
+	// Access control
 	static std::once_flag mOnceFlag;
+	std::atomic<bool> mApiBusy{false};
 	std::mutex mConnectMutex;
 	std::mutex mDataMutex;
+
 	bool mInitialized = false;
 	bool mConnected = false;
 	bool mWifiConnected = false;
@@ -111,9 +116,14 @@ private:
 		.transferSpeed = 0
 	};
 
+	SyncthingState mLastState;
+
+	void executeScan(Window* window, std::string const* folderId = nullptr);
+	SyncthingState getStateFromApi();
 	std::string getMyId();
 	std::vector<std::string> getConnectedDeviceIds();
 	bool parseConfig();
 	void updateDeviceCompletion(Device* device);
 	long getCurrentTimeMillis();
+	bool waitWithTimeout(HttpReq* req, int timeoutMs)
 };
