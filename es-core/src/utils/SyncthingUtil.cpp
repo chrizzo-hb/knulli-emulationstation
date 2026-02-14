@@ -76,7 +76,7 @@ bool SyncthingUtil::connect() {
 	}
 
 	{
-		std::lock_guard<std::recursive_mutex> lock(mConnectMutex);
+		std::lock_guard<std::mutex> lock(mConnectMutex);
 		
         if (mConnected) 
             return true;
@@ -94,7 +94,7 @@ bool SyncthingUtil::connect() {
 
 // Disconnects from the syncthing API by clearing all configuration data.
 void SyncthingUtil::disconnect() {
-	std::lock_guard<std::recursive_mutex> lock(mDataMutex);
+	std::lock_guard<std::mutex> lock(mDataMutex);
 	mConnected = false;
 
 	// Reset status of own device
@@ -159,7 +159,7 @@ void SyncthingUtil::executeScan(Window* window, std::string const* folderId, int
     std::string targetFolderLabel = "";
 	bool allSharedFoldersPaused = true;
 	{
-		std::lock_guard<std::recursive_mutex> lock(mDataMutex);
+		std::lock_guard<std::mutex> lock(mDataMutex);
 		for (const auto& folder : mFolders) {
 			if (folder.shared && !folder.paused) {
 				allSharedFoldersPaused = false;
@@ -199,7 +199,8 @@ void SyncthingUtil::executeScan(Window* window, std::string const* folderId, int
 	}
 
 	LOG(LogDebug) << "Syncthing: Scan request sent";
-	if (!waitWithTimeout(req.get(), timeoutMs)) {
+	//if (!waitWithTimeout(req.get(), timeoutMs)) {
+	if (req->wait()) {
 		long endTime = getCurrentTimeMillis();
 		long duration = endTime - startTime;
 		LOG(LogDebug) << "Syncthing: Scan completed in " << duration << " milliseconds";
@@ -277,7 +278,7 @@ SyncthingState SyncthingUtil::getStateFromApi(int timeoutMs) {
 	state.connectedDevices.clear();
 	
 	{
-		std::lock_guard<std::recursive_mutex> lock(mDataMutex);
+		std::lock_guard<std::mutex> lock(mDataMutex);
 
 		updateDeviceCompletion(&self, timeoutMs);
 		globalItems += self.globalItems;
@@ -364,7 +365,8 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds(int timeoutMs) {
 
 	std::unique_ptr<HttpReq> req(new HttpReq("http://127.0.0.1:8384/rest/system/connections", &options));
 
-	if (!waitWithTimeout(req.get(), timeoutMs)) {
+	//if (!waitWithTimeout(req.get(), timeoutMs)) {
+	if (req->wait()) {
 		rapidjson::Document doc;
 		doc.Parse(req->getContent().c_str());
 		if (doc.HasParseError())
@@ -373,7 +375,7 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds(int timeoutMs) {
 		if (doc.IsObject() == false)
 			return deviceIds;
 
-		std::lock_guard<std::recursive_mutex> lock(mDataMutex);
+		std::lock_guard<std::mutex> lock(mDataMutex);
 
 		if (doc.HasMember("total")) {
 			self.bytesReceived = doc["total"].GetObject()["inBytesTotal"].GetInt64();
@@ -426,7 +428,8 @@ void SyncthingUtil::updateDeviceCompletion(Device* device, int timeoutMs) {
 
 	std::unique_ptr<HttpReq> req(new HttpReq("http://127.0.0.1:8384/rest/db/completion?device=" + device->id, &options));
 
-	if (!waitWithTimeout(req.get(), timeoutMs)) {
+	//if (!waitWithTimeout(req.get(), timeoutMs)) {
+	if (!req->wait()) {
 		return;
 	}
 	rapidjson::Document doc;
@@ -480,7 +483,7 @@ bool SyncthingUtil::parseConfig() {
 	LOG(LogInfo) << "Syncthing: Own device ID is " << self.id;
 
 	// Clear map before determining devices.
-	std::lock_guard<std::recursive_mutex> lock(mDataMutex);
+	std::lock_guard<std::mutex> lock(mDataMutex);
 	mDevicesMap.clear();
 	mFolders.clear();
 
@@ -545,7 +548,7 @@ long SyncthingUtil::getCurrentTimeMillis() {
 		.count();
 }
 
-bool SyncthingUtil::waitWithTimeout(HttpReq* req, int timeoutMs) {
+bool SyncthingUtil::(HttpReq* req, int timeoutMs) {
     auto startTime = std::chrono::steady_clock::now();
     
     while (req->status() == HttpReq::REQ_IN_PROGRESS) {

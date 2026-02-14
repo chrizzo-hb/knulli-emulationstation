@@ -95,8 +95,8 @@ private:
 	// Access control
 	static std::once_flag mOnceFlag;
 	std::atomic<bool> mApiBusy{false};
-	std::recursive_mutex mConnectMutex;
-	std::recursive_mutex mDataMutex;
+	std::mutex mConnectMutex;
+	std::mutex mDataMutex;
 
 	bool mInitialized = false;
 	bool mConnected = false;
