@@ -47,7 +47,7 @@ bool SyncthingUtil::isEnabled() {
 	auto& instance = getInstance();
     if (instance.mApiBusy.exchange(true)) {
         LOG(LogDebug) << "Syncthing: API is busy with another request, skipping check if alive.";
-        return mEnabled;
+        return instance.mEnabled;
     }
 
     struct Guard { 
