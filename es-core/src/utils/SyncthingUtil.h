@@ -65,7 +65,7 @@ public:
 
 	void init();
 	void scan(Window* window, std::string const* folderId = nullptr);
-	void reloadConfig();
+	bool reloadConfig();
 	SyncthingState getState();
 	static bool isEnabled();
 	bool isConnected() { return mConnected && mWifiConnected; }
