@@ -33,10 +33,7 @@ void SyncthingUtil::init() {
 	if (mInitialized) {
 		return;
 	}
-	NetworkStateWatcher* watcher = WatchersManager::GetComponent<NetworkStateWatcher>();
-	if (watcher != nullptr) {
-		mWifiConnected = watcher->isConnected();
-	}
+
 	WatchersManager::getInstance()->RegisterNotify(this);
 	mInitialized = true;
 }
