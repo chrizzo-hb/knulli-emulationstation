@@ -125,5 +125,6 @@ private:
 	bool parseConfig();
 	void updateDeviceCompletion(Device* device);
 	long getCurrentTimeMillis();
-	bool waitWithTimeout(HttpReq* req, int timeoutMs)
+
+	static bool waitWithTimeout(HttpReq* req, int timeoutMs)
 };

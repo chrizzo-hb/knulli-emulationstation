@@ -303,7 +303,7 @@ std::string SyncthingUtil::getMyId() {
     std::vector<std::string> myIds;
     char buffer[128];
 
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
+    std::unique_ptr<FILE, int(*)(FILE*)> pipe(popen(cmd.c_str(), "r"), pclose);
 
     if (!pipe) {
         LOG(LogError) << "Syncthing: Failed to open pipe for device ID command.";
@@ -521,7 +521,7 @@ long SyncthingUtil::getCurrentTimeMillis() {
 		.count();
 }
 
-bool waitWithTimeout(HttpReq* req, int timeoutMs) {
+bool SyncthingUtil::waitWithTimeout(HttpReq* req, int timeoutMs) {
     auto startTime = std::chrono::steady_clock::now();
     
     while (req->status() == HttpReq::REQ_IN_PROGRESS) {
@@ -530,11 +530,11 @@ bool waitWithTimeout(HttpReq* req, int timeoutMs) {
 
         if (elapsed > timeoutMs) {
             LOG(LogWarning) << "Syncthing: Request timed out after " << timeoutMs << "ms";
-            return false; // Abort
+            return false; 
         }
         
-        // Give the CPU a tiny break, but keep the multi_handle processing
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+		// Give the CPU a tiny break, but keep the multi_handle processing
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     
     return req->status() == HttpReq::REQ_SUCCESS;
