@@ -33,7 +33,10 @@ void SyncthingUtil::init() {
 	if (mInitialized) {
 		return;
 	}
-
+	NetworkStateWatcher* watcher = WatchersManager::GetComponent<NetworkStateWatcher>();
+	if (watcher != nullptr) {
+		mWifiConnected = watcher->isConnected();
+	}
 	WatchersManager::getInstance()->RegisterNotify(this);
 	mInitialized = true;
 }
@@ -323,7 +326,8 @@ std::string SyncthingUtil::getMyId() {
     std::vector<std::string> myIds;
     char buffer[128];
 
-    std::unique_ptr<FILE, int(*)(FILE*)> pipe(popen(cmd.c_str(), "r"), pclose);
+    //std::unique_ptr<FILE, int(*)(FILE*)> pipe(popen(cmd.c_str(), "r"), pclose);
+	std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
 
     if (!pipe) {
         LOG(LogError) << "Syncthing: Failed to open pipe for device ID command.";
