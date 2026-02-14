@@ -87,12 +87,16 @@ private:
 	SyncthingUtil(SyncthingUtil&&) = delete;
 	SyncthingUtil& operator=(SyncthingUtil&&) = delete;
 
+	static const int HTTP_TIMEOUT_MS = 2000;
+	static const int EXTENDED_HTTP_TIMEOUT_MS = 10000;
+
 	// Access control
 	static std::once_flag mOnceFlag;
 	std::atomic<bool> mApiBusy{false};
 	std::mutex mConnectMutex;
 	std::mutex mDataMutex;
 
+	bool mEnabled = false;
 	bool mInitialized = false;
 	bool mConnected = false;
 	bool mWifiConnected = false;
@@ -118,10 +122,10 @@ private:
 
 	SyncthingState mLastState;
 
-	void executeScan(Window* window, std::string const* folderId = nullptr);
-	SyncthingState getStateFromApi();
+	void executeScan(Window* window, std::string const* folderId = nullptr, int timeoutMs = HTTP_TIMEOUT_MS);
+	SyncthingState getStateFromApi(int timeoutMs = HTTP_TIMEOUT_MS);
 	std::string getMyId();
-	std::vector<std::string> getConnectedDeviceIds();
+	std::vector<std::string> getConnectedDeviceIds(int timeoutMs = HTTP_TIMEOUT_MS);
 	bool parseConfig();
 	void updateDeviceCompletion(Device* device);
 	long getCurrentTimeMillis();

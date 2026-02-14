@@ -43,9 +43,20 @@ void SyncthingUtil::init() {
 // Returns true if syncthing is enabled and reachable and the respective config file exists.
 bool SyncthingUtil::isEnabled() {
 
+    // Try to set busy. If already busy, skip the check.
+    if (mApiBusy.exchange(true)) {
+        LOG(LogDebug) << "Syncthing: API is busy with another request, skipping check if alive.";
+        return mEnabled;
+    }
+
+    struct Guard { 
+        std::atomic<bool>& flag; 
+        ~Guard() { flag.store(false); } 
+    } apiGuard{mApiBusy};
+
 	// Check if syncthing API is up
 	std::unique_ptr<HttpReq> req(new HttpReq("http://127.0.0.1:8384"));
-	if (!waitWithTimeout(req.get(), 2000)) {
+	if (!waitWithTimeout(req.get(), EXTENDED_HTTP_TIMEOUT_MS)) {
 		return false;
 	}
 
@@ -53,7 +64,8 @@ bool SyncthingUtil::isEnabled() {
 	if (!Utils::FileSystem::exists(SYNCTHING_CONFIG_XML)) {
 		return false;
 	}
-	return true;
+	mEnabled = true;
+	return mEnabled;
 }
 
 // Establishes a connection to the syncthing API by verifying the syncthing API
@@ -127,11 +139,11 @@ void SyncthingUtil::scan(Window* window, std::string const* folderId) {
         ~Guard() { flag.store(false); } 
     } apiGuard{mApiBusy};
 
-	executeScan(window, folderId);
+	executeScan(window, folderId, HTTP_TIMEOUT_MS);
 }
 
 // Starts a rescan of all folders or of a specific folder if folderId is provided.
-void SyncthingUtil::executeScan(Window* window, std::string const* folderId) {
+void SyncthingUtil::executeScan(Window* window, std::string const* folderId, int timeoutMs) {
 	if (!reconnect()) {
 		LOG(LogError) << "Syncthing: Unable to (re-)connect, cannot start scan";
 		return;
@@ -186,7 +198,7 @@ void SyncthingUtil::executeScan(Window* window, std::string const* folderId) {
 	}
 
 	LOG(LogDebug) << "Syncthing: Scan request sent";
-	if (!waitWithTimeout(req.get(), 2000)) {
+	if (!waitWithTimeout(req.get(), timeoutMs)) {
 		long endTime = getCurrentTimeMillis();
 		long duration = endTime - startTime;
 		LOG(LogDebug) << "Syncthing: Scan completed in " << duration << " milliseconds";
@@ -212,7 +224,15 @@ SyncthingState SyncthingUtil::getState() {
     // Try to set busy. If already busy, return empty/last state immediately.
     if (mApiBusy.exchange(true)) {
         LOG(LogDebug) << "Syncthing: API is busy with another request, skipping getState.";
-        return mLastState;
+		SyncthingState busyState = mLastState;
+		if (busyState.itemsSynced < busyState.itemsTotal) {
+			// The last known state indicates syncing is in progress, but
+			// since we are currently busy, let's assume there is some activity
+			// and set some non-zero values to avoid that the notification closes.
+			busyState.transferSpeed = 1;
+			busyState.totalBytesTransferred = 2048;
+		}
+        return busyState;
     }
 
     struct Guard { 
@@ -220,12 +240,14 @@ SyncthingState SyncthingUtil::getState() {
         ~Guard() { flag.store(false); } 
     } apiGuard{mApiBusy};
 
-    mLastState = getStateFromApi();
+	// If the API isn't busy and we do not know if it's syncing or not, let's
+	// extend the timeout to give it more time to respond.
+    mLastState = getStateFromApi(mLastState.isSyncing() ? HTTP_TIMEOUT_MS : EXTENDED_HTTP_TIMEOUT_MS);
     return mLastState;
 }
 
 // Retrieves the current synchronization state from the syncthing API.
-SyncthingState SyncthingUtil::getStateFromApi() {
+SyncthingState SyncthingUtil::getStateFromApi(int timeoutMs) {
 	SyncthingState state;
 	state.itemsSynced = 0;
 	state.itemsTotal = 0;
@@ -241,7 +263,7 @@ SyncthingState SyncthingUtil::getStateFromApi() {
 		return state;
 	}
 
-	std::vector<std::string> deviceIds = getConnectedDeviceIds();
+	std::vector<std::string> deviceIds = getConnectedDeviceIds(timeoutMs);
 	if (deviceIds.empty()) {
 		LOG(LogDebug) << "Syncthing: No connected devices found when getting current state.";
 		return state;
@@ -256,7 +278,7 @@ SyncthingState SyncthingUtil::getStateFromApi() {
 	{
 		std::lock_guard<std::mutex> lock(mDataMutex);
 
-		updateDeviceCompletion(&self);
+		updateDeviceCompletion(&self, timeoutMs);
 		globalItems += self.globalItems;
 		needItems += self.needItems;
 		totalSpeed += self.transferSpeed;
@@ -332,7 +354,7 @@ std::string SyncthingUtil::getMyId() {
 }
 
 // Retrieves a list of IDs of currently connected devices from the syncthing API.
-std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
+std::vector<std::string> SyncthingUtil::getConnectedDeviceIds(int timeoutMs) {
 	std::vector<std::string> deviceIds;
 
 	HttpReqOptions options;
@@ -340,7 +362,7 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 
 	std::unique_ptr<HttpReq> req(new HttpReq("http://127.0.0.1:8384/rest/system/connections", &options));
 
-	if (!waitWithTimeout(req.get(), 2000)) {
+	if (!waitWithTimeout(req.get(), timeoutMs)) {
 		rapidjson::Document doc;
 		doc.Parse(req->getContent().c_str());
 		if (doc.HasParseError())
@@ -394,7 +416,7 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 }
 
 // Updates the status of a specific device by querying the syncthing API.
-void SyncthingUtil::updateDeviceCompletion(Device* device) {
+void SyncthingUtil::updateDeviceCompletion(Device* device, int timeoutMs) {
 	if (!device) return;
 
 	HttpReqOptions options;
@@ -402,7 +424,7 @@ void SyncthingUtil::updateDeviceCompletion(Device* device) {
 
 	std::unique_ptr<HttpReq> req(new HttpReq("http://127.0.0.1:8384/rest/db/completion?device=" + device->id, &options));
 
-	if (!waitWithTimeout(req.get(), 2000)) {
+	if (!waitWithTimeout(req.get(), timeoutMs)) {
 		return;
 	}
 	rapidjson::Document doc;
