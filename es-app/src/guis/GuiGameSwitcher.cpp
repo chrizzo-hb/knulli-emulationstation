@@ -24,6 +24,7 @@
 #include "components/SliderComponent.h"
 #include "components/SwitchComponent.h"
 
+#include <cstring>
 #include <rapidjson/rapidjson.h>
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
@@ -36,6 +37,8 @@
 // Static members
 bool GuiGameSwitcher::sPendingGameSwitcher = false;
 GuiGameSwitcher* GuiGameSwitcher::sActiveInstance = nullptr;
+std::set<std::string> GuiGameSwitcher::sCachedExclusions;
+bool GuiGameSwitcher::sExclusionsLoaded = false;
 
 void GuiGameSwitcher::setPendingGameSwitcher(bool pending)
 {
@@ -164,17 +167,23 @@ void GuiGameSwitcher::saveExclusions(const std::vector<std::string>& exclusions)
 
 void GuiGameSwitcher::addExclusion(const std::string& gamePath)
 {
-	auto exclusions = loadExclusions();
-
-	// Don't add duplicates
-	for (const auto& p : exclusions)
+	// Ensure cache is loaded
+	if (!sExclusionsLoaded)
 	{
-		if (p == gamePath)
-			return;
+		auto exclusions = loadExclusions();
+		sCachedExclusions.insert(exclusions.begin(), exclusions.end());
+		sExclusionsLoaded = true;
 	}
 
-	exclusions.push_back(gamePath);
+	// Don't add duplicates
+	if (sCachedExclusions.find(gamePath) != sCachedExclusions.end())
+		return;
+
+	// Add to cache and persist
+	sCachedExclusions.insert(gamePath);
+	std::vector<std::string> exclusions(sCachedExclusions.begin(), sCachedExclusions.end());
 	saveExclusions(exclusions);
+
 	LOG(LogDebug) << "GuiGameSwitcher: Excluded game: " << gamePath;
 }
 
@@ -186,17 +195,20 @@ void GuiGameSwitcher::clearExclusions()
 		Utils::FileSystem::removeFile(path);
 		LOG(LogDebug) << "GuiGameSwitcher: Cleared all exclusions";
 	}
+
+	sCachedExclusions.clear();
+	sExclusionsLoaded = false;
 }
 
 bool GuiGameSwitcher::isExcluded(const std::string& gamePath)
 {
-	auto exclusions = loadExclusions();
-	for (const auto& p : exclusions)
+	if (!sExclusionsLoaded)
 	{
-		if (p == gamePath)
-			return true;
+		auto exclusions = loadExclusions();
+		sCachedExclusions.insert(exclusions.begin(), exclusions.end());
+		sExclusionsLoaded = true;
 	}
-	return false;
+	return sCachedExclusions.find(gamePath) != sCachedExclusions.end();
 }
 
 void GuiGameSwitcher::savePendingStats(const std::string& gamePath, const std::string& systemName, int elapsedSeconds)
@@ -271,40 +283,27 @@ void GuiGameSwitcher::savePendingStats(const std::string& gamePath, const std::s
 			}
 			else if (cacheDoc.IsArray())
 			{
-				// Find and update the game entry
-				for (auto& gameObj : cacheDoc.GetArray())
-				{
-					if (gameObj.HasMember("gamePath") && gameObj["gamePath"].IsString())
-					{
-						if (std::string(gameObj["gamePath"].GetString()) == gamePath)
-						{
-							// Update stats
-							if (gameObj.HasMember("playCount"))
-								gameObj["playCount"] = gameObj["playCount"].GetInt() + 1;
-							if (gameObj.HasMember("gameTime"))
-								gameObj["gameTime"] = gameObj["gameTime"].GetInt() + elapsedSeconds;
-							break;
-						}
-					}
-				}
-
-				// Re-sort by moving this game to the front (most recently played)
-				// Simple approach: find the entry and move it to index 0
+				// Find the game entry, update its stats, and move it to the front
 				for (rapidjson::SizeType i = 0; i < cacheDoc.Size(); i++)
 				{
-					if (cacheDoc[i].HasMember("gamePath") && cacheDoc[i]["gamePath"].IsString())
+					if (cacheDoc[i].HasMember("gamePath") && cacheDoc[i]["gamePath"].IsString()
+						&& strcmp(cacheDoc[i]["gamePath"].GetString(), gamePath.c_str()) == 0)
 					{
-						if (std::string(cacheDoc[i]["gamePath"].GetString()) == gamePath && i > 0)
+						// Update stats
+						if (cacheDoc[i].HasMember("playCount"))
+							cacheDoc[i]["playCount"] = cacheDoc[i]["playCount"].GetInt() + 1;
+						if (cacheDoc[i].HasMember("gameTime"))
+							cacheDoc[i]["gameTime"] = cacheDoc[i]["gameTime"].GetInt() + elapsedSeconds;
+
+						// Move to front (most recently played)
+						if (i > 0)
 						{
-							// Swap entries to move this game to the front
 							rapidjson::Value temp(cacheDoc[i], cacheDoc.GetAllocator());
 							for (rapidjson::SizeType j = i; j > 0; j--)
-							{
 								cacheDoc[j] = cacheDoc[j-1];
-							}
 							cacheDoc[0] = temp;
-							break;
 						}
+						break;
 					}
 				}
 
@@ -443,10 +442,13 @@ void GuiGameSwitcher::saveCache(FileData* gameBeingLaunched)
 
 	std::vector<FileData*> allPlayedGames;
 
-	// Iterate all game systems (skip collections, image viewer, etc.)
+	// Iterate all game systems (skip collections, grouped children, image viewer, etc.)
 	for (auto system : SystemData::sSystemVector)
 	{
 		if (!system->isGameSystem() || system->isCollection())
+			continue;
+
+		if (system->isGroupChildSystem())
 			continue;
 
 		if (system->hasPlatformId(PlatformIds::IMAGEVIEWER) || system->hasPlatformId(PlatformIds::PLATFORM_IGNORE))
@@ -503,44 +505,8 @@ void GuiGameSwitcher::saveCache(FileData* gameBeingLaunched)
 		gameObj.AddMember("systemName",
 			rapidjson::Value(game->getSystem()->getName().c_str(), allocator), allocator);
 
-		// Screenshot path (using same priority as getScreenshotForGame)
-		std::string screenshotPath;
-		auto* repo = game->getSourceFileData()->getSystem()->getSaveStateRepository();
-		if (repo != nullptr)
-		{
-			SaveState* autoSave = repo->getGameAutoSave(game);
-			if (autoSave != nullptr)
-			{
-				std::string screenshot = autoSave->getScreenShot();
-				if (!screenshot.empty() && Utils::FileSystem::exists(screenshot))
-					screenshotPath = screenshot;
-			}
-			if (screenshotPath.empty())
-			{
-				auto states = repo->getSaveStates(game);
-				for (auto* state : states)
-				{
-					std::string screenshot = state->getScreenShot();
-					if (!screenshot.empty() && Utils::FileSystem::exists(screenshot))
-					{
-						screenshotPath = screenshot;
-						break;
-					}
-				}
-			}
-		}
-		if (screenshotPath.empty())
-		{
-			std::string imagePath = game->getImagePath();
-			if (!imagePath.empty() && Utils::FileSystem::exists(imagePath))
-				screenshotPath = imagePath;
-		}
-		if (screenshotPath.empty())
-		{
-			std::string thumbPath = game->getThumbnailPath();
-			if (!thumbPath.empty() && Utils::FileSystem::exists(thumbPath))
-				screenshotPath = thumbPath;
-		}
+		// Screenshot path (reuse getScreenshotForGame logic)
+		std::string screenshotPath = getScreenshotForGame(game);
 		gameObj.AddMember("screenshotPath",
 			rapidjson::Value(screenshotPath.c_str(), allocator), allocator);
 
@@ -610,6 +576,8 @@ void GuiGameSwitcher::loadFromCache()
 		return;
 	}
 
+	mGames.reserve(doc.GetArray().Size());
+
 	for (auto& gameObj : doc.GetArray())
 	{
 		if (!gameObj.IsObject())
@@ -669,11 +637,22 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	mLaunchAfterNavigation = false;
 	mAnimationProgress = 0.0f;
 	mAnimationDirection = 0;
+	mScreenWidth = (float)Renderer::getScreenWidth();
+	mScreenHeight = (float)Renderer::getScreenHeight();
+	mCachedBgAlpha = 0;
+	mCachedInfoBgColor = 0;
+	mCachedHelpEnabled = false;
+	mPlayInfoBgW = 0.0f;
+	mPlayInfoBgH = 0.0f;
+	mPlayInfoBgY = 0.0f;
+	mPrevPlayInfoBgW = 0.0f;
+	mPrevPlayInfoBgH = 0.0f;
+	mPrevPlayInfoBgY = 0.0f;
 	mAnimationDuration = Settings::getInstance()->getInt("GameSwitcherAnimationSpeed");
 	if (mAnimationDuration < 50)
 		mAnimationDuration = 50;  // Minimum 50ms to prevent division by zero or too-fast animations
 
-	setSize((float)Renderer::getScreenWidth(), (float)Renderer::getScreenHeight());
+	setSize(mScreenWidth, mScreenHeight);
 
 	if (fromCache)
 		loadFromCache();
@@ -690,37 +669,37 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 
 	auto theme = ThemeData::getMenuTheme();
 	auto fontPath = theme->Text.font->getPath();
-	float fontSize = Renderer::getScreenHeight() / 16.0f;
-	float infoFontSize = Renderer::getScreenHeight() / 28.0f;
+	float fontSize = mScreenHeight / 16.0f;
+	float infoFontSize = mScreenHeight / 28.0f;
 	auto font = Font::get((int)fontSize, fontPath);
 	auto infoFont = Font::get((int)infoFontSize, fontPath);
 
 	// Create current screenshot component (full screen)
 	mScreenshot = new ImageComponent(mWindow, true);
 	mScreenshot->setOrigin(0.5f, 0.5f);
-	mScreenshot->setPosition(Renderer::getScreenWidth() / 2.0f, Renderer::getScreenHeight() / 2.0f);
-	mScreenshot->setMaxSize((float)Renderer::getScreenWidth(), (float)Renderer::getScreenHeight());
+	mScreenshot->setPosition(mScreenWidth / 2.0f, mScreenHeight / 2.0f);
+	mScreenshot->setMaxSize(mScreenWidth, mScreenHeight);
 
 	// Create current marquee component (top center)
 	float marqueeWidthPct = Settings::getInstance()->getInt("GameSwitcherMarqueeSize") / 100.0f;
 	float marqueeHeightPct = marqueeWidthPct * 0.45f;  // Height proportional to width
 
 	// Calculate Y position - ensure marquee doesn't go off the top of the screen
-	float marqueeMaxHeight = Renderer::getScreenHeight() * marqueeHeightPct;
-	float marqueeTopMargin = Renderer::getScreenHeight() * 0.02f;  // 2% margin from top
-	float marqueeDefaultY = Renderer::getScreenHeight() * 0.14f;
+	float marqueeMaxHeight = mScreenHeight * marqueeHeightPct;
+	float marqueeTopMargin = mScreenHeight * 0.02f;  // 2% margin from top
+	float marqueeDefaultY = mScreenHeight * 0.14f;
 	float marqueeMinY = marqueeTopMargin + (marqueeMaxHeight / 2.0f);  // Minimum Y to keep on screen
 	float marqueeY = std::max(marqueeDefaultY, marqueeMinY);
 
 	mMarquee = new ImageComponent(mWindow, true);
 	mMarquee->setOrigin(0.5f, 0.5f);
-	mMarquee->setPosition(Renderer::getScreenWidth() * 0.50f, marqueeY);
-	mMarquee->setMaxSize(Renderer::getScreenWidth() * marqueeWidthPct, marqueeMaxHeight);
+	mMarquee->setPosition(mScreenWidth * 0.50f, marqueeY);
+	mMarquee->setMaxSize(mScreenWidth * marqueeWidthPct, marqueeMaxHeight);
 
 	// Create current game name text (fallback when no marquee)
 	mGameName = new TextComponent(mWindow);
-	mGameName->setPosition(0, Renderer::getScreenHeight() * 0.10f);
-	mGameName->setSize((float)Renderer::getScreenWidth(), Renderer::getScreenHeight() * 0.10f);
+	mGameName->setPosition(0, mScreenHeight * 0.10f);
+	mGameName->setSize(mScreenWidth, mScreenHeight * 0.10f);
 	mGameName->setHorizontalAlignment(ALIGN_CENTER);
 	mGameName->setVerticalAlignment(ALIGN_CENTER);
 	mGameName->setColor(0xFFFFFFFF);
@@ -730,8 +709,7 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 
 	// Create current play info text (bottom center)
 	// Move up when help prompts are visible to avoid overlap with help bar
-	float screenH = (float)Renderer::getScreenHeight();
-	float playInfoHeight = screenH * 0.08f;
+	float playInfoHeight = mScreenHeight * 0.08f;
 	float playInfoY;
 
 	bool helpEnabled = Settings::getInstance()->getBool("GameSwitcherHelpEnabled");
@@ -741,19 +719,19 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 		float helpBarY = helpStyle.position.y();
 
 		// Account for the help background padding above the text
-		float helpContentH = helpStyle.font ? Math::round(helpStyle.font->getLetterHeight() * 1.25f) : screenH * 0.03f;
+		float helpContentH = helpStyle.font ? Math::round(helpStyle.font->getLetterHeight() * 1.25f) : mScreenHeight * 0.03f;
 		float helpBgPadding = helpContentH * 0.4f;
-		float gap = screenH * 0.015f;
+		float gap = mScreenHeight * 0.015f;
 		playInfoY = helpBarY - helpBgPadding - gap - playInfoHeight;
 	}
 	else
 	{
-		playInfoY = screenH * 0.90f;
+		playInfoY = mScreenHeight * 0.90f;
 	}
 
 	mPlayInfo = new TextComponent(mWindow);
 	mPlayInfo->setPosition(0, playInfoY);
-	mPlayInfo->setSize((float)Renderer::getScreenWidth(), playInfoHeight);
+	mPlayInfo->setSize(mScreenWidth, playInfoHeight);
 	mPlayInfo->setHorizontalAlignment(ALIGN_CENTER);
 	mPlayInfo->setVerticalAlignment(ALIGN_CENTER);
 	mPlayInfo->setColor(0xD0D0D0FF);
@@ -764,19 +742,19 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	// Create previous screenshot component (for animation)
 	mPrevScreenshot = new ImageComponent(mWindow, true);
 	mPrevScreenshot->setOrigin(0.5f, 0.5f);
-	mPrevScreenshot->setPosition(Renderer::getScreenWidth() / 2.0f, Renderer::getScreenHeight() / 2.0f);
-	mPrevScreenshot->setMaxSize((float)Renderer::getScreenWidth(), (float)Renderer::getScreenHeight());
+	mPrevScreenshot->setPosition(mScreenWidth / 2.0f, mScreenHeight / 2.0f);
+	mPrevScreenshot->setMaxSize(mScreenWidth, mScreenHeight);
 
 	// Create previous marquee component (for animation)
 	mPrevMarquee = new ImageComponent(mWindow, true);
 	mPrevMarquee->setOrigin(0.5f, 0.5f);
-	mPrevMarquee->setPosition(Renderer::getScreenWidth() * 0.50f, marqueeY);
-	mPrevMarquee->setMaxSize(Renderer::getScreenWidth() * marqueeWidthPct, marqueeMaxHeight);
+	mPrevMarquee->setPosition(mScreenWidth * 0.50f, marqueeY);
+	mPrevMarquee->setMaxSize(mScreenWidth * marqueeWidthPct, marqueeMaxHeight);
 
 	// Create previous game name text (for animation)
 	mPrevGameName = new TextComponent(mWindow);
-	mPrevGameName->setPosition(0, Renderer::getScreenHeight() * 0.10f);
-	mPrevGameName->setSize((float)Renderer::getScreenWidth(), Renderer::getScreenHeight() * 0.10f);
+	mPrevGameName->setPosition(0, mScreenHeight * 0.10f);
+	mPrevGameName->setSize(mScreenWidth, mScreenHeight * 0.10f);
 	mPrevGameName->setHorizontalAlignment(ALIGN_CENTER);
 	mPrevGameName->setVerticalAlignment(ALIGN_CENTER);
 	mPrevGameName->setColor(0xFFFFFFFF);
@@ -787,13 +765,38 @@ GuiGameSwitcher::GuiGameSwitcher(Window* window, bool fromCache) : GuiComponent(
 	// Create previous play info text (for animation)
 	mPrevPlayInfo = new TextComponent(mWindow);
 	mPrevPlayInfo->setPosition(0, playInfoY);
-	mPrevPlayInfo->setSize((float)Renderer::getScreenWidth(), playInfoHeight);
+	mPrevPlayInfo->setSize(mScreenWidth, playInfoHeight);
 	mPrevPlayInfo->setHorizontalAlignment(ALIGN_CENTER);
 	mPrevPlayInfo->setVerticalAlignment(ALIGN_CENTER);
 	mPrevPlayInfo->setColor(0xD0D0D0FF);
 	mPrevPlayInfo->setGlowColor(0x00000060);
 	mPrevPlayInfo->setGlowSize(2);
 	mPrevPlayInfo->setFont(infoFont);
+
+	// Cache settings used per-frame in render() and per-navigation in updateDisplayForComponents()
+	int bgOpacityPct = Settings::getInstance()->getInt("GameSwitcherInfoBackgroundOpacity");
+	mCachedBgAlpha = (unsigned char)((bgOpacityPct / 100.0f) * 255.0f);
+	mCachedInfoBgColor = 0x00000000 | mCachedBgAlpha;
+	mCachedHelpEnabled = Settings::getInstance()->getBool("GameSwitcherHelpEnabled");
+	mCachedMarqueeEnabled = Settings::getInstance()->getBool("GameSwitcherMarqueeEnabled");
+	mCachedMarqueeFallback = Settings::getInstance()->getBool("GameSwitcherMarqueeFallback");
+	mCachedPlayInfoEnabled = Settings::getInstance()->getBool("GameSwitcherPlayInfoEnabled");
+	mCachedLaunchAnimEnabled = Settings::getInstance()->getBool("GameSwitcherLaunchAnimationEnabled");
+
+	// Cache help bar background geometry (computed from getHelpStyle(), never changes)
+	mHelpBgY = 0.0f;
+	mHelpBgHeight = 0.0f;
+	if (mCachedHelpEnabled)
+	{
+		HelpStyle style = getHelpStyle();
+		if (style.font)
+		{
+			float helpHeight = Math::round(style.font->getLetterHeight() * 1.25f);
+			float padding = helpHeight * 0.4f;
+			mHelpBgY = style.position.y() - padding;
+			mHelpBgHeight = mScreenHeight - mHelpBgY;
+		}
+	}
 
 	// Display the first game
 	updateDisplay();
@@ -829,10 +832,13 @@ void GuiGameSwitcher::loadRecentlyPlayedGames()
 
 	std::vector<FileData*> allPlayedGames;
 
-	// Iterate all game systems (skip collections, image viewer, etc.)
+	// Iterate all game systems (skip collections, grouped children, image viewer, etc.)
 	for (auto system : SystemData::sSystemVector)
 	{
 		if (!system->isGameSystem() || system->isCollection())
+			continue;
+
+		if (system->isGroupChildSystem())
 			continue;
 
 		if (system->hasPlatformId(PlatformIds::IMAGEVIEWER) || system->hasPlatformId(PlatformIds::PLATFORM_IGNORE))
@@ -855,6 +861,7 @@ void GuiGameSwitcher::loadRecentlyPlayedGames()
 
 	// Take top N games and build the items list
 	int count = std::min(maxGames, (int)allPlayedGames.size());
+	mGames.reserve(count);
 	for (int i = 0; i < count; i++)
 	{
 		GameItem item;
@@ -946,8 +953,7 @@ void GuiGameSwitcher::updateDisplayForComponents(ImageComponent* screenshot, Ima
 	}
 
 	// Update marquee or game name
-	bool marqueeEnabled = Settings::getInstance()->getBool("GameSwitcherMarqueeEnabled");
-	if (marqueeEnabled)
+	if (mCachedMarqueeEnabled)
 	{
 		if (!marqueePath.empty() && Utils::FileSystem::exists(marqueePath))
 		{
@@ -959,8 +965,7 @@ void GuiGameSwitcher::updateDisplayForComponents(ImageComponent* screenshot, Ima
 		{
 			marquee->setImage("");
 			marquee->setVisible(false);
-			bool fallback = Settings::getInstance()->getBool("GameSwitcherMarqueeFallback");
-			if (fallback)
+			if (mCachedMarqueeFallback)
 			{
 				gameName->setText(gameNameStr);
 				gameName->setVisible(true);
@@ -980,16 +985,28 @@ void GuiGameSwitcher::updateDisplayForComponents(ImageComponent* screenshot, Ima
 	}
 
 	// Update play info
-	bool playInfoEnabled = Settings::getInstance()->getBool("GameSwitcherPlayInfoEnabled");
-	if (playInfoEnabled)
+	if (mCachedPlayInfoEnabled)
 	{
 		std::string playTimeStr = Utils::Time::secondsToString(gameTime);
 		std::string playInfoStr;
+		playInfoStr.reserve(64);
 
 		if (playCount == 1)
-			playInfoStr = _("Played 1 time") + "  |  " + _("Play time") + ": " + playTimeStr;
+		{
+			playInfoStr.append(_("Played 1 time"));
+		}
 		else
-			playInfoStr = _("Played") + " " + std::to_string(playCount) + " " + _("times") + "  |  " + _("Play time") + ": " + playTimeStr;
+		{
+			playInfoStr.append(_("Played"));
+			playInfoStr.append(" ");
+			playInfoStr.append(std::to_string(playCount));
+			playInfoStr.append(" ");
+			playInfoStr.append(_("times"));
+		}
+		playInfoStr.append("  |  ");
+		playInfoStr.append(_("Play time"));
+		playInfoStr.append(": ");
+		playInfoStr.append(playTimeStr);
 
 		playInfo->setText(playInfoStr);
 		playInfo->setVisible(true);
@@ -998,6 +1015,32 @@ void GuiGameSwitcher::updateDisplayForComponents(ImageComponent* screenshot, Ima
 	{
 		playInfo->setText("");
 		playInfo->setVisible(false);
+	}
+
+	// Cache play info background dimensions to avoid per-frame sizeText() calls
+	if (playInfo->isVisible())
+	{
+		float screenH = mScreenHeight;
+		float padding = screenH * 0.015f;
+		auto font = playInfo->getFont();
+		float textWidth = font->sizeText(playInfo->getText()).x();
+		float textHeight = font->getHeight();
+		float bgW = textWidth + (padding * 2);
+		float bgH = textHeight + (padding * 2);
+		float bgY = playInfo->getPosition().y() + (playInfo->getSize().y() - bgH) / 2.0f;
+
+		if (playInfo == mPlayInfo)
+		{
+			mPlayInfoBgW = bgW;
+			mPlayInfoBgH = bgH;
+			mPlayInfoBgY = bgY;
+		}
+		else if (playInfo == mPrevPlayInfo)
+		{
+			mPrevPlayInfoBgW = bgW;
+			mPrevPlayInfoBgH = bgH;
+			mPrevPlayInfoBgY = bgY;
+		}
 	}
 }
 
@@ -1025,7 +1068,9 @@ void GuiGameSwitcher::navigateTo(int index)
 	// Determine animation direction
 	// Going right (next): old slides left, new comes from right
 	// Going left (prev): old slides right, new comes from left
-	if (index > oldIndex || (oldIndex == (int)mGames.size() - 1 && index == 0))
+	if (oldIndex == 0 && index == (int)mGames.size() - 1)
+		mAnimationDirection = -1; // Backward wrap - slide right
+	else if (index > oldIndex || (oldIndex == (int)mGames.size() - 1 && index == 0))
 		mAnimationDirection = 1;  // Next game - slide left
 	else
 		mAnimationDirection = -1; // Prev game - slide right
@@ -1157,7 +1202,7 @@ bool GuiGameSwitcher::input(InputConfig* config, Input input)
 	// A button - start fade-out then launch game (only if not animating)
 	if (config->isMappedTo(BUTTON_OK, input) && !mAnimating)
 	{
-		bool launchAnimEnabled = Settings::getInstance()->getBool("GameSwitcherLaunchAnimationEnabled");
+		bool launchAnimEnabled = mCachedLaunchAnimEnabled;
 		bool hasMarquee = mMarquee && mMarquee->isVisible() && mMarquee->hasImage();
 		bool hasPlayInfo = mPlayInfo && mPlayInfo->isVisible();
 		if (launchAnimEnabled && (hasMarquee || hasPlayInfo))
@@ -1300,13 +1345,9 @@ void GuiGameSwitcher::update(int deltaTime)
 
 void GuiGameSwitcher::render(const Transform4x4f& transform)
 {
-	float screenWidth = (float)Renderer::getScreenWidth();
-	float screenHeight = (float)Renderer::getScreenHeight();
-
-	// Calculate info background color from opacity setting
-	int bgOpacityPct = Settings::getInstance()->getInt("GameSwitcherInfoBackgroundOpacity");
-	unsigned char bgAlpha = (unsigned char)((bgOpacityPct / 100.0f) * 255.0f);
-	unsigned int infoBgColor = 0x00000000 | bgAlpha;
+	float screenWidth = mScreenWidth;
+	float screenHeight = mScreenHeight;
+	unsigned int infoBgColor = mCachedInfoBgColor;
 
 	// Draw black background
 	Renderer::setMatrix(Transform4x4f::Identity());
@@ -1384,22 +1425,13 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 		// Draw previous play info with background (both fading out)
 		if (mPrevPlayInfo && mPrevPlayInfo->isVisible())
 		{
-			float padding = screenHeight * 0.015f;
-			auto font = mPrevPlayInfo->getFont();
-			float textWidth = font->sizeText(mPrevPlayInfo->getText()).x();
-			float textHeight = font->getHeight();
+			float bgX = (screenWidth - mPrevPlayInfoBgW) / 2.0f + prevOffset;
 
-			float bgWidth = textWidth + (padding * 2);
-			float bgHeight = textHeight + (padding * 2);
-			float bgX = (screenWidth - bgWidth) / 2.0f + prevOffset;
-			float bgY = mPrevPlayInfo->getPosition().y() + (mPrevPlayInfo->getSize().y() - bgHeight) / 2.0f;
-
-			// Fade out the background as well
-			unsigned char fadedBgAlpha = (unsigned char)(bgAlpha * prevOpacityFactor);
+			unsigned char fadedBgAlpha = (unsigned char)(mCachedBgAlpha * prevOpacityFactor);
 			unsigned int fadedBgColor = 0x00000000 | fadedBgAlpha;
 
 			Renderer::setMatrix(Transform4x4f::Identity());
-			Renderer::drawRect(bgX, bgY, bgWidth, bgHeight, fadedBgColor, fadedBgColor);
+			Renderer::drawRect(bgX, mPrevPlayInfoBgY, mPrevPlayInfoBgW, mPrevPlayInfoBgH, fadedBgColor, fadedBgColor);
 
 			mPrevPlayInfo->setOpacity(prevOpacity);
 			mPrevPlayInfo->render(prevTransform);
@@ -1431,41 +1463,25 @@ void GuiGameSwitcher::render(const Transform4x4f& transform)
 	// Draw current play info with background (both fading in when animating)
 	if (mPlayInfo && mPlayInfo->isVisible())
 	{
-		float padding = screenHeight * 0.015f;
-		auto font = mPlayInfo->getFont();
-		float textWidth = font->sizeText(mPlayInfo->getText()).x();
-		float textHeight = font->getHeight();
+		float bgX = (screenWidth - mPlayInfoBgW) / 2.0f + currOffset;
 
-		float bgWidth = textWidth + (padding * 2);
-		float bgHeight = textHeight + (padding * 2);
-		float bgX = (screenWidth - bgWidth) / 2.0f + currOffset;
-		float bgY = mPlayInfo->getPosition().y() + (mPlayInfo->getSize().y() - bgHeight) / 2.0f;
-
-		// Fade in the background as well (full opacity when not animating)
-		unsigned char fadedCurrBgAlpha = (unsigned char)(bgAlpha * currOpacityFactor);
+		unsigned char fadedCurrBgAlpha = (unsigned char)(mCachedBgAlpha * currOpacityFactor);
 		unsigned int fadedCurrBgColor = 0x00000000 | fadedCurrBgAlpha;
 
 		Renderer::setMatrix(Transform4x4f::Identity());
-		Renderer::drawRect(bgX, bgY, bgWidth, bgHeight, fadedCurrBgColor, fadedCurrBgColor);
+		Renderer::drawRect(bgX, mPlayInfoBgY, mPlayInfoBgW, mPlayInfoBgH, fadedCurrBgColor, fadedCurrBgColor);
 
 		mPlayInfo->setOpacity(currOpacity);
 		mPlayInfo->render(currTransform);
 	}
 
 	// Render help prompts early to bypass Window's fullScreenMenus suppression
-	if (Settings::getInstance()->getBool("GameSwitcherHelpEnabled"))
+	if (mCachedHelpEnabled)
 	{
-		// Draw a semi-transparent background strip behind the help prompts
-		HelpStyle style = getHelpStyle();
-		if (style.font)
+		if (mHelpBgHeight > 0.0f)
 		{
-			float helpHeight = Math::round(style.font->getLetterHeight() * 1.25f);
-			float padding = helpHeight * 0.4f;
-			float bgY = style.position.y() - padding;
-			float bgHeight = screenHeight - bgY;
-
 			Renderer::setMatrix(Transform4x4f::Identity());
-			Renderer::drawRect(0.0f, bgY, screenWidth, bgHeight, infoBgColor, infoBgColor);
+			Renderer::drawRect(0.0f, mHelpBgY, screenWidth, mHelpBgHeight, infoBgColor, infoBgColor);
 		}
 
 		mWindow->renderHelpPromptsEarly(transform);
@@ -1477,7 +1493,7 @@ std::vector<HelpPrompt> GuiGameSwitcher::getHelpPrompts()
 	std::vector<HelpPrompt> prompts;
 
 	// Hide help prompts if disabled in settings
-	if (!Settings::getInstance()->getBool("GameSwitcherHelpEnabled"))
+	if (!mCachedHelpEnabled)
 		return prompts;
 
 	prompts.push_back(HelpPrompt("left/right", _("NAVIGATE")));
@@ -1493,7 +1509,7 @@ HelpStyle GuiGameSwitcher::getHelpStyle()
 	HelpStyle style = GuiComponent::getHelpStyle();
 
 	// Always center help prompts horizontally in Game Switcher
-	style.position = Vector2f(Renderer::getScreenWidth() / 2.0f, style.position.y());
+	style.position = Vector2f(mScreenWidth / 2.0f, style.position.y());
 	style.origin = Vector2f(0.5f, 0.0f);
 
 	return style;
@@ -1548,6 +1564,8 @@ bool GuiGameSwitcher::runCachedMode()
 
 	while (running && isActive())
 	{
+		int frameStart = SDL_GetTicks();
+
 		SDL_Event event;
 		if (SDL_PollEvent(&event))
 		{
@@ -1568,6 +1586,11 @@ bool GuiGameSwitcher::runCachedMode()
 		window.update(deltaTime);
 		window.render();
 		Renderer::swapBuffers();
+
+		// Cap at ~60fps to avoid spinning the CPU
+		int frameTime = SDL_GetTicks() - frameStart;
+		if (frameTime < 16)
+			SDL_Delay(16 - frameTime);
 	}
 
 	// Restore overlay settings

@@ -5,6 +5,7 @@
 #include "Window.h"
 #include "components/ImageComponent.h"
 #include "components/TextComponent.h"
+#include <set>
 
 class FileData;
 
@@ -92,7 +93,7 @@ private:
 
 	void loadRecentlyPlayedGames();
 	void loadFromCache();
-	std::string getScreenshotForGame(FileData* game);
+	static std::string getScreenshotForGame(FileData* game);
 	void updateDisplay();
 	void updateDisplayForComponents(ImageComponent* screenshot, ImageComponent* marquee,
 	                                 TextComponent* gameName, TextComponent* playInfo,
@@ -103,6 +104,35 @@ private:
 
 	MultiStateInput mXButton;
 	MultiStateInput mYButton;
+
+	// Cached screen dimensions (avoid per-frame Renderer calls)
+	float mScreenWidth;
+	float mScreenHeight;
+
+	// Cached settings (avoid per-frame singleton lookups in render())
+	unsigned char mCachedBgAlpha;
+	unsigned int mCachedInfoBgColor;
+	bool mCachedHelpEnabled;
+	bool mCachedMarqueeEnabled;
+	bool mCachedMarqueeFallback;
+	bool mCachedPlayInfoEnabled;
+	bool mCachedLaunchAnimEnabled;
+
+	// Cached help bar background geometry (avoid per-frame getHelpStyle() calls)
+	float mHelpBgY;
+	float mHelpBgHeight;
+
+	// Cached play info background dimensions (avoid per-frame sizeText() calls)
+	float mPlayInfoBgW;
+	float mPlayInfoBgH;
+	float mPlayInfoBgY;
+	float mPrevPlayInfoBgW;
+	float mPrevPlayInfoBgH;
+	float mPrevPlayInfoBgY;
+
+	// Cached exclusion list (avoid repeated file I/O in isExcluded())
+	static std::set<std::string> sCachedExclusions;
+	static bool sExclusionsLoaded;
 
 	static bool sPendingGameSwitcher;
 	static GuiGameSwitcher* sActiveInstance;
