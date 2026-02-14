@@ -87,10 +87,10 @@ private:
 
 	static std::once_flag mOnceFlag;
 	std::mutex mConnectMutex;
+	std::mutex mDataMutex;
 	bool mInitialized = false;
 	bool mConnected = false;
 	bool mWifiConnected = false;
-	int mCurrentTransferNeededFiles = 0;
 
 	// Syncthing configuration
 	std::string mApiKey;
@@ -115,7 +115,5 @@ private:
 	std::vector<std::string> getConnectedDeviceIds();
 	bool parseConfig();
 	void updateDeviceCompletion(Device* device);
-	std::shared_ptr<Device> getDeviceById(const std::string& deviceId);
-	Folder *getFolderById(const std::string& folderId);
 	long getCurrentTimeMillis();
 };

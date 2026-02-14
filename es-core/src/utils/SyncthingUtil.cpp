@@ -82,21 +82,19 @@ bool SyncthingUtil::connect() {
 
 // Disconnects from the syncthing API by clearing all configuration data.
 void SyncthingUtil::disconnect() {
+	std::lock_guard<std::mutex> lock(mDataMutex);
 	mConnected = false;
 
 	// Reset status of own device
-	self = Device {
-		.id = "self",
-		.name = "self",
-		.paused = false,
-		.completion = 0,
-		.needItems = 0,
-		.globalItems = 0,
-		.needBytes = 0,
-		.bytesReceived = 0,
-		.bytesSent = 0,
-		.transferSpeed = 0
-	};
+	self.connected = false;
+	self.paused = false;
+	self.completion = 0;
+	self.needItems = 0;
+	self.globalItems = 0;
+	self.needBytes = 0;
+	self.bytesReceived = 0;
+	self.bytesSent = 0;
+	self.transferSpeed = 0;
 
 	// Clear existing devices and folders
 	mDevicesMap.clear();
@@ -113,10 +111,9 @@ bool SyncthingUtil::reloadConfig() {
 	if (parseConfig()) {
 		LOG(LogInfo) << "Syncthing: Successfully reloaded config.";
 		return true;
-	} else {
-		LOG(LogError) << "Syncthing: Failed to reload config.";
-		return false;
 	}
+	LOG(LogError) << "Syncthing: Failed to reload config.";
+	return false;
 }
 
 // Starts a rescan of all folders or of a specific folder if folderId is provided.
@@ -131,11 +128,21 @@ void SyncthingUtil::scan(Window* window, std::string const* folderId) {
 	LOG(LogDebug) << "Syncthing: Created notification window";
 	wndNotification->updateTitle(GUIICON + _("SYNCTHING"));
 
+	std::string targetFolderId = "";
+    std::string targetFolderLabel = "";
 	bool allSharedFoldersPaused = true;
-	for (const auto& folder : mFolders) {
-		if (folder.shared && !folder.paused) {
-			allSharedFoldersPaused = false;
-			break;
+	{
+		std::lock_guard<std::mutex> lock(mDataMutex);
+		for (const auto& folder : mFolders) {
+			if (folder.shared && !folder.paused) {
+				allSharedFoldersPaused = false;
+			}
+
+			// If we are looking for a specific folder, copy its data now
+			if (folderId && folder.id == *folderId) {
+				targetFolderId = folder.id;
+				targetFolderLabel = folder.label;
+			}
 		}
 	}
 
@@ -147,32 +154,21 @@ void SyncthingUtil::scan(Window* window, std::string const* folderId) {
 		return;
 	}
 
-	Folder* folder = nullptr;
-	if (folderId) {
-		folder = getFolderById(*folderId);
-		if (folder) {
-			wndNotification->updateText("Scanning folder: " + folder->label);
-		} else {
-			wndNotification->updateText("Scanning all folders...");
-		}
-	} else {
-		wndNotification->updateText("Scanning all folders...");
-	}
-	LOG(LogDebug) << "Syncthing: Starting scan request";
-	
 	HttpReqOptions options;
 	options.customHeaders.push_back("X-Api-Key: " + mApiKey);
 	options.dataToPost = "scan"; // TODO: Make sure this works
 
 	std::unique_ptr<HttpReq> req;
 
+	LOG(LogDebug) << "Syncthing: Starting scan request";
 	long startTime = getCurrentTimeMillis();
-	if(folder == nullptr) {
-		// Sync all folders
-		req.reset(new HttpReq("http://127.0.0.1:8384/rest/db/scan", &options));
+
+	if (!targetFolderId.empty()) {
+		wndNotification->updateText("Scanning folder: " + targetFolderLabel);
+		req.reset(new HttpReq("http://127.0.0.1:8384/rest/db/scan?folder=" + targetFolderId, &options));
 	} else {
-		// Sync only specified folder
-		req.reset(new HttpReq("http://127.0.0.1:8384/rest/db/scan?folder=" + folder->id, &options));
+		wndNotification->updateText("Scanning all folders...");
+		req.reset(new HttpReq("http://127.0.0.1:8384/rest/db/scan", &options));
 	}
 
 	LOG(LogDebug) << "Syncthing: Scan request sent";
@@ -215,38 +211,47 @@ SyncthingState SyncthingUtil::getState() {
 		return state;
 	}
 
-	// If no devices are connected, there's nothing to wait for
 	std::vector<std::string> deviceIds = getConnectedDeviceIds();
-	if (deviceIds.size() == 0)
+	if (deviceIds.empty()) {
+		LOG(LogDebug) << "Syncthing: No connected devices found when getting current state.";
 		return state;
+	}
 
 	int globalItems = 0;
 	int needItems = 0;
 	int totalSpeed = 0;
 
-	updateDeviceCompletion(&self);
-	globalItems += self.globalItems;
-	needItems += self.needItems;
-	totalSpeed += self.transferSpeed;
-
 	state.connectedDevices.clear();
+	
+	{
+		std::lock_guard<std::mutex> lock(mDataMutex);
 
-	for (auto& deviceId : getConnectedDeviceIds()) {
-		std::shared_ptr<Device> device = getDeviceById(deviceId);
-		if (device == nullptr) continue;
-		updateDeviceCompletion(device.get());
-		if (!device->connected || device->paused) continue;
-		state.connectedDevices.push_back(device->name);
-		globalItems += device->globalItems;
-		needItems += device->needItems;
-		totalSpeed += device->transferSpeed;
-		if (device->needItems > 0) {
-			state.dirtyDevices.push_back(device->name);
-		} else {
-			// Remove device from dirty list if it has no more unsynced items
-			auto it = std::find(state.dirtyDevices.begin(), state.dirtyDevices.end(), device->name);
-			if (it != state.dirtyDevices.end()) {
-				state.dirtyDevices.erase(it);
+		updateDeviceCompletion(&self);
+		globalItems += self.globalItems;
+		needItems += self.needItems;
+		totalSpeed += self.transferSpeed;
+
+		for (auto& deviceId : deviceIds) {
+
+			auto it = mDevicesMap.find(deviceId);
+            if (it == mDevicesMap.end()) continue;
+            
+            std::shared_ptr<Device> device = it->second;
+
+			updateDeviceCompletion(device.get());
+			if (!device->connected || device->paused) continue;
+			state.connectedDevices.push_back(device->name);
+			globalItems += device->globalItems;
+			needItems += device->needItems;
+			totalSpeed += device->transferSpeed;
+			if (device->needItems > 0) {
+				state.dirtyDevices.push_back(device->name);
+			} else {
+				// Remove device from dirty list if it has no more unsynced items
+				auto it = std::find(state.dirtyDevices.begin(), state.dirtyDevices.end(), device->name);
+				if (it != state.dirtyDevices.end()) {
+					state.dirtyDevices.erase(it);
+				}
 			}
 		}
 	}
@@ -259,25 +264,6 @@ SyncthingState SyncthingUtil::getState() {
 		LOG(LogDebug) << "Syncthing: No transfer speed detected, assuming sync is complete even though " << needItems << " files have not been synced yet.";
 	}
 	return state;
-}
-
-// Retrieves a device by its ID, or nullptr if not found.
-std::shared_ptr<Device> SyncthingUtil::getDeviceById(const std::string& deviceId) {
-    auto it = mDevicesMap.find(deviceId);
-    if (it != mDevicesMap.end()) {
-        return it->second;
-    }
-    return nullptr;
-}
-
-// Retrieves a folder by its ID, or nullptr if not found.
-Folder* SyncthingUtil::getFolderById(const std::string& folderId) {
-	for (auto& folder : mFolders) {
-		if (folder.id == folderId) {
-			return &folder;
-		}
-	}
-	return nullptr;
 }
 
 // Retrieves own device ID from the syncthing API.
@@ -332,6 +318,9 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 
 		if (doc.IsObject() == false)
 			return deviceIds;
+
+		std::lock_guard<std::mutex> lock(mDataMutex);
+
 		if (doc.HasMember("total")) {
 			self.bytesReceived = doc["total"].GetObject()["inBytesTotal"].GetInt64();
             self.bytesSent = doc["total"].GetObject()["outBytesTotal"].GetInt64();
@@ -341,8 +330,13 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 				// Exclude self and paused devices from list of connected devices
 				if (member.name.IsString() == false || std::string(member.name.GetString()) == self.id)
 					continue;
-				std::shared_ptr<Device> device = getDeviceById(member.name.GetString());
-				
+
+				std::shared_ptr<Device> device = nullptr;
+				auto it = mDevicesMap.find(member.name.GetString());
+				if (it != mDevicesMap.end()) {
+					device = it->second;
+				}
+			
 				// Handle unknown device TODO: Create new device instead of skipping?
 				if (device == nullptr)
 					continue;
@@ -431,6 +425,7 @@ bool SyncthingUtil::parseConfig() {
 	LOG(LogInfo) << "Syncthing: Own device ID is " << self.id;
 
 	// Clear map before determining devices.
+	std::lock_guard<std::mutex> lock(mDataMutex);
 	mDevicesMap.clear();
 	mFolders.clear();
 
@@ -475,6 +470,8 @@ bool SyncthingUtil::parseConfig() {
 		LOG(LogInfo) << "Syncthing: Added folder with label " << folder.label;
 		mFolders.push_back(folder);
 	}
+
+	return true;
 }
 
 // Handles WiFi connection status changes.
