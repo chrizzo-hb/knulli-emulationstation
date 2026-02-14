@@ -19,7 +19,6 @@
 #include "LocaleES.h"
 #include "components/AsyncNotificationComponent.h"
 #include "watchers/NetworkStateWatcher.h"
-#include "SystemConf.h"
 
 #define GUIICON _U("\uF07C ")
 
@@ -69,9 +68,6 @@ bool SyncthingUtil::isEnabled() {
 // is reachable and loading all relevant devices and folders from the config XML.
 bool SyncthingUtil::connect() {
 
-	// Lock guard ensures the logic below is thread-safe
-    std::lock_guard<std::mutex> lock(mConnectMutex);
-
 	if (mConnected)
 		return true;
 
@@ -79,12 +75,20 @@ bool SyncthingUtil::connect() {
 		return false;
 	}
 
-	if (!parseConfig()) {
-		LOG(LogError) << "Syncthing: Failed to parse config XML, cannot connect.";
-		return false;
+	{
+		std::lock_guard<std::mutex> lock(mConnectMutex);
+		
+        if (mConnected) 
+            return true;
+
+		if (!parseConfig()) {
+			LOG(LogError) << "Syncthing: Failed to parse config XML, cannot connect.";
+			return false;
+		}
+
+		mConnected = true;
 	}
 
-	mConnected = true;
 	return true;
 }
 
