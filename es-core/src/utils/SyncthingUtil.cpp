@@ -131,15 +131,15 @@ void SyncthingUtil::scan(Window* window, std::string const* folderId) {
 	LOG(LogDebug) << "Syncthing: Created notification window";
 	wndNotification->updateTitle(GUIICON + _("SYNCTHING"));
 
-	bool allFoldersPaused = true;
+	bool allSharedFoldersPaused = true;
 	for (const auto& folder : mFolders) {
-		if (!folder.paused) {
-			allFoldersPaused = false;
+		if (folder.shared && !folder.paused) {
+			allSharedFoldersPaused = false;
 			break;
 		}
 	}
 
-	if (self.paused || allFoldersPaused) {
+	if (self.paused || allSharedFoldersPaused) {
 		LOG(LogError) << "Syncthing: Cannot start scan because synchronization is paused on this device or all folders are paused.";
 		wndNotification->updateText(_("Unable to sync: Synchronization is paused."));
 		std::this_thread::sleep_for(std::chrono::seconds(5));
