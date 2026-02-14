@@ -140,11 +140,11 @@ void SyncthingUtil::scan(Window* window, std::string const* folderId) {
         ~Guard() { flag.store(false); } 
     } apiGuard{mApiBusy};
 
-	executeScan(window, folderId, HTTP_TIMEOUT_MS);
+	executeScan(window, folderId);
 }
 
 // Starts a rescan of all folders or of a specific folder if folderId is provided.
-void SyncthingUtil::executeScan(Window* window, std::string const* folderId, int timeoutMs) {
+void SyncthingUtil::executeScan(Window* window, std::string const* folderId) {
 	if (!reconnect()) {
 		LOG(LogError) << "Syncthing: Unable to (re-)connect, cannot start scan";
 		return;
@@ -199,7 +199,6 @@ void SyncthingUtil::executeScan(Window* window, std::string const* folderId, int
 	}
 
 	LOG(LogDebug) << "Syncthing: Scan request sent";
-	//if (!waitWithTimeout(req.get(), timeoutMs)) {
 	if (req->wait()) {
 		long endTime = getCurrentTimeMillis();
 		long duration = endTime - startTime;
@@ -242,14 +241,12 @@ SyncthingState SyncthingUtil::getState() {
         ~Guard() { flag.store(false); } 
     } apiGuard{mApiBusy};
 
-	// If the API isn't busy and we do not know if it's syncing or not, let's
-	// extend the timeout to give it more time to respond.
-    mLastState = getStateFromApi(mLastState.isSyncing() ? HTTP_TIMEOUT_MS : EXTENDED_HTTP_TIMEOUT_MS);
+    mLastState = getStateFromApi();
     return mLastState;
 }
 
 // Retrieves the current synchronization state from the syncthing API.
-SyncthingState SyncthingUtil::getStateFromApi(int timeoutMs) {
+SyncthingState SyncthingUtil::getStateFromApi() {
 	SyncthingState state;
 	state.itemsSynced = 0;
 	state.itemsTotal = 0;
@@ -265,7 +262,7 @@ SyncthingState SyncthingUtil::getStateFromApi(int timeoutMs) {
 		return state;
 	}
 
-	std::vector<std::string> deviceIds = getConnectedDeviceIds(timeoutMs);
+	std::vector<std::string> deviceIds = getConnectedDeviceIds();
 	if (deviceIds.empty()) {
 		LOG(LogDebug) << "Syncthing: No connected devices found when getting current state.";
 		return state;
@@ -280,7 +277,7 @@ SyncthingState SyncthingUtil::getStateFromApi(int timeoutMs) {
 	{
 		std::lock_guard<std::mutex> lock(mDataMutex);
 
-		updateDeviceCompletion(&self, timeoutMs);
+		updateDeviceCompletion(&self);
 		globalItems += self.globalItems;
 		needItems += self.needItems;
 		totalSpeed += self.transferSpeed;
@@ -327,8 +324,7 @@ std::string SyncthingUtil::getMyId() {
     std::vector<std::string> myIds;
     char buffer[128];
 
-    //std::unique_ptr<FILE, int(*)(FILE*)> pipe(popen(cmd.c_str(), "r"), pclose);
-	std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
+    std::unique_ptr<FILE, int(*)(FILE*)> pipe(popen(cmd.c_str(), "r"), pclose);
 
     if (!pipe) {
         LOG(LogError) << "Syncthing: Failed to open pipe for device ID command.";
@@ -357,7 +353,7 @@ std::string SyncthingUtil::getMyId() {
 }
 
 // Retrieves a list of IDs of currently connected devices from the syncthing API.
-std::vector<std::string> SyncthingUtil::getConnectedDeviceIds(int timeoutMs) {
+std::vector<std::string> SyncthingUtil::getConnectedDeviceIds() {
 	std::vector<std::string> deviceIds;
 
 	HttpReqOptions options;
@@ -365,7 +361,6 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds(int timeoutMs) {
 
 	std::unique_ptr<HttpReq> req(new HttpReq("http://127.0.0.1:8384/rest/system/connections", &options));
 
-	//if (!waitWithTimeout(req.get(), timeoutMs)) {
 	if (req->wait()) {
 		rapidjson::Document doc;
 		doc.Parse(req->getContent().c_str());
@@ -420,7 +415,7 @@ std::vector<std::string> SyncthingUtil::getConnectedDeviceIds(int timeoutMs) {
 }
 
 // Updates the status of a specific device by querying the syncthing API.
-void SyncthingUtil::updateDeviceCompletion(Device* device, int timeoutMs) {
+void SyncthingUtil::updateDeviceCompletion(Device* device) {
 	if (!device) return;
 
 	HttpReqOptions options;
@@ -428,7 +423,6 @@ void SyncthingUtil::updateDeviceCompletion(Device* device, int timeoutMs) {
 
 	std::unique_ptr<HttpReq> req(new HttpReq("http://127.0.0.1:8384/rest/db/completion?device=" + device->id, &options));
 
-	//if (!waitWithTimeout(req.get(), timeoutMs)) {
 	if (!req->wait()) {
 		return;
 	}
@@ -546,23 +540,4 @@ long SyncthingUtil::getCurrentTimeMillis() {
 	return std::chrono::duration_cast<std::chrono::milliseconds>(
 			   std::chrono::system_clock::now().time_since_epoch())
 		.count();
-}
-
-bool SyncthingUtil::waitWithTimeout(HttpReq* req, int timeoutMs) {
-    auto startTime = std::chrono::steady_clock::now();
-    
-    while (req->status() == HttpReq::REQ_IN_PROGRESS) {
-        auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count();
-
-        if (elapsed > timeoutMs) {
-            LOG(LogWarning) << "Syncthing: Request timed out after " << timeoutMs << "ms";
-            return false; 
-        }
-        
-		// Give the CPU a tiny break, but keep the multi_handle processing
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-    
-    return req->status() == HttpReq::REQ_SUCCESS;
 }

@@ -87,9 +87,6 @@ private:
 	SyncthingUtil(SyncthingUtil&&) = delete;
 	SyncthingUtil& operator=(SyncthingUtil&&) = delete;
 
-	static const int HTTP_TIMEOUT_MS = 2000;
-	static const int EXTENDED_HTTP_TIMEOUT_MS = 10000;
-
 	static bool mEnabled;
 
 	// Access control
@@ -123,13 +120,11 @@ private:
 
 	SyncthingState mLastState;
 
-	void executeScan(Window* window, std::string const* folderId = nullptr, int timeoutMs = HTTP_TIMEOUT_MS);
-	SyncthingState getStateFromApi(int timeoutMs = HTTP_TIMEOUT_MS);
+	void executeScan(Window* window, std::string const* folderId = nullptr);
+	SyncthingState getStateFromApi();
 	std::string getMyId();
-	std::vector<std::string> getConnectedDeviceIds(int timeoutMs = HTTP_TIMEOUT_MS);
+	std::vector<std::string> getConnectedDeviceIds();
 	bool parseConfig();
-	void updateDeviceCompletion(Device* device, int timeoutMs = HTTP_TIMEOUT_MS);
+	void updateDeviceCompletion(Device* device);
 	long getCurrentTimeMillis();
-
-	static bool waitWithTimeout(HttpReq* req, int timeoutMs);
 };
