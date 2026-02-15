@@ -1593,6 +1593,11 @@ bool GuiGameSwitcher::runCachedMode()
 			SDL_Delay(16 - frameTime);
 	}
 
+	// Clear the screen before shutting down (removes lingering help prompts)
+	Renderer::setMatrix(Transform4x4f::Identity());
+	Renderer::drawRect(0.0f, 0.0f, (float)Renderer::getScreenWidth(), (float)Renderer::getScreenHeight(), 0x000000FF);
+	Renderer::swapBuffers();
+
 	// Restore overlay settings
 	Settings::setDrawClock(origDrawClock);
 	Settings::setShowControllerActivity(origShowController);
