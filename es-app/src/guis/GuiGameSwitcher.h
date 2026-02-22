@@ -8,6 +8,15 @@
 #include <set>
 
 class FileData;
+struct SaveState;
+
+struct SaveStatePreview
+{
+	std::string screenshotPath;
+	std::string label;       // "AUTO SAVE - Jan 15 2026" or "SLOT 2 - Jan 10 2026"
+	int slot;                // -1 = auto-save, >= 0 = numbered
+	SaveState* saveState;    // Non-null in normal mode, nullptr in cached mode
+};
 
 class GuiGameSwitcher : public GuiComponent
 {
@@ -43,6 +52,15 @@ public:
 	static void clearExclusions();
 	static bool isExcluded(const std::string& gamePath);
 
+	// Inclusion list management
+	static std::string getInclusionPath();
+	static std::vector<std::string> loadInclusions();
+	static void saveInclusions(const std::vector<std::string>& inclusions);
+	static void addInclusion(const std::string& gamePath);
+	static void removeInclusion(const std::string& gamePath);
+	static void clearInclusions();
+	static bool isIncluded(const std::string& gamePath);
+
 	// Pending stats for games launched without full ES (Quick Resume / cached mode)
 	static void savePendingStats(const std::string& gamePath, const std::string& systemName, int elapsedSeconds);
 	static void applyPendingStats();  // Called when ES fully loads
@@ -65,6 +83,11 @@ private:
 		std::string systemName;
 		int playCount;
 		int gameTime;
+		bool included;
+
+		// Save state preview data
+		std::vector<SaveStatePreview> saveStates;
+		int currentSaveStateIndex;  // -1 = default view (no specific save state selected)
 	};
 
 	std::vector<GameItem> mGames;
@@ -77,6 +100,18 @@ private:
 	TextComponent*  mGameName;      // Fallback when no marquee
 	TextComponent*  mPlayInfo;      // "Played X times | Play time: Xh Xm"
 
+	// Save state label (shown when browsing save states with up/down)
+	TextComponent*  mSaveStateLabel;
+	TextComponent*  mPrevSaveStateLabel;
+
+	// Save state indicator (◉, top-left — shown when viewing a save state)
+	TextComponent*  mSaveStateIndicator;
+	TextComponent*  mPrevSaveStateIndicator;
+
+	// Included indicator (star, top-right — shown when game is pinned)
+	TextComponent*  mIncludedIndicator;
+	TextComponent*  mPrevIncludedIndicator;
+
 	// Previous visual components (for animation)
 	ImageComponent* mPrevScreenshot;
 	ImageComponent* mPrevMarquee;
@@ -85,10 +120,12 @@ private:
 
 	// Animation state
 	bool  mAnimating;
+	bool  mAnimatingVertical;    // True = vertical (save state), false = horizontal (game)
 	bool  mLaunching;            // Fade-out before launch
 	bool  mLaunchAfterNavigation; // Launch game after navigation animation completes
 	float mAnimationProgress;    // 0.0 to 1.0
-	int   mAnimationDirection;   // -1 = left, +1 = right
+	int   mAnimationDirection;   // -1 = left/up, +1 = right/down
+	bool  mFadeIndicator;        // True when save state indicator should fade (default ↔ save state)
 	int   mAnimationDuration;    // milliseconds
 
 	void loadRecentlyPlayedGames();
@@ -99,11 +136,14 @@ private:
 	                                 TextComponent* gameName, TextComponent* playInfo,
 	                                 int gameIndex);
 	void navigateTo(int index);
+	void navigateToSaveState(int newIndex, int direction);
 	void launchCurrentGame();
 	void removeCurrentGame();
+	void toggleCurrentGameInclusion();
 
 	MultiStateInput mXButton;
 	MultiStateInput mYButton;
+	MultiStateInput mAButton;
 
 	// Cached screen dimensions (avoid per-frame Renderer calls)
 	float mScreenWidth;
@@ -130,9 +170,21 @@ private:
 	float mPrevPlayInfoBgH;
 	float mPrevPlayInfoBgY;
 
+	// Cached save state label background dimensions
+	float mSaveStateLabelBgW;
+	float mSaveStateLabelBgH;
+	float mSaveStateLabelBgY;
+	float mPrevSaveStateLabelBgW;
+	float mPrevSaveStateLabelBgH;
+	float mPrevSaveStateLabelBgY;
+
 	// Cached exclusion list (avoid repeated file I/O in isExcluded())
 	static std::set<std::string> sCachedExclusions;
 	static bool sExclusionsLoaded;
+
+	// Cached inclusion list (avoid repeated file I/O in isIncluded())
+	static std::set<std::string> sCachedInclusions;
+	static bool sInclusionsLoaded;
 
 	static bool sPendingGameSwitcher;
 	static GuiGameSwitcher* sActiveInstance;
